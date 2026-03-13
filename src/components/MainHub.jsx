@@ -164,10 +164,14 @@ const MainHub = ({ user, onLogout }) => {
 
         <div className="module-grid">
           {modules.map((module, index) => (
-            <div 
+            <motion.div 
               key={module.id}
               className="module-card"
               onClick={() => setActiveModule(module.id)}
+              whileHover={{ scale: 1.02, y: -5 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.02 }}
             >
               <div className="module-icon" style={{ backgroundColor: `${module.color}15`, color: module.color }}>
                 {module.icon}
@@ -178,7 +182,7 @@ const MainHub = ({ user, onLogout }) => {
                 <span className="sub">Operasyonel takip</span>
               </div>
               <ChevronRight className="arrow" size={16}/>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
