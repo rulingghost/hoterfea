@@ -1,317 +1,306 @@
 import React, { useState } from 'react';
-import { 
-  User, Search, Plus, 
-  History, Star, MessageSquare,
-  ShieldAlert, CheckCircle, Globe,
-  Briefcase, Mail, Phone, MoreVertical,
-  ChevronDown, Filter, LayoutGrid,
-  Bell, CreditCard, PieChart as PieIcon,
-  Zap, ThumbsUp, ThumbsDown
+import { useHotel } from '../../context/HotelContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Search, Plus, Star, Phone, Mail, Globe,
+  Edit, X, CheckCircle, CreditCard, Award,
+  Calendar, TrendingUp, User, Heart
 } from 'lucide-react';
-import { 
-  PieChart, Pie, Cell, ResponsiveContainer
-} from 'recharts';
-import { motion } from 'framer-motion';
 
-const history = [
-  { agency: 'Booking.com', checkIn: '13 Mar', checkOut: '15 Mar 2024', room: '104 DBL', board: 'Half-Board', total: '₺ 7,350', score: '-' },
-  { agency: 'Expedia', checkIn: '19 Haz', checkOut: '22 Haz 2023', room: '209 SUE', board: 'Half-Board', total: '₺ 10,950', score: '5' },
-  { agency: 'Agency', checkIn: '01 Ağu', checkOut: '04 Ağu 2022', room: '305 DLP', board: 'Room + Braccarr', total: '₺ 7,850', score: '4.5' },
-];
+const LOYALTY_COLORS = {
+  Platinum: { bg:'#1e293b', text:'white'  },
+  Gold:     { bg:'#f59e0b', text:'white'  },
+  Silver:   { bg:'#64748b', text:'white'  },
+  None:     { bg:'#f1f5f9', text:'#64748b'},
+};
 
-const preferences = [
-  { date: '24 Mart 1987', note: 'Kahvesini latte unsütlü tercih eder. Yumuşak yastık ister', age: '(50 yaşında)' },
-];
+const GuestFormModal = ({ guest, onClose, onSave }) => {
+  const [form, setForm] = useState(guest || { name:'', nationality:'TR', phone:'', email:'', loyalty:'None', dob:'', tcNo:'', passport:'' });
+  const set = (k,v) => setForm(p=>({...p,[k]:v}));
 
-const logs = [
-  { date: '14 Mar', type: 'critical', text: 'Oda temizliğinden memnun kalmadı.', time: '14:20' },
-  { date: '22 Nov', type: 'normal', text: 'Kahvesini latte unsütlü tercih etti.', time: '09:35' },
-  { date: '01 Apr', type: 'positive', text: 'Bir gezden süper!', time: '10:45' },
-];
-
-const pieData = [{ name: 'Konaklamalar', value: 3, plan: 8, total: '₺ 26,150' }];
-
-const GuestCRM = () => {
   return (
-    <div className="crm-container">
-      <header className="header">
-         <div className="title-section">
-            <User size={32} className="icon-blue"/>
-            <div>
-               <h2>Misafir 360 & CRM</h2>
-               <span>Kişiselleştirilmiş misafir deneyimi, sadakat yönetimi ve geri bildirim takibi</span>
+    <motion.div className="modal-overlay" onClick={onClose} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+      <motion.div className="gf-modal" onClick={e=>e.stopPropagation()} initial={{scale:.9,y:20}} animate={{scale:1,y:0}}>
+        <div className="modal-head">
+          <h3>{guest ? 'Misafir Düzenle' : 'Yeni Misafir Kaydı'}</h3>
+          <button onClick={onClose}><X size={20}/></button>
+        </div>
+        <div className="gf-body">
+          <div className="form-grid">
+            <div className="fg-group full"><label>Ad Soyad *</label><input value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Ad Soyad"/></div>
+            <div className="fg-group"><label>Uyruk</label>
+              <select value={form.nationality} onChange={e=>set('nationality',e.target.value)}>
+                {['TR','DE','US','UK','FR','ES','IT','RU','AE'].map(c=><option key={c}>{c}</option>)}
+              </select>
             </div>
-         </div>
-         <div className="actions">
-            <button className="btn outline">ANKET GÖNDER</button>
-            <button className="btn primary green">ÖZEL TEKLİF YAP</button>
-            <button className="btn primary orange">VİP STATÜ YAP</button>
-            <button className="btn primary dark-red">KARA LİSTEYE AL</button>
-         </div>
-      </header>
-
-      <div className="crm-grid">
-         {/* Main Content Area */}
-         <section className="main-content">
-            <div className="card profile-card">
-               <div className="p-header">
-                  <div className="p-avatar">
-                     <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200" alt="Guest" />
-                     <div className="p-badges">
-                        <span className="badge vip">VIP</span>
-                        <span className="badge blacklist">BLACKLIST</span>
-                     </div>
-                  </div>
-                  <div className="p-main-info">
-                     <div className="pm-top">
-                        <h2>Canberk Arslan</h2>
-                        <span className="loyalty gold">GOLD SADAKAT</span>
-                     </div>
-                     <div className="pm-grid">
-                        <div className="pm-field">
-                           <label>Misafir Adı Soyadı</label>
-                           <strong>Canberk Arslan</strong>
-                        </div>
-                        <div className="pm-field">
-                           <label>TC / Pasaport No</label>
-                           <div className="input-row">
-                              <strong>143265598780</strong>
-                              <button className="btn-s blue">SORGULA</button>
-                           </div>
-                        </div>
-                        <div className="pm-field">
-                           <label>Uyruk</label>
-                           <div className="input-row">
-                              <Globe size={14} className="blue"/>
-                              <strong>Türkiye</strong>
-                           </div>
-                        </div>
-                        <div className="pm-field">
-                           <label>Puan</label>
-                           <strong>₺ 12,450 Puan</strong>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-
-               <div className="section-title mt-30">
-                  <h3>KONAKLAMA GEÇMİŞİ</h3>
-               </div>
-               <table className="crm-table">
-                  <thead>
-                     <tr>
-                        <th>Acente</th>
-                        <th>Giriş Tarihi</th>
-                        <th>Çıkış Tarihi</th>
-                        <th>Oda</th>
-                        <th>Pansiyon</th>
-                        <th>Har: Toplam Tutar</th>
-                        <th>Anket Puanı</th>
-                     </tr>
-                  </thead>
-                  <tbody>
-                     {history.map((h, i) => (
-                       <tr key={i} className={i === 0 ? 'active' : ''}>
-                          <td>{h.agency}</td>
-                          <td><strong>{h.checkIn}</strong></td>
-                          <td>{h.checkOut}</td>
-                          <td>{h.room}</td>
-                          <td>{h.board}</td>
-                          <td>{h.total}</td>
-                          <td><span className="score-tag">{h.score}</span></td>
-                       </tr>
-                     ))}
-                  </tbody>
-               </table>
-
-               <div className="stats-row mt-30">
-                  <div className="graph-box">
-                     <div className="donut-box">
-                         <div className="donut-center">
-                            <strong>3</strong>
-                            <span>Konaklamalar</span>
-                         </div>
-                         <svg width="120" height="120">
-                            <circle cx="60" cy="60" r="50" fill="transparent" stroke="#f1f5f9" strokeWidth="10" />
-                            <circle cx="60" cy="60" r="50" fill="transparent" stroke="#3b82f6" strokeWidth="10" strokeDasharray="157 157" strokeDashoffset="0" />
-                         </svg>
-                     </div>
-                     <div className="graph-info">
-                        <strong>₺ 26,150</strong>
-                        <div className="stars">
-                           {Array.from({length: 5}).map((_, i) => <Star key={i} size={14} fill={i < 4 ? '#f59e0b' : 'none'} stroke={i < 4 ? '#f59e0b' : '#cbd5e1'} />)}
-                        </div>
-                     </div>
-                  </div>
-                  <div className="data-box">
-                     <div className="db-row"><span>Konaklamalar:</span> <strong>3</strong></div>
-                     <div className="db-row"><span>Giriş Tarihi:</span> <strong>₺ 7,350</strong></div>
-                     <div className="db-row"><span>Çıkış Tarihi:</span> <strong>₺ 26,150</strong></div>
-                  </div>
-                  <div className="data-box">
-                     <div className="db-row"><span>Racena:</span> <strong>87.2%</strong></div>
-                     <div className="db-row"><span>Tahsim</span> <strong>★★★★☆</strong></div>
-                     <div className="db-row"><span>Anket Ortalaması:</span> <strong className="blue">4.8</strong></div>
-                  </div>
-               </div>
+            <div className="fg-group"><label>Sadakat Seviyesi</label>
+              <select value={form.loyalty} onChange={e=>set('loyalty',e.target.value)}>
+                {['None','Silver','Gold','Platinum'].map(l=><option key={l}>{l}</option>)}
+              </select>
             </div>
-         </section>
+            <div className="fg-group"><label>Telefon</label><input value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="+90..."/></div>
+            <div className="fg-group"><label>E-posta</label><input value={form.email} onChange={e=>set('email',e.target.value)} placeholder="email@example.com"/></div>
+            <div className="fg-group"><label>Doğum Tarihi</label><input type="date" value={form.dob} onChange={e=>set('dob',e.target.value)}/></div>
+            <div className="fg-group"><label>TC Kimlik No</label><input value={form.tcNo} onChange={e=>set('tcNo',e.target.value)} placeholder="12345678900"/></div>
+            <div className="fg-group"><label>Pasaport No</label><input value={form.passport} onChange={e=>set('passport',e.target.value)} placeholder="A1234567"/></div>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn-cancel" onClick={onClose}>İptal</button>
+          <button className="btn-save" onClick={()=>{ onSave(form); onClose(); }} disabled={!form.name}>
+            {guest ? 'Güncelle' : 'Misafir Oluştur'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
 
-         {/* Sidebar: Details & Preferences */}
-         <aside className="right-panel">
-            <section className="card contact-card">
-               <h3>CRM & İLETİŞİM</h3>
-               <div className="contact-list mt-20">
-                  <div className="c-row">
-                     <Mail size={16} className="gray"/>
-                     <div className="c-info"><span>E-Posta</span><strong>Harekat@oda</strong></div>
-                  </div>
-                  <div className="c-row mt-15">
-                     <Phone size={16} className="gray"/>
-                     <div className="c-info"><span>Telefon</span><strong>+90 532 555 9670</strong></div>
-                  </div>
-                  <button className="btn-full mt-20"><Mail size={16}/> Yeni E-Posta Gönder</button>
-               </div>
-            </section>
+const GuestDetailPanel = ({ guest, reservations, onClose, onEdit }) => {
+  const guestRes = reservations.filter(r => r.guestId === guest.id || r.guest === guest.name);
+  const lc = LOYALTY_COLORS[guest.loyalty];
 
-            <section className="card preferences-card mt-20">
-               <h3>ÖZEL NOTLAR</h3>
-               <div className="p-content mt-15">
-                  <div className="p-head">{preferences[0].date} <small>{preferences[0].age}</small></div>
-                  <p className="p-text mt-10">{preferences[0].note}</p>
-               </div>
-            </section>
-
-            <section className="card log-card mt-20">
-               <h3>ŞİKAYET/MEMNUNİYET GÜNLÜĞÜ</h3>
-               <div className="log-list mt-20">
-                  {logs.map((l, i) => (
-                    <div key={i} className="log-item">
-                       <div className="l-icon">
-                          {l.type === 'critical' && <ShieldAlert size={14} className="red"/>}
-                          {l.type === 'positive' && <ThumbsUp size={14} className="green"/>}
-                          {l.type === 'normal' && <Zap size={14} className="yellow"/>}
-                       </div>
-                       <div className="l-info">
-                          <div className="l-head">
-                             <strong>{l.date}</strong>
-                             <span>{l.time}</span>
-                          </div>
-                          <p>{l.text}</p>
-                       </div>
-                    </div>
-                  ))}
-               </div>
-            </section>
-         </aside>
+  return (
+    <motion.div className="detail-panel" initial={{x:40,opacity:0}} animate={{x:0,opacity:1}} exit={{x:40,opacity:0}}>
+      <div className="dp-head">
+        <div className="dp-avatar">{guest.name[0]}</div>
+        <div>
+          <h3>{guest.name}</h3>
+          <span className="loyalty-tag" style={{background:lc.bg,color:lc.text}}>{guest.loyalty}</span>
+        </div>
+        <button onClick={onClose} style={{marginLeft:'auto'}}><X size={20}/></button>
       </div>
 
-      <footer className="crm-footer">
-         <span>DOLULUK: <strong className="green">%84</strong></span>
-         <span>GİRİŞ: <strong className="blue">12</strong></span>
-         <div className="footer-meta">
-            <span>Kullanıcı: <strong>CRM_Manager</strong></span>
-            <span>Süre: 02:10</span>
-            <span>Son İşlem: 15 Mar 10:30</span>
-         </div>
-         <span className="time-now">09:42</span>
-      </footer>
+      <div className="dp-stats">
+        <div className="dps"><Calendar size={16}/><div><strong>{guest.visits}</strong><span>Konaklama</span></div></div>
+        <div className="dps"><TrendingUp size={16}/><div><strong>₺{guest.totalSpent.toLocaleString()}</strong><span>Toplam Harcama</span></div></div>
+        <div className="dps"><Star size={16}/><div><strong>{guest.lastVisit}</strong><span>Son Ziyaret</span></div></div>
+      </div>
+
+      <div className="dp-contact">
+        <div className="dc-row"><Phone size={14}/><span>{guest.phone||'—'}</span></div>
+        <div className="dc-row"><Mail size={14}/><span>{guest.email||'—'}</span></div>
+        <div className="dc-row"><Globe size={14}/><span>{guest.nationality}</span></div>
+        {guest.tcNo  && <div className="dc-row"><User size={14}/><span>TC: {guest.tcNo}</span></div>}
+        {guest.passport && <div className="dc-row"><User size={14}/><span>Pasaport: {guest.passport}</span></div>}
+      </div>
+
+      <div className="dp-section">
+        <h4>Rezervasyon Geçmişi</h4>
+        {guestRes.length === 0 ? <p className="no-res">Rezervasyon bulunamadı.</p> :
+          guestRes.map(r => (
+            <div key={r.id} className="res-mini">
+              <div className="rm-left">
+                <strong>{r.id}</strong>
+                <span>Oda {r.room||'—'} · {r.checkIn} / {r.checkOut}</span>
+              </div>
+              <span className={`rmtag ${r.status}`}>{r.status==='check-in'?'İçeride':r.status==='check-out'?'Çıktı':'Bekliyor'}</span>
+            </div>
+          ))
+        }
+      </div>
+
+      <button className="dp-edit-btn" onClick={()=>onEdit(guest)}><Edit size={14}/> Misafiri Düzenle</button>
+    </motion.div>
+  );
+};
+
+const GuestCRM = () => {
+  const { guests, addGuest, reservations } = useHotel();
+  const [search, setSearch] = useState('');
+  const [loyaltyFilter, setLoyaltyFilter] = useState('Tümü');
+  const [selectedGuest, setSelectedGuest] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingGuest, setEditingGuest] = useState(null);
+
+  const filtered = guests.filter(g => {
+    const q = search.toLowerCase();
+    const matchQ = !q || g.name.toLowerCase().includes(q) || g.email?.toLowerCase().includes(q) || g.phone?.includes(q);
+    const matchL = loyaltyFilter === 'Tümü' || g.loyalty === loyaltyFilter;
+    return matchQ && matchL;
+  });
+
+  const handleSave = (form) => {
+    if (editingGuest) return; // update not implemented with current simple state
+    addGuest(form);
+  };
+
+  return (
+    <div className="crm-layout">
+      {/* Left: Guest List */}
+      <div className="crm-list-panel">
+        <div className="cls-head">
+          <h2>Misafir CRM</h2>
+          <button className="btn-primary" onClick={()=>{ setEditingGuest(null); setShowForm(true); }}>
+            <Plus size={16}/> Yeni Misafir
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div className="crm-mini-stats">
+          {['Platinum','Gold','Silver'].map(l => (
+            <div key={l} className="cms">
+              <strong>{guests.filter(g=>g.loyalty===l).length}</strong>
+              <span>{l}</span>
+            </div>
+          ))}
+          <div className="cms"><strong>{guests.length}</strong><span>Toplam</span></div>
+        </div>
+
+        {/* Search & Filter */}
+        <div className="crm-filters">
+          <div className="search-box">
+            <Search size={15} color="#94a3b8"/>
+            <input placeholder="İsim, e-posta, telefon..." value={search} onChange={e=>setSearch(e.target.value)}/>
+          </div>
+          <div className="loyalty-filter">
+            {['Tümü','Platinum','Gold','Silver','None'].map(l=>(
+              <button key={l} className={`lf-btn ${loyaltyFilter===l?'active':''}`} onClick={()=>setLoyaltyFilter(l)}>{l}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* List */}
+        <div className="guest-cards">
+          {filtered.map((g, i) => {
+            const lc = LOYALTY_COLORS[g.loyalty];
+            return (
+              <motion.div
+                key={g.id}
+                className={`gc-card ${selectedGuest?.id===g.id?'active':''}`}
+                onClick={()=>setSelectedGuest(g)}
+                whileHover={{scale:1.01}}
+                initial={{opacity:0,y:10}}
+                animate={{opacity:1,y:0}}
+                transition={{delay:i*0.04}}
+              >
+                <div className="gc-avatar">{g.name[0]}</div>
+                <div className="gc-info">
+                  <strong>{g.name}</strong>
+                  <span>{g.email||g.phone}</span>
+                </div>
+                <div>
+                  <span className="loyalty-tag sm" style={{background:lc.bg,color:lc.text}}>{g.loyalty}</span>
+                  <div className="gc-stat">₺{g.totalSpent.toLocaleString()} · {g.visits}×</div>
+                </div>
+              </motion.div>
+            );
+          })}
+          {filtered.length===0 && <p className="no-res" style={{padding:'30px',textAlign:'center',color:'#94a3b8'}}>Misafir bulunamadı.</p>}
+        </div>
+      </div>
+
+      {/* Right: Detail */}
+      <div className="crm-detail-panel">
+        <AnimatePresence mode="wait">
+          {selectedGuest ? (
+            <GuestDetailPanel
+              key={selectedGuest.id}
+              guest={selectedGuest}
+              reservations={reservations}
+              onClose={()=>setSelectedGuest(null)}
+              onEdit={(g)=>{ setEditingGuest(g); setShowForm(true); }}
+            />
+          ) : (
+            <motion.div className="no-selection" initial={{opacity:0}} animate={{opacity:1}}>
+              <Heart size={64} color="#e2e8f0"/>
+              <p>Misafir detayları için listeden birini seçin</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Form Modal */}
+      <AnimatePresence>
+        {showForm && (
+          <GuestFormModal
+            guest={editingGuest}
+            onClose={()=>{ setShowForm(false); setEditingGuest(null); }}
+            onSave={handleSave}
+          />
+        )}
+      </AnimatePresence>
 
       <style>{`
-        .crm-container {
-          padding: 30px;
-          background: #f1f5f9;
-          height: calc(100vh - 70px);
-          overflow-y: auto;
-          display: flex; flex-direction: column; gap: 30px;
-        }
+        .crm-layout { display:flex; height:calc(100vh - 70px); }
+        .crm-list-panel { width:440px; border-right:1px solid #e2e8f0; background:white; display:flex; flex-direction:column; overflow:hidden; }
+        .cls-head { padding:20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; }
+        .cls-head h2 { font-size:20px; font-weight:800; color:#1e293b; }
+        .btn-primary { padding:9px 16px; border-radius:10px; border:none; background:#3b82f6; color:white; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; }
 
-        .header { display: flex; justify-content: space-between; align-items: center; }
-        .title-section { display: flex; align-items: center; gap: 20px; }
-        .icon-blue { color: #3b82f6; }
-        .title-section h2 { font-size: 24px; font-weight: 800; color: #1e293b; }
-        .title-section span { font-size: 14px; color: #64748b; }
+        .crm-mini-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:0; border-bottom:1px solid #f1f5f9; }
+        .cms { text-align:center; padding:14px 8px; border-right:1px solid #f1f5f9; }
+        .cms strong { display:block; font-size:20px; font-weight:900; color:#1e293b; }
+        .cms span { font-size:11px; color:#94a3b8; font-weight:700; }
 
-        .actions { display: flex; gap: 10px; }
-        .btn { padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; }
-        .btn.outline { background: white; border: 1px solid #e2e8f0; color: #1e293b; }
-        .btn.primary.green { background: #059669; color: white; }
-        .btn.primary.orange { background: #f59e0b; color: white; }
-        .btn.primary.dark-red { background: #991b1b; color: white; }
+        .crm-filters { padding:14px; display:flex; flex-direction:column; gap:10px; border-bottom:1px solid #f1f5f9; }
+        .search-box { display:flex; align-items:center; gap:8px; background:#f8fafc; border:1.5px solid #e2e8f0; padding:9px 14px; border-radius:10px; }
+        .search-box input { border:none; background:transparent; outline:none; font-size:13px; width:100%; }
+        .loyalty-filter { display:flex; gap:6px; flex-wrap:wrap; }
+        .lf-btn { padding:5px 12px; border-radius:20px; border:1.5px solid #e2e8f0; background:white; font-size:11px; font-weight:700; color:#64748b; cursor:pointer; }
+        .lf-btn.active { background:#1e293b; color:white; border-color:#1e293b; }
 
-        .crm-grid { display: grid; grid-template-columns: 1fr 320px; gap: 30px; flex: 1; }
+        .guest-cards { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:6px; }
+        .gc-card { display:flex; align-items:center; gap:12px; padding:13px; border-radius:12px; border:1.5px solid transparent; cursor:pointer; transition:0.2s; }
+        .gc-card:hover { background:#f8fafc; }
+        .gc-card.active { background:#eff6ff; border-color:#3b82f6; }
+        .gc-avatar { width:40px; height:40px; background:linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius:12px; display:flex; align-items:center; justify-content:center; color:white; font-weight:900; font-size:16px; flex-shrink:0; }
+        .gc-info { flex:1; min-width:0; }
+        .gc-info strong { display:block; font-size:14px; color:#1e293b; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .gc-info span { font-size:11px; color:#94a3b8; }
+        .loyalty-tag { padding:3px 10px; border-radius:20px; font-size:10px; font-weight:800; white-space:nowrap; }
+        .loyalty-tag.sm { font-size:9px; padding:2px 8px; display:block; margin-bottom:4px; text-align:center; }
+        .gc-stat { font-size:10px; color:#94a3b8; font-weight:700; text-align:right; }
 
-        .card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .card h3 { font-size: 11px; font-weight: 900; color: #1e293b; letter-spacing: 0.5px; }
+        .crm-detail-panel { flex:1; overflow-y:auto; background:#f8fafc; }
+        .no-selection { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; color:#94a3b8; font-size:14px; font-weight:600; }
 
-        .p-header { display: flex; gap: 30px; }
-        .p-avatar { position: relative; width: 140px; }
-        .p-avatar img { width: 140px; height: 140px; border-radius: 12px; object-fit: cover; }
-        .p-badges { position: absolute; bottom: -10px; left: 0; right: 0; display: flex; flex-direction: column; gap: 5px; }
-        .badge { font-size: 9px; font-weight: 900; padding: 4px; border-radius: 4px; text-align: center; color: white; }
-        .badge.vip { background: #059669; }
-        .badge.blacklist { background: #1e293b; }
+        .detail-panel { padding:30px; background:white; min-height:100%; display:flex; flex-direction:column; gap:20px; }
+        .dp-head { display:flex; align-items:center; gap:16px; }
+        .dp-avatar { width:56px; height:56px; background:linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius:16px; display:flex; align-items:center; justify-content:center; color:white; font-weight:900; font-size:24px; flex-shrink:0; }
+        .dp-head h3 { font-size:22px; font-weight:800; color:#1e293b; }
+        .dp-head button { background:transparent; border:none; color:#94a3b8; cursor:pointer; }
 
-        .p-main-info { flex: 1; }
-        .pm-top { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-        .pm-top h2 { font-size: 28px; font-weight: 800; color: #1e293b; }
-        .loyalty { font-size: 11px; font-weight: 900; padding: 4px 12px; border-radius: 20px; }
-        .loyalty.gold { background: #fefce8; color: #854d0e; border: 1px solid #fef08a; }
+        .dp-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+        .dps { background:#f8fafc; border-radius:14px; padding:16px; display:flex; align-items:center; gap:12px; }
+        .dps svg { color:#3b82f6; flex-shrink:0; }
+        .dps strong { display:block; font-size:18px; font-weight:900; color:#1e293b; }
+        .dps span { font-size:11px; color:#94a3b8; font-weight:700; }
 
-        .pm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .pm-field label { display: block; font-size: 11px; color: #94a3b8; font-weight: 800; margin-bottom: 6px; }
-        .pm-field strong { font-size: 14px; color: #1e293b; }
-        .input-row { display: flex; align-items: center; gap: 10px; }
-        .btn-s { padding: 4px 10px; border-radius: 6px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; }
-        .btn-s.blue { background: #3b82f6; color: white; }
+        .dp-contact { display:flex; flex-direction:column; gap:8px; padding:16px; background:#f8fafc; border-radius:14px; }
+        .dc-row { display:flex; align-items:center; gap:10px; font-size:13px; color:#475569; }
+        .dc-row svg { color:#94a3b8; flex-shrink:0; }
 
-        .section-title { border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px; }
-        .crm-table { width: 100%; border-collapse: collapse; }
-        .crm-table th { text-align: left; padding: 12px; font-size: 11px; color: #94a3b8; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
-        .crm-table td { padding: 15px 12px; font-size: 13px; color: #475569; border-bottom: 1px solid #f8fafc; }
-        .crm-table tr.active td { background: #eff6ff; border-top: 1px solid #3b82f6; border-bottom: 1px solid #3b82f6; }
-        .score-tag { padding: 2px 8px; background: #f1f5f9; border-radius: 4px; font-size: 11px; font-weight: 900; }
+        .dp-section h4 { font-size:14px; font-weight:800; color:#1e293b; margin-bottom:12px; }
+        .res-mini { display:flex; justify-content:space-between; align-items:center; padding:12px; background:#f8fafc; border-radius:10px; margin-bottom:8px; }
+        .rm-left strong { display:block; font-size:13px; color:#1e293b; font-weight:700; }
+        .rm-left span { font-size:11px; color:#94a3b8; }
+        .rmtag { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:800; }
+        .rmtag.check-in { background:#f0fdf4; color:#10b981; }
+        .rmtag.check-out { background:#f8fafc; color:#64748b; }
+        .rmtag.gelecek { background:#eff6ff; color:#3b82f6; }
+        .no-res { font-size:13px; color:#94a3b8; }
 
-        .stats-row { display: flex; gap: 30px; align-items: center; justify-content: space-between; background: #f8fafc; padding: 30px; border-radius: 16px; }
-        .graph-box { display: flex; align-items: center; gap: 20px; }
-        .donut-box { position: relative; width: 120px; height: 120px; }
-        .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .donut-center strong { font-size: 24px; color: #1e293b; }
-        .donut-center span { font-size: 9px; color: #94a3b8; font-weight: 800; }
-        .graph-info strong { display: block; font-size: 24px; color: #1e293b; margin-bottom: 5px; }
+        .dp-edit-btn { padding:12px 20px; border-radius:12px; border:1.5px solid #e2e8f0; background:white; font-size:13px; font-weight:700; color:#475569; cursor:pointer; display:flex; align-items:center; gap:8px; align-self:flex-start; }
+        .dp-edit-btn:hover { background:#f1f5f9; border-color:#3b82f6; color:#3b82f6; }
 
-        .data-box { display: flex; flex-direction: column; gap: 10px; flex: 1; }
-        .db-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: #64748b; }
-        .db-row strong { color: #1e293b; }
-
-        .c-row { display: flex; align-items: center; gap: 15px; }
-        .c-info span { display: block; font-size: 11px; color: #94a3b8; font-weight: 800; }
-        .c-info strong { font-size: 14px; color: #1e293b; }
-        .btn-full { width: 100%; padding: 12px; background: white; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 13px; font-weight: 700; color: #1e293b; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
-
-        .p-text { font-size: 14px; color: #475569; line-height: 1.6; font-style: italic; }
-        .log-list { display: flex; flex-direction: column; gap: 20px; }
-        .log-item { display: flex; gap: 15px; }
-        .l-icon { padding-top: 4px; }
-        .l-head { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .l-head strong { font-size: 13px; color: #1e293b; }
-        .l-head span { font-size: 11px; color: #94a3b8; font-weight: 800; }
-        .log-item p { font-size: 12px; color: #64748b; font-weight: 700; }
-
-        .crm-footer { padding: 20px 30px; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 30px; align-items: center; font-size: 12px; font-weight: 800; color: #94a3b8; }
-        .footer-meta { display: flex; gap: 20px; align-items: center; flex: 1; justify-content: center; }
-        .footer-meta strong { color: #1e293b; }
-        .time-now { font-size: 16px; color: #1e293b; font-weight: 900; }
-
-        .blue { color: #3b82f6; }
-        .green { color: #10b981; }
-        .orange { color: #f59e0b; }
-        .red { color: #ef4444; }
-        .gray { color: #cbd5e1; }
-        .mt-30 { margin-top: 30px; }
-        .mt-20 { margin-top: 20px; }
-        .mt-15 { margin-top: 15px; }
-        .mt-10 { margin-top: 10px; }
+        /* form modal */
+        .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.75); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; z-index:1000; }
+        .gf-modal { background:white; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px rgba(0,0,0,0.4); width:520px; max-height:90vh; overflow-y:auto; }
+        .modal-head { padding:22px 28px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:white; z-index:10; }
+        .modal-head h3 { font-size:18px; font-weight:800; color:#1e293b; }
+        .modal-head button { background:transparent; border:none; color:#94a3b8; cursor:pointer; }
+        .gf-body { padding:24px 28px; }
+        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        .fg-group { display:flex; flex-direction:column; gap:6px; }
+        .fg-group.full { grid-column:1/-1; }
+        .fg-group label { font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; }
+        .fg-group input, .fg-group select { padding:11px 14px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:13px; outline:none; }
+        .fg-group input:focus, .fg-group select:focus { border-color:#3b82f6; }
+        .modal-foot { padding:16px 28px; border-top:1px solid #f1f5f9; display:flex; justify-content:flex-end; gap:10px; position:sticky; bottom:0; background:white; }
+        .btn-cancel { padding:12px 20px; border-radius:12px; border:1px solid #e2e8f0; background:white; font-weight:700; cursor:pointer; }
+        .btn-save { padding:12px 24px; border-radius:12px; border:none; background:#3b82f6; color:white; font-weight:800; cursor:pointer; }
+        .btn-save:disabled { opacity:.5; cursor:not-allowed; }
       `}</style>
     </div>
   );
