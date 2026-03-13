@@ -143,7 +143,7 @@ const Finance = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .fin-container {
           padding: 30px;
           background: #f1f5f9;

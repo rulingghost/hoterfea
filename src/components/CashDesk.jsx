@@ -143,7 +143,7 @@ const CashDesk = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .cd-container {
           padding: 20px;
           background: #f1f5f9;

@@ -114,7 +114,7 @@ const MiniBar = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .mb-container {
           padding: 30px;
           background: #f8fafc;

@@ -181,7 +181,7 @@ const LoyaltyMobile = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .lm-container {
           padding: 30px;
           background: #f1f5f9;

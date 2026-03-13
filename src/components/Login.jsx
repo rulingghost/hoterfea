@@ -148,7 +148,7 @@ const Login = ({ onLogin }) => {
         </div>
       </footer>
 
-      <style jsx>{`
+      <style>{`
         .login-container {
           height: 100vh;
           display: flex;

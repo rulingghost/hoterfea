@@ -207,7 +207,7 @@ const ITInfrastructure = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .it-container {
           padding: 30px;
           background: #f8fafc;

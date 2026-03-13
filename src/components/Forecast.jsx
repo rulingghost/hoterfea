@@ -114,7 +114,7 @@ const Forecast = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .forecast-container {
           padding: 30px;
           background: #f8fafc;

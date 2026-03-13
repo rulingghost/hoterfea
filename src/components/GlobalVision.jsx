@@ -154,7 +154,7 @@ const GlobalVision = () => {
          </section>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .gv-container {
           padding: 30px;
           background: #f1f5f9;

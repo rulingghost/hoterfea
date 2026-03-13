@@ -132,7 +132,7 @@ const Folio = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .folio-container {
           padding: 20px;
           background: #f1f5f9;

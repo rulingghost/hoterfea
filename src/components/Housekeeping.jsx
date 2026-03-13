@@ -190,7 +190,7 @@ const Housekeeping = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .hk-container {
           padding: 30px;
           background: #f1f5f9;

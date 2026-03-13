@@ -175,7 +175,7 @@ const ExecutiveDashboard = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .exec-container {
           padding: 30px;
           background: #f8fafc;

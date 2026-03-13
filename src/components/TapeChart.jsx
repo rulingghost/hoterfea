@@ -113,7 +113,7 @@ const TapeChart = () => {
          <div className="time-info">24.04.2026 | 09:42</div>
       </footer>
 
-      <style jsx>{`
+      <style>{`
         .tape-container {
           padding: 30px;
           background: #f1f5f9;

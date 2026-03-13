@@ -240,7 +240,7 @@ const FrontOffice = () => {
          )}
       </AnimatePresence>
 
-      <style jsx>{`
+      <style>{`
         .fo-container {
           padding: 30px;
           background: #f1f5f9;

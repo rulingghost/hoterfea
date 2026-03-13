@@ -213,7 +213,7 @@ const Inventory = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .inv-container {
           padding: 30px;
           background: #f1f5f9;

@@ -106,7 +106,7 @@ const RoomRack = () => {
          ))}
       </div>
 
-      <style jsx>{`
+      <style>{`
         .rack-container {
           padding: 30px;
           background: #f1f5f9;

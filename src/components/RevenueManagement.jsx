@@ -173,7 +173,7 @@ const RevenueManagement = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .revenue-container {
           padding: 30px;
           background: #f8fafc;

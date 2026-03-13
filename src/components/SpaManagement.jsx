@@ -141,7 +141,7 @@ const SpaManagement = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .spa-container {
           padding: 30px;
           background: #f1f5f9;

@@ -211,7 +211,7 @@ const MainHub = ({ user, onLogout }) => {
         {renderContent()}
       </main>
 
-      <style jsx>{`
+      <style>{`
         .main-hub-wrapper {
           display: flex;
           height: 100vh;

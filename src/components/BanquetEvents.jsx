@@ -192,7 +192,7 @@ const BanquetEvents = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .banquet-container {
           padding: 30px;
           background: #f1f5f9;

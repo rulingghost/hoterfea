@@ -204,7 +204,7 @@ const NewReservationWizard = () => {
          <span>Rezervasyon No: <strong>12245</strong></span>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .wizard-container {
           padding: 30px;
           background: #f1f5f9;

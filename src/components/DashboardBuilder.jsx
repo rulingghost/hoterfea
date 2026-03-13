@@ -167,7 +167,7 @@ const DashboardBuilder = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .builder-container {
           padding: 30px;
           background: #f1f5f9;

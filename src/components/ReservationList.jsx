@@ -109,7 +109,7 @@ const ReservationList = () => {
          </div>
       </section>
 
-      <style jsx>{`
+      <style>{`
         .res-list-container {
           padding: 30px;
           background: #f8fafc;

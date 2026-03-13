@@ -129,7 +129,7 @@ const TechService = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .ts-container {
           padding: 20px;
           background: #f1f5f9;

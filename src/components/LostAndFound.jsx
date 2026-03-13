@@ -115,7 +115,7 @@ const LostAndFound = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .lf-container {
           padding: 30px;
           background: #f8fafc;

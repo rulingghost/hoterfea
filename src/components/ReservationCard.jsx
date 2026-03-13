@@ -121,7 +121,7 @@ const ReservationCard = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .card-container {
           padding: 30px;
           background: #f1f5f9;

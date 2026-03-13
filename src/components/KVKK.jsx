@@ -124,7 +124,7 @@ const KVKK = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .kvkk-container {
           padding: 30px;
           background: #f8fafc;

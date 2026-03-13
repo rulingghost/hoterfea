@@ -173,7 +173,7 @@ const Accounting = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .accounting-container {
           padding: 30px;
           background: #f1f5f9;

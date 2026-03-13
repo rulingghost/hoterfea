@@ -188,7 +188,7 @@ const Integrations = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .int-container {
           padding: 30px;
           background: #f1f5f9;

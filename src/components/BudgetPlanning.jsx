@@ -121,7 +121,7 @@ const BudgetPlanning = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .budget-container {
           padding: 30px;
           background: #f1f5f9;

@@ -105,7 +105,7 @@ const Entertainment = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .ent-container {
           padding: 30px;
           background: #f8fafc;

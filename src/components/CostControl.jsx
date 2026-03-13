@@ -124,7 +124,7 @@ const CostControl = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .cost-container {
           padding: 30px;
           background: #f1f5f9;

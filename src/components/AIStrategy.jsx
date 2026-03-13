@@ -173,7 +173,7 @@ const AIStrategy = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .ai-container {
           padding: 30px;
           background: #f8fafc;

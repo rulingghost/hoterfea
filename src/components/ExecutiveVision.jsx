@@ -198,7 +198,7 @@ const ExecutiveVision = () => {
          </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .vision-container {
           padding: 30px;
           background: #f1f5f9;

@@ -130,7 +130,7 @@ const AgencyContracts = () => {
          </aside>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .agency-container {
           padding: 30px;
           background: #f1f5f9;
