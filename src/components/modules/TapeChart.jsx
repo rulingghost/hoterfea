@@ -14,18 +14,18 @@ const STATUS_STYLE = {
 const CLEAN_STYLE = { temiz: '#10b981', kirli: '#f59e0b' };
 
 const TapeChart = () => {
-  const { reservations, rooms } = useHotel();
-  const today = '2026-03-14';
+  const { reservations, rooms, TODAY } = useHotel();
+  const today = TODAY;
 
-  // Build 14-day date range
+  // Build 14-day date range starting 2 days before today
   const days = Array.from({length:14},(_,i)=>{
-    const d = new Date('2026-03-13');
-    d.setDate(d.getDate()+i);
+    const d = new Date(today);
+    d.setDate(d.getDate()-2+i);
     return d.toISOString().split('T')[0];
   });
 
   const dayLabels = days.map(d => {
-    const dt = new Date(d);
+    const dt = new Date(d+'T12:00:00');
     return { date: d, label: dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'short'}), isToday: d===today };
   });
 

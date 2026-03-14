@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BarChart2, Target, Users, Megaphone, 
   Search, Plus, MapPin, Mail, Phone, 
-  ChevronRight, Calendar, Tag, Star
+  ChevronRight, Calendar, Tag, Star, ArrowUpRight
 } from 'lucide-react';
 
 const SalesMarketing = () => {
@@ -179,8 +179,5 @@ const SalesMarketing = () => {
   );
 };
 
-const ArrowUpRight = ({ size, color }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-);
 
 export default SalesMarketing;

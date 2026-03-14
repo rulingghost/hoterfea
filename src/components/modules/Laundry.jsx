@@ -4,52 +4,44 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shirt, Plus, CheckCircle, Clock, X, Search, Truck } from 'lucide-react';
 
 const STATUS_MAP = {
-  bekliyor: { label:'Bekliyor', color:'#f59e0b', bg:'#fffbeb' },
-  yikama:   { label:'Yıkamada', color:'#3b82f6', bg:'#eff6ff' },
-  hazir:    { label:'Hazır', color:'#10b981', bg:'#f0fdf4' },
-  teslim:   { label:'Teslim', color:'#64748b', bg:'#f1f5f9' },
+  bekliyor:   { label:'Bekliyor', color:'#f59e0b', bg:'#fffbeb' },
+  yıkanıyor:  { label:'Yıkamada', color:'#3b82f6', bg:'#eff6ff' },
+  hazır:      { label:'Hazır', color:'#10b981', bg:'#f0fdf4' },
+  teslim:     { label:'Teslim', color:'#64748b', bg:'#f1f5f9' },
 };
 
 const Laundry = () => {
-  const { reservations, addFolioLine, addNotification } = useHotel();
+  const { reservations, laundryOrders, addLaundryOrder, updateLaundryOrder } = useHotel();
   const inHouse = reservations.filter(r=>r.status==='check-in');
 
-  const [orders, setOrders] = useState([
-    { id:'L-001', room:'101', guest:'Ahmet Yılmaz', items:'3 Gömlek, 2 Pantolon', status:'hazir', date:'2026-03-14', total:450, urgent:false },
-    { id:'L-002', room:'205', guest:'Sarah Johnson',  items:'5 Parça Karma',       status:'yikama', date:'2026-03-14', total:275, urgent:true },
-    { id:'L-003', room:'304', guest:'Klaus Weber',    items:'2 Takım Elbise',      status:'bekliyor',date:'2026-03-14', total:600, urgent:false },
-  ]);
-
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ room:'', guest:'', items:'', urgent:false, total:'' });
+  const [form, setForm] = useState({ room:'', guest:'', resId:'', items:'', urgent:false, total:'' });
   const set = (k,v) => setForm(p=>({...p,[k]:v}));
 
   const submit = (e) => {
     e.preventDefault();
-    const id = `L-${String(orders.length+1).padStart(3,'0')}`;
-    setOrders(p=>[...p,{...form, id, status:'bekliyor', date:'2026-03-14', total:Number(form.total)}]);
-    addNotification({ type:'info', msg:`Çamaşır siparişi alındı: Oda ${form.room}` });
-    setForm({ room:'', guest:'', items:'', urgent:false, total:'' });
+    const res = inHouse.find(r=>r.room===form.room);
+    addLaundryOrder({
+      room: form.room,
+      guest: form.guest,
+      resId: res?.id || null,
+      items: form.items.split(',').map(s=>({
+        name: s.trim(),
+        qty: 1,
+        price: Math.round(Number(form.total) / form.items.split(',').length)
+      })),
+      total: Number(form.total),
+      urgent: form.urgent,
+    });
+    setForm({ room:'', guest:'', resId:'', items:'', urgent:false, total:'' });
     setShowForm(false);
   };
 
-  const updateStatus = (id, status) => {
-    setOrders(p=>p.map(o=>o.id===id?{...o,status}:o));
-    if (status==='teslim') {
-      const o = orders.find(x=>x.id===id);
-      if (o) {
-        const res = inHouse.find(r=>r.room===o.room);
-        if (res) addFolioLine(res.id, { desc:`Çamaşırhane — ${o.items}`, amount:o.total, type:'extra' });
-      }
-      addNotification({ type:'success', msg:`Çamaşır teslim edildi: Oda ${orders.find(o=>o.id===id)?.room}` });
-    }
-  };
-
   const kpi = [
-    { label:'Bekliyor', val:orders.filter(o=>o.status==='bekliyor').length, color:'#f59e0b' },
-    { label:'Yıkamada', val:orders.filter(o=>o.status==='yikama').length, color:'#3b82f6' },
-    { label:'Hazır',    val:orders.filter(o=>o.status==='hazir').length, color:'#10b981' },
-    { label:'Bugün Gelir',val:`₺${orders.filter(o=>o.status==='teslim').reduce((s,o)=>s+o.total,0).toLocaleString()}`, color:'#8b5cf6' },
+    { label:'Bekliyor', val:laundryOrders.filter(o=>o.status==='bekliyor').length, color:'#f59e0b' },
+    { label:'Yıkamada', val:laundryOrders.filter(o=>o.status==='yıkanıyor').length, color:'#3b82f6' },
+    { label:'Hazır',    val:laundryOrders.filter(o=>o.status==='hazır').length, color:'#10b981' },
+    { label:'Bugün Gelir',val:`₺${laundryOrders.filter(o=>o.status==='teslim').reduce((s,o)=>s+o.total,0).toLocaleString()}`, color:'#8b5cf6' },
   ];
 
   return (
@@ -101,22 +93,24 @@ const Laundry = () => {
         <table className="lnd-table">
           <thead><tr><th>Sipariş</th><th>Oda / Misafir</th><th>Parçalar</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead>
           <tbody>
-            {orders.map((o,i)=>{
-              const st = STATUS_MAP[o.status];
+            {laundryOrders.map((o,i)=>{
+              const stKey = o.status in STATUS_MAP ? o.status : 'bekliyor';
+              const st = STATUS_MAP[stKey];
+              const itemLabel = Array.isArray(o.items) ? o.items.map(i=>`${i.qty}× ${i.name}`).join(', ') : o.items;
               return (
                 <motion.tr key={o.id} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.05}}>
                   <td>
                     <div><span className="oid">{o.id}</span>{o.urgent&&<span className="urgent-tag">⚡ Acele</span>}</div>
                   </td>
                   <td><div><strong>{o.room}</strong><span>{o.guest}</span></div></td>
-                  <td>{o.items}</td>
+                  <td>{itemLabel}</td>
                   <td><strong>₺{o.total.toLocaleString()}</strong></td>
                   <td><span className="status-tag" style={{background:st.bg,color:st.color}}>{st.label}</span></td>
                   <td>
                     <div className="act-btns">
-                      {o.status==='bekliyor' && <button className="mb blue" onClick={()=>updateStatus(o.id,'yikama')}>Yıkamaya Al</button>}
-                      {o.status==='yikama'   && <button className="mb green" onClick={()=>updateStatus(o.id,'hazir')}>Hazır İşaretle</button>}
-                      {o.status==='hazir'    && <button className="mb purple" onClick={()=>updateStatus(o.id,'teslim')}><Truck size={12}/> Teslim Et + Faturalandır</button>}
+                      {o.status==='bekliyor' && <button className="mb blue" onClick={()=>updateLaundryOrder(o.id,{status:'yıkanıyor'})}>Yıkamaya Al</button>}
+                      {o.status==='yıkanıyor' && <button className="mb green" onClick={()=>updateLaundryOrder(o.id,{status:'hazır'})}>Hazır İşaretle</button>}
+                      {o.status==='hazır'    && <button className="mb purple" onClick={()=>updateLaundryOrder(o.id,{status:'teslim'})}><Truck size={12}/> Teslim Et + Faturalandır</button>}
                     </div>
                   </td>
                 </motion.tr>

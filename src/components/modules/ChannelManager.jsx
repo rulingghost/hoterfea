@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Layers, RefreshCw, AlertCircle, CheckCircle, ExternalLink, Shield, Save } from 'lucide-react';
+import { Layers, RefreshCw, AlertCircle, CheckCircle, ExternalLink, Shield, Save, Plus } from 'lucide-react';
 
 const CHANNELS = [
   { id: 'booking', name: 'Booking.com',   status: 'aktif',   sync: '5 dk önce', logo: 'B' },
@@ -192,8 +192,5 @@ const ChannelManager = () => {
   );
 };
 
-const Plus = ({ size }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-);
 
 export default ChannelManager;

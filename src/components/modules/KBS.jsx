@@ -4,25 +4,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, CheckCircle, AlertCircle, FileText, Download, Eye, Lock, User, X, Clock } from 'lucide-react';
 
 const KBS = () => {
-  const { reservations, guests, addNotification } = useHotel();
-  const [sentList, setSentList] = useState(['RES-001','RES-003','RES-008']);
+  const { reservations, guests, kbsSent, sendKBS: ctxSendKBS, addNotification } = useHotel();
   const [selected, setSelected] = useState(null);
   const [sending, setSending] = useState(null);
 
   const arrivals = reservations.filter(r => r.status === 'check-in');
-  const pending  = arrivals.filter(r => !sentList.includes(r.id));
+  const pending  = arrivals.filter(r => !kbsSent.find(k => k.resId === r.id));
 
-  const sendKBS = async (resId) => {
+  const sendToKBS = async (resId) => {
     setSending(resId);
     await new Promise(r=>setTimeout(r,1500));
-    setSentList(prev=>[...prev,resId]);
+    ctxSendKBS(resId);
     setSending(null);
-    const res = reservations.find(r=>r.id===resId);
-    addNotification({ type:'success', msg:`KBS gönderildi: ${res?.guest}` });
   };
 
   const sendAll = async () => {
-    for (const r of pending) { await sendKBS(r.id); }
+    for (const r of pending) { await sendToKBS(r.id); }
   };
 
   return (
@@ -44,7 +41,7 @@ const KBS = () => {
 
       {/* Stats */}
       <div className="kbs-stats">
-        <div className="ks"><CheckCircle size={20} color="#10b981"/><div><strong>{sentList.length}</strong><span>Gönderildi</span></div></div>
+        <div className="ks"><CheckCircle size={20} color="#10b981"/><div><strong>{kbsSent.length}</strong><span>Gönderildi</span></div></div>
         <div className="ks"><AlertCircle size={20} color="#f59e0b"/><div><strong style={{color:pending.length>0?'#ef4444':'#10b981'}}>{pending.length}</strong><span>Bekliyor</span></div></div>
         <div className="ks"><User size={20} color="#3b82f6"/><div><strong>{arrivals.length}</strong><span>İç Misafir</span></div></div>
       </div>
@@ -59,7 +56,7 @@ const KBS = () => {
           <tbody>
             {arrivals.map((r,i)=>{
               const g = guests.find(g=>g.name===r.guest)||{};
-              const sent = sentList.includes(r.id);
+              const sent = !!kbsSent.find(k => k.resId === r.id);
               const isSending = sending===r.id;
               return (
                 <motion.tr key={r.id} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.05}}>
@@ -79,7 +76,7 @@ const KBS = () => {
                   <td>
                     <div className="act-row">
                       {!sent && !isSending && (
-                        <button className="act-btn blue" onClick={()=>sendKBS(r.id)}>
+                        <button className="act-btn blue" onClick={()=>sendToKBS(r.id)}>
                           <Shield size={13}/> KBS Gönder
                         </button>
                       )}
@@ -107,7 +104,7 @@ const KBS = () => {
                   ['Giriş Tarihi', selected.checkIn],
                   ['Çıkış Tarihi', selected.checkOut],
                   ['Kişi Sayısı', selected.pax],
-                  ['KBS Durumu', sentList.includes(selected.id) ? '✓ Gönderildi' : '⏳ Bekliyor'],
+                  ['KBS Durumu', kbsSent.find(k=>k.resId===selected.id) ? '✓ Gönderildi' : '⏳ Bekliyor'],
                 ].map(([k,v])=>(
                   <div key={k} className="kd-row"><span>{k}</span><strong>{v}</strong></div>
                 ))}

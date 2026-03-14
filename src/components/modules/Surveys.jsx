@@ -3,7 +3,8 @@ import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ClipboardCheck, BarChart3, MessageCircle, Star, 
-  ThumbsUp, ThumbsDown, Send, Filter, Download, MoreHorizontal
+  ThumbsUp, ThumbsDown, Send, Filter, Download, MoreHorizontal,
+  CheckCircle
 } from 'lucide-react';
 
 const Surveys = () => {

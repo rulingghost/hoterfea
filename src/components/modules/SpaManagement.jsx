@@ -17,17 +17,11 @@ const SERVICES = [
 const SLOTS = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
 
 const SpaManagement = () => {
-  const { reservations, addFolioLine, addCashTransaction, addNotification } = useHotel();
+  const { reservations, spaAppointments, addSpaAppointment, updateSpaAppointment, addFolioLine, addCashTransaction, addNotification, TODAY } = useHotel();
   const inHouse = reservations.filter(r=>r.status==='check-in');
 
-  const [appointments, setAppointments] = useState([
-    { id:'A-001', service:'Klasik Masaj (60dk)', guest:'Ahmet Yılmaz', room:'101', time:'10:00', date:'2026-03-14', status:'tamamlandı', price:850 },
-    { id:'A-002', service:'Aromaterapi (90dk)',   guest:'Sarah Johnson', room:'205', time:'14:00', date:'2026-03-14', status:'bekliyor', price:1200 },
-    { id:'A-003', service:'VIP Paket (180dk)',    guest:'Klaus Weber',   room:'304', time:'16:00', date:'2026-03-14', status:'bekliyor', price:2800 },
-  ]);
-
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ service:'SP-01', guestRes:'', date:'2026-03-14', time:'10:00', billing:'folio' });
+  const [form, setForm] = useState({ service:'SP-01', guestRes:'', date:TODAY, time:'10:00' });
   const set = (k,v) => setForm(p=>({...p,[k]:v}));
 
   const selService = SERVICES.find(s=>s.id===form.service);
@@ -35,33 +29,41 @@ const SpaManagement = () => {
 
   const submit = (e) => {
     e.preventDefault();
-    const id = `A-${String(appointments.length+1).padStart(3,'0')}`;
-    setAppointments(p=>[...p,{
-      id, service:selService.name, guest:selRes?.guest||'Walk-in',
-      room:selRes?.room||'—', time:form.time, date:form.date, status:'bekliyor', price:selService.price
-    }]);
-    addNotification({ type:'info', msg:`SPA randevusu oluşturuldu: ${selService.name} — ${form.time}` });
-    setForm({ service:'SP-01', guestRes:'', date:'2026-03-14', time:'10:00', billing:'folio' });
+    addSpaAppointment({
+      guest: selRes?.guest || 'Walk-in',
+      room: selRes?.room || '—',
+      resId: selRes?.id || null,
+      service: selService.name,
+      price: selService.price,
+      therapist: 'Elena K.',
+      time: form.time,
+      date: form.date,
+    });
+    setForm({ service:'SP-01', guestRes:'', date:TODAY, time:'10:00' });
     setShowForm(false);
   };
 
   const complete = (appt) => {
-    setAppointments(p=>p.map(a=>a.id===appt.id?{...a,status:'tamamlandı'}:a));
-    const res = inHouse.find(r=>r.guest===appt.guest);
-    if (res) {
-      addFolioLine(res.id, { desc:`SPA — ${appt.service}`, amount:appt.price, type:'extra' });
-      addNotification({ type:'success', msg:`SPA hizmeti faturaya eklendi: ${appt.guest}` });
+    // Folio or cash
+    if (appt.resId) {
+      addFolioLine(appt.resId, { desc:`SPA — ${appt.service}`, amount:appt.price, type:'extra' });
     } else {
-      addCashTransaction({ type:'gelir', desc:`SPA — ${appt.service} (${appt.guest})`, amount:appt.price, method:'Nakit' });
-      addNotification({ type:'success', msg:`SPA hizmeti kasaya eklendi: ₺${appt.price}` });
+      const res = inHouse.find(r=>r.guest===appt.guest);
+      if (res) {
+        addFolioLine(res.id, { desc:`SPA — ${appt.service}`, amount:appt.price, type:'extra' });
+      } else {
+        addCashTransaction({ type:'gelir', desc:`SPA — ${appt.service} (${appt.guest})`, amount:appt.price, method:'Nakit' });
+      }
     }
+    updateSpaAppointment(appt.id, { status:'tamamlandı' });
   };
 
   const cats = ['Tümü',...new Set(SERVICES.map(s=>s.category))];
   const [cat, setCat] = useState('Tümü');
   const filteredSvc = cat==='Tümü' ? SERVICES : SERVICES.filter(s=>s.category===cat);
 
-  const todayTotal = appointments.filter(a=>a.status==='tamamlandı').reduce((s,a)=>s+a.price,0);
+  const todayAppts = spaAppointments.filter(a=>a.date===TODAY);
+  const todayTotal = spaAppointments.filter(a=>a.status==='tamamlandı').reduce((s,a)=>s+a.price,0);
 
   return (
     <div className="spa-page">
@@ -72,9 +74,9 @@ const SpaManagement = () => {
 
       <div className="spa-kpi">
         {[
-          { label:'Bugün Randevu', val:appointments.filter(a=>a.date==='2026-03-14').length, color:'#8b5cf6' },
-          { label:'Bekliyor', val:appointments.filter(a=>a.status==='bekliyor').length, color:'#f59e0b' },
-          { label:'Tamamlanan', val:appointments.filter(a=>a.status==='tamamlandı').length, color:'#10b981' },
+          { label:'Bugün Randevu', val:todayAppts.length, color:'#8b5cf6' },
+          { label:'Bekliyor', val:spaAppointments.filter(a=>a.status==='bekliyor').length, color:'#f59e0b' },
+          { label:'Tamamlanan', val:spaAppointments.filter(a=>a.status==='tamamlandı').length, color:'#10b981' },
           { label:'Günlük Gelir', val:`₺${todayTotal.toLocaleString()}`, color:'#3b82f6' },
         ].map((k,i)=>(
           <div key={i} className="spk"><strong style={{color:k.color}}>{k.val}</strong><span>{k.label}</span></div>
@@ -105,9 +107,9 @@ const SpaManagement = () => {
 
         {/* Appointments */}
         <div className="appt-panel">
-          <h3>Bugünkü Randevular ({appointments.filter(a=>a.date==='2026-03-14').length})</h3>
+          <h3>Bugünkü Randevular ({todayAppts.length})</h3>
           <div className="appt-list">
-            {appointments.map((a,i)=>(
+            {spaAppointments.map((a,i)=>(
               <motion.div key={a.id} className={`appt-card ${a.status}`} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.05}}>
                 <div className="ac-time"><Clock size={14}/>{a.time}</div>
                 <div className="ac-info">

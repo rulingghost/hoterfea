@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Zap, Termometer, Lightbulb, Lock, Unlock, 
+  Zap, Thermometer, Lightbulb, Lock, Unlock, 
   Wind, Power, PowerOff, Battery, ShieldAlert,
-  Search, Filter, Settings
+  Search, Filter, Settings, MoreHorizontal
 } from 'lucide-react';
 
 const SmartRoom = () => {
@@ -82,7 +82,7 @@ const SmartRoom = () => {
 
             <div className="src-main">
               <div className="src-metric">
-                <Termometer size={16} color="#ef4444"/>
+                <Thermometer size={16} color="#ef4444"/>
                 <strong>{r.temp}°C</strong>
               </div>
               <div className="src-actions">
@@ -156,8 +156,5 @@ const SmartRoom = () => {
   );
 };
 
-const MoreHorizontal = ({ size }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-);
 
 export default SmartRoom;

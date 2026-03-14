@@ -16,12 +16,12 @@ const AUDIT_STEPS = [
 ];
 
 const NightAudit = () => {
-  const { reservations, rooms, stats, cashTransactions, addNotification } = useHotel();
+  const { reservations, rooms, stats, cashTransactions, addNotification, TODAY } = useHotel();
   const [running, setRunning] = useState(false);
   const [completedSteps, setCompletedSteps] = useState([]);
   const [done, setDone] = useState(false);
 
-  const today = '2026-03-14';
+  const today = TODAY;
   const todayTx = cashTransactions.filter(t=>t.date===today);
   const totalGelir = todayTx.filter(t=>t.type==='gelir').reduce((s,t)=>s+t.amount,0);
   const totalGider = todayTx.filter(t=>t.type==='gider').reduce((s,t)=>s+t.amount,0);

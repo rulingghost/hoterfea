@@ -4,7 +4,7 @@ import {
   Bus, Map, Plane, Compass, 
   Search, Plus, Calendar, Clock, 
   MapPin, CheckCircle, Navigation,
-  ChevronRight, Car
+  ChevronRight, Car, User, ArrowUpRight
 } from 'lucide-react';
 
 const TourManagement = () => {
@@ -160,12 +160,5 @@ const TourManagement = () => {
   );
 };
 
-const User = ({ size }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-);
-
-const ArrowUpRight = ({ size, color }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-);
 
 export default TourManagement;
