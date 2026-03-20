@@ -4,39 +4,82 @@ const TODAY = new Date().toISOString().slice(0, 10);
 
 // ─── Initial demo data ────────────────────────────────────────────
 const initialRooms = [
-  { id: '101', type: 'Standard', floor: 1, status: 'dolu',    clean: 'temiz',   guest: 'Ahmet Yılmaz',  checkIn: '2026-03-13', checkOut: '2026-03-16', pax: 2, rate: 1500 },
-  { id: '102', type: 'Standard', floor: 1, status: 'boş',     clean: 'temiz',   guest: null,            checkIn: null,         checkOut: null,         pax: 0, rate: 1500 },
-  { id: '103', type: 'Deluxe',   floor: 1, status: 'dolu',    clean: 'kirli',   guest: 'Hans Müller',   checkIn: '2026-03-12', checkOut: '2026-03-15', pax: 1, rate: 2250 },
-  { id: '104', type: 'Deluxe',   floor: 1, status: 'arızalı', clean: 'kirli',   guest: null,            checkIn: null,         checkOut: null,         pax: 0, rate: 2250 },
-  { id: '105', type: 'Standard', floor: 1, status: 'boş',     clean: 'kirli',   guest: null,            checkIn: null,         checkOut: null,         pax: 0, rate: 1500 },
-  { id: '201', type: 'Suite',    floor: 2, status: 'boş',     clean: 'temiz',   guest: null,            checkIn: null,         checkOut: null,         pax: 0, rate: 4000 },
-  { id: '202', type: 'Standard', floor: 2, status: 'dolu',    clean: 'temiz',   guest: 'Fatma Demir',   checkIn: '2026-03-13', checkOut: '2026-03-17', pax: 2, rate: 1500 },
-  { id: '203', type: 'Deluxe',   floor: 2, status: 'dolu',    clean: 'kirli',   guest: 'John Smith',    checkIn: '2026-03-11', checkOut: '2026-03-15', pax: 3, rate: 2250 },
-  { id: '204', type: 'Suite',    floor: 2, status: 'boş',     clean: 'temiz',   guest: null,            checkIn: null,         checkOut: null,         pax: 0, rate: 4000 },
-  { id: '205', type: 'Standard', floor: 2, status: 'boş',     clean: 'temiz',   guest: null,            checkIn: null,         checkOut: null,         pax: 0, rate: 1500 },
-  { id: '301', type: 'Standard', floor: 3, status: 'dolu',    clean: 'temiz',   guest: 'Maria Lopez',   checkIn: '2026-03-13', checkOut: '2026-03-16', pax: 2, rate: 1500 },
-  { id: '302', type: 'Penthouse',floor: 3, status: 'boş',     clean: 'temiz',   guest: null,            checkIn: null,         checkOut: null,         pax: 0, rate: 7500 },
-  { id: '303', type: 'Deluxe',   floor: 3, status: 'dolu',    clean: 'temiz',   guest: 'Kemal Arslan',  checkIn: '2026-03-14', checkOut: '2026-03-17', pax: 2, rate: 2250 },
-  { id: '304', type: 'Suite',    floor: 3, status: 'boş',     clean: 'kirli',   guest: null,            checkIn: null,         checkOut: null,         pax: 0, rate: 4000 },
+  // Kat 1
+  { id: '101', type: 'Standard', floor: 1, status: 'dolu',    clean: 'temiz',   guest: 'Ahmet Yılmaz',     checkIn: '2026-03-13', checkOut: '2026-03-16', pax: 2, rate: 1500 },
+  { id: '102', type: 'Standard', floor: 1, status: 'dolu',    clean: 'temiz',   guest: 'Elif Çelik',       checkIn: '2026-03-19', checkOut: '2026-03-23', pax: 1, rate: 1500 },
+  { id: '103', type: 'Deluxe',   floor: 1, status: 'dolu',    clean: 'kirli',   guest: 'Hans Müller',      checkIn: '2026-03-12', checkOut: '2026-03-15', pax: 1, rate: 2250 },
+  { id: '104', type: 'Deluxe',   floor: 1, status: 'arızalı', clean: 'kirli',   guest: null,               checkIn: null,         checkOut: null,         pax: 0, rate: 2250 },
+  { id: '105', type: 'Standard', floor: 1, status: 'dolu',    clean: 'temiz',   guest: 'Pierre Dupont',    checkIn: '2026-03-20', checkOut: '2026-03-25', pax: 2, rate: 1500 },
+  { id: '106', type: 'Standard', floor: 1, status: 'boş',     clean: 'kirli',   guest: null,               checkIn: null,         checkOut: null,         pax: 0, rate: 1500 },
+  // Kat 2
+  { id: '201', type: 'Suite',    floor: 2, status: 'dolu',    clean: 'temiz',   guest: 'Olga Petrova',     checkIn: '2026-03-18', checkOut: '2026-03-22', pax: 2, rate: 4000 },
+  { id: '202', type: 'Standard', floor: 2, status: 'dolu',    clean: 'temiz',   guest: 'Fatma Demir',      checkIn: '2026-03-13', checkOut: '2026-03-17', pax: 2, rate: 1500 },
+  { id: '203', type: 'Deluxe',   floor: 2, status: 'dolu',    clean: 'kirli',   guest: 'John Smith',       checkIn: '2026-03-11', checkOut: '2026-03-15', pax: 3, rate: 2250 },
+  { id: '204', type: 'Suite',    floor: 2, status: 'dolu',    clean: 'temiz',   guest: 'Yuki Tanaka',      checkIn: '2026-03-20', checkOut: '2026-03-26', pax: 2, rate: 4000 },
+  { id: '205', type: 'Standard', floor: 2, status: 'boş',     clean: 'temiz',   guest: null,               checkIn: null,         checkOut: null,         pax: 0, rate: 1500 },
+  { id: '206', type: 'Deluxe',   floor: 2, status: 'dolu',    clean: 'temiz',   guest: 'Carlos Rivera',    checkIn: '2026-03-19', checkOut: '2026-03-22', pax: 1, rate: 2250 },
+  // Kat 3
+  { id: '301', type: 'Standard', floor: 3, status: 'dolu',    clean: 'temiz',   guest: 'Maria Lopez',      checkIn: '2026-03-13', checkOut: '2026-03-16', pax: 2, rate: 1500 },
+  { id: '302', type: 'Penthouse',floor: 3, status: 'dolu',    clean: 'temiz',   guest: 'Sheikh Al-Rashid',  checkIn: '2026-03-19', checkOut: '2026-03-28', pax: 4, rate: 7500 },
+  { id: '303', type: 'Deluxe',   floor: 3, status: 'dolu',    clean: 'temiz',   guest: 'Kemal Arslan',     checkIn: '2026-03-14', checkOut: '2026-03-17', pax: 2, rate: 2250 },
+  { id: '304', type: 'Suite',    floor: 3, status: 'boş',     clean: 'kirli',   guest: null,               checkIn: null,         checkOut: null,         pax: 0, rate: 4000 },
+  { id: '305', type: 'Standard', floor: 3, status: 'dolu',    clean: 'temiz',   guest: 'Anna Kowalski',    checkIn: '2026-03-20', checkOut: '2026-03-24', pax: 2, rate: 1500 },
+  // Kat 4
+  { id: '401', type: 'Deluxe',   floor: 4, status: 'dolu',    clean: 'temiz',   guest: 'Marco Rossi',      checkIn: '2026-03-18', checkOut: '2026-03-21', pax: 2, rate: 2500 },
+  { id: '402', type: 'Suite',    floor: 4, status: 'dolu',    clean: 'temiz',   guest: 'Sophie Bernard',   checkIn: '2026-03-17', checkOut: '2026-03-23', pax: 2, rate: 4500 },
+  { id: '403', type: 'Standard', floor: 4, status: 'boş',     clean: 'temiz',   guest: null,               checkIn: null,         checkOut: null,         pax: 0, rate: 1500 },
+  { id: '404', type: 'Deluxe',   floor: 4, status: 'dolu',    clean: 'temiz',   guest: 'Chen Wei',         checkIn: '2026-03-21', checkOut: '2026-03-25', pax: 1, rate: 2500 },
+  { id: '405', type: 'Standard', floor: 4, status: 'dolu',    clean: 'kirli',   guest: 'Mustafa Öztürk',   checkIn: '2026-03-19', checkOut: '2026-03-22', pax: 3, rate: 1500 },
+  // Kat 5 (Üst kat - Premium)
+  { id: '501', type: 'Suite',    floor: 5, status: 'dolu',    clean: 'temiz',   guest: 'James Brown',      checkIn: '2026-03-16', checkOut: '2026-03-21', pax: 2, rate: 5000 },
+  { id: '502', type: 'Penthouse',floor: 5, status: 'boş',     clean: 'temiz',   guest: null,               checkIn: null,         checkOut: null,         pax: 0, rate: 9000 },
+  { id: '503', type: 'Suite',    floor: 5, status: 'dolu',    clean: 'temiz',   guest: 'Lina Johansson',   checkIn: '2026-03-20', checkOut: '2026-03-27', pax: 2, rate: 5000 },
+  { id: '504', type: 'Penthouse',floor: 5, status: 'dolu',    clean: 'temiz',   guest: 'Ali Rıza Bey',     checkIn: '2026-03-15', checkOut: '2026-03-19', pax: 4, rate: 9000 },
 ];
 
 const initialReservations = [
-  { id: 'RES-001', guest: 'Ahmet Yılmaz',  guestId:'G-001', room: '101', type: 'Standard', channel: 'Booking.com', checkIn: '2026-03-13', checkOut: '2026-03-16', nights: 3, pax: 2, status: 'check-in',  total: 4500,  paid: 4500,  balance: 0,    board:'HB', notes:'' },
-  { id: 'RES-002', guest: 'Hans Müller',    guestId:'G-002', room: '103', type: 'Deluxe',   channel: 'Expedia',     checkIn: '2026-03-12', checkOut: '2026-03-15', nights: 3, pax: 1, status: 'check-in',  total: 6750,  paid: 3000,  balance: 3750, board:'BB', notes:'' },
-  { id: 'RES-003', guest: 'Fatma Demir',   guestId:'G-003', room: '202', type: 'Standard', channel: 'Direkt',      checkIn: '2026-03-13', checkOut: '2026-03-17', nights: 4, pax: 2, status: 'check-in',  total: 6000,  paid: 6000,  balance: 0,    board:'AI', notes:'' },
-  { id: 'RES-004', guest: 'John Smith',    guestId:'G-004', room: '203', type: 'Deluxe',   channel: 'Booking.com', checkIn: '2026-03-11', checkOut: '2026-03-14', nights: 3, pax: 3, status: 'check-in',  total: 9000,  paid: 6000,  balance: 3000, board:'HB', notes:'VIP - Extra havlu' },
-  { id: 'RES-005', guest: 'Maria Lopez',   guestId:'G-005', room: '301', type: 'Standard', channel: 'HotelRunner', checkIn: '2026-03-13', checkOut: '2026-03-16', nights: 3, pax: 2, status: 'check-in',  total: 4500,  paid: 1500,  balance: 3000, board:'BB', notes:'' },
-  { id: 'RES-006', guest: 'Selin Kaya',    guestId:null,    room: null,  type: 'Suite',    channel: 'Direkt',      checkIn: '2026-03-15', checkOut: '2026-03-18', nights: 3, pax: 2, status: 'gelecek',   total: 12000, paid: 3000,  balance: 9000, board:'AI', notes:'' },
-  { id: 'RES-007', guest: 'David Wilson',  guestId:null,    room: null,  type: 'Deluxe',   channel: 'TUI',         checkIn: '2026-03-16', checkOut: '2026-03-20', nights: 4, pax: 2, status: 'gelecek',   total: 9000,  paid: 0,     balance: 9000, board:'HB', notes:'' },
-  { id: 'RES-008', guest: 'Kemal Arslan',  guestId:null,    room: '303', type: 'Deluxe',   channel: 'Direkt',      checkIn: '2026-03-14', checkOut: '2026-03-17', nights: 3, pax: 2, status: 'check-in',  total: 6750,  paid: 6750,  balance: 0,    board:'HB', notes:'' },
+  // Mevcut check-in'ler
+  { id: 'RES-001', guest: 'Ahmet Yılmaz',    guestId:'G-001', room: '101', type: 'Standard', channel: 'Booking.com', checkIn: '2026-03-13', checkOut: '2026-03-16', nights: 3, pax: 2, status: 'check-in',  total: 4500,  paid: 4500,  balance: 0,    board:'HB', notes:'' },
+  { id: 'RES-002', guest: 'Hans Müller',      guestId:'G-002', room: '103', type: 'Deluxe',   channel: 'Expedia',     checkIn: '2026-03-12', checkOut: '2026-03-15', nights: 3, pax: 1, status: 'check-in',  total: 6750,  paid: 3000,  balance: 3750, board:'BB', notes:'' },
+  { id: 'RES-003', guest: 'Fatma Demir',      guestId:'G-003', room: '202', type: 'Standard', channel: 'Direkt',      checkIn: '2026-03-13', checkOut: '2026-03-17', nights: 4, pax: 2, status: 'check-in',  total: 6000,  paid: 6000,  balance: 0,    board:'AI', notes:'' },
+  { id: 'RES-004', guest: 'John Smith',       guestId:'G-004', room: '203', type: 'Deluxe',   channel: 'Booking.com', checkIn: '2026-03-11', checkOut: '2026-03-15', nights: 4, pax: 3, status: 'check-in',  total: 9000,  paid: 6000,  balance: 3000, board:'HB', notes:'VIP - Extra havlu' },
+  { id: 'RES-005', guest: 'Maria Lopez',      guestId:'G-005', room: '301', type: 'Standard', channel: 'HotelRunner', checkIn: '2026-03-13', checkOut: '2026-03-16', nights: 3, pax: 2, status: 'check-in',  total: 4500,  paid: 1500,  balance: 3000, board:'BB', notes:'' },
+  { id: 'RES-008', guest: 'Kemal Arslan',     guestId:'G-008', room: '303', type: 'Deluxe',   channel: 'Direkt',      checkIn: '2026-03-14', checkOut: '2026-03-17', nights: 3, pax: 2, status: 'check-in',  total: 6750,  paid: 6750,  balance: 0,    board:'HB', notes:'' },
+  // Gelecek (onaylı) rezervasyonlar
+  { id: 'RES-006', guest: 'Selin Kaya',       guestId:null,    room: '304', type: 'Suite',    channel: 'Direkt',      checkIn: '2026-03-22', checkOut: '2026-03-25', nights: 3, pax: 2, status: 'gelecek',   total: 12000, paid: 3000,  balance: 9000, board:'AI', notes:'' },
+  { id: 'RES-007', guest: 'David Wilson',     guestId:null,    room: '205', type: 'Standard', channel: 'TUI',         checkIn: '2026-03-23', checkOut: '2026-03-27', nights: 4, pax: 2, status: 'gelecek',   total: 6000,  paid: 0,     balance: 6000, board:'HB', notes:'' },
+  { id: 'RES-009', guest: 'Elif Çelik',       guestId:'G-006', room: '102', type: 'Standard', channel: 'Booking.com', checkIn: '2026-03-19', checkOut: '2026-03-23', nights: 4, pax: 1, status: 'check-in',  total: 6000,  paid: 6000,  balance: 0,    board:'BB', notes:'' },
+  { id: 'RES-010', guest: 'Pierre Dupont',    guestId:'G-007', room: '105', type: 'Standard', channel: 'Expedia',     checkIn: '2026-03-20', checkOut: '2026-03-25', nights: 5, pax: 2, status: 'check-in',  total: 7500,  paid: 3000,  balance: 4500, board:'HB', notes:'Balayı çifti' },
+  { id: 'RES-011', guest: 'Olga Petrova',     guestId:'G-008', room: '201', type: 'Suite',    channel: 'Booking.com', checkIn: '2026-03-18', checkOut: '2026-03-22', nights: 4, pax: 2, status: 'check-in',  total: 16000, paid: 16000, balance: 0,    board:'AI', notes:'VIP misafir' },
+  { id: 'RES-012', guest: 'Yuki Tanaka',      guestId:'G-009', room: '204', type: 'Suite',    channel: 'Direkt',      checkIn: '2026-03-20', checkOut: '2026-03-26', nights: 6, pax: 2, status: 'gelecek',   total: 24000, paid: 8000,  balance: 16000,board:'AI', notes:'Japon grup lideri' },
+  { id: 'RES-013', guest: 'Carlos Rivera',    guestId:'G-010', room: '206', type: 'Deluxe',   channel: 'HotelRunner', checkIn: '2026-03-19', checkOut: '2026-03-22', nights: 3, pax: 1, status: 'check-in',  total: 6750,  paid: 6750,  balance: 0,    board:'BB', notes:'' },
+  { id: 'RES-014', guest: 'Sheikh Al-Rashid', guestId:'G-011', room: '302', type: 'Penthouse',channel: 'Direkt',      checkIn: '2026-03-19', checkOut: '2026-03-28', nights: 9, pax: 4, status: 'check-in',  total: 67500, paid: 67500, balance: 0,    board:'AI', notes:'VVIP — Özel karşılama' },
+  { id: 'RES-015', guest: 'Anna Kowalski',    guestId:null,    room: '305', type: 'Standard', channel: 'Booking.com', checkIn: '2026-03-20', checkOut: '2026-03-24', nights: 4, pax: 2, status: 'gelecek',   total: 6000,  paid: 2000,  balance: 4000, board:'HB', notes:'' },
+  { id: 'RES-016', guest: 'Marco Rossi',      guestId:null,    room: '401', type: 'Deluxe',   channel: 'Expedia',     checkIn: '2026-03-18', checkOut: '2026-03-21', nights: 3, pax: 2, status: 'check-in',  total: 7500,  paid: 7500,  balance: 0,    board:'HB', notes:'' },
+  { id: 'RES-017', guest: 'Sophie Bernard',   guestId:null,    room: '402', type: 'Suite',    channel: 'Booking.com', checkIn: '2026-03-17', checkOut: '2026-03-23', nights: 6, pax: 2, status: 'check-in',  total: 27000, paid: 15000, balance: 12000,board:'AI', notes:'Uzun konaklama' },
+  { id: 'RES-018', guest: 'Chen Wei',         guestId:null,    room: '404', type: 'Deluxe',   channel: 'TUI',         checkIn: '2026-03-21', checkOut: '2026-03-25', nights: 4, pax: 1, status: 'gelecek',   total: 10000, paid: 0,     balance: 10000,board:'BB', notes:'Grup çin turist' },
+  { id: 'RES-019', guest: 'Mustafa Öztürk',   guestId:null,    room: '405', type: 'Standard', channel: 'Direkt',      checkIn: '2026-03-19', checkOut: '2026-03-22', nights: 3, pax: 3, status: 'check-in',  total: 4500,  paid: 4500,  balance: 0,    board:'HB', notes:'Aile — çocuklu' },
+  { id: 'RES-020', guest: 'James Brown',      guestId:null,    room: '501', type: 'Suite',    channel: 'Booking.com', checkIn: '2026-03-16', checkOut: '2026-03-21', nights: 5, pax: 2, status: 'check-in',  total: 25000, paid: 25000, balance: 0,    board:'AI', notes:'CEO — iş seyahati' },
+  { id: 'RES-021', guest: 'Lina Johansson',   guestId:null,    room: '503', type: 'Suite',    channel: 'Expedia',     checkIn: '2026-03-20', checkOut: '2026-03-27', nights: 7, pax: 2, status: 'gelecek',   total: 35000, paid: 10000, balance: 25000,board:'AI', notes:'İsveçli çift' },
+  { id: 'RES-022', guest: 'Ali Rıza Bey',     guestId:'G-012', room: '504', type: 'Penthouse',channel: 'Direkt',      checkIn: '2026-03-15', checkOut: '2026-03-19', nights: 4, pax: 4, status: 'check-in',  total: 36000, paid: 36000, balance: 0,    board:'AI', notes:'Sadık müşteri — 15. ziyaret' },
+  // Geçmiş tamamlanmış
+  { id: 'RES-023', guest: 'Emre Kılıç',       guestId:null,    room: '106', type: 'Standard', channel: 'Direkt',      checkIn: '2026-03-10', checkOut: '2026-03-13', nights: 3, pax: 1, status: 'check-out', total: 4500,  paid: 4500,  balance: 0,    board:'BB', notes:'' },
+  { id: 'RES-024', guest: 'Lara Novak',       guestId:null,    room: '403', type: 'Standard', channel: 'Booking.com', checkIn: '2026-03-11', checkOut: '2026-03-14', nights: 3, pax: 2, status: 'check-out', total: 4500,  paid: 4500,  balance: 0,    board:'HB', notes:'' },
 ];
 
 const initialGuests = [
-  { id: 'G-001', name: 'Ahmet Yılmaz',  nationality: 'TR', phone: '+90 532 111 22 33', email: 'ahmet@example.com',  loyalty: 'Gold',     visits: 12, totalSpent: 48000,  lastVisit: '2026-03-13', dob:'1980-05-14', tcNo:'12345678900', passport:'' },
-  { id: 'G-002', name: 'Hans Müller',   nationality: 'DE', phone: '+49 151 234 5678',  email: 'hans@example.com',   loyalty: 'Platinum', visits: 25, totalSpent: 120000, lastVisit: '2026-03-12', dob:'1972-08-22', tcNo:'',           passport:'C4V8X2' },
-  { id: 'G-003', name: 'Fatma Demir',  nationality: 'TR', phone: '+90 542 333 44 55', email: 'fatma@example.com',  loyalty: 'Silver',   visits: 5,  totalSpent: 18000,  lastVisit: '2026-03-13', dob:'1990-03-01', tcNo:'98765432100', passport:'' },
-  { id: 'G-004', name: 'John Smith',   nationality: 'US', phone: '+1 555 678 9012',   email: 'john@example.com',   loyalty: 'None',     visits: 1,  totalSpent: 9000,   lastVisit: '2026-03-11', dob:'1985-11-30', tcNo:'',           passport:'US992010' },
-  { id: 'G-005', name: 'Maria Lopez',  nationality: 'ES', phone: '+34 600 123 456',   email: 'maria@example.com',  loyalty: 'Silver',   visits: 3,  totalSpent: 12000,  lastVisit: '2026-03-13', dob:'1995-07-19', tcNo:'',           passport:'ES440122' },
+  { id: 'G-001', name: 'Ahmet Yılmaz',    nationality: 'TR', phone: '+90 532 111 22 33', email: 'ahmet@example.com',    loyalty: 'Gold',     visits: 12, totalSpent: 48000,  lastVisit: '2026-03-13', dob:'1980-05-14', tcNo:'12345678900', passport:'' },
+  { id: 'G-002', name: 'Hans Müller',     nationality: 'DE', phone: '+49 151 234 5678',  email: 'hans@example.com',     loyalty: 'Platinum', visits: 25, totalSpent: 120000, lastVisit: '2026-03-12', dob:'1972-08-22', tcNo:'',           passport:'C4V8X2' },
+  { id: 'G-003', name: 'Fatma Demir',     nationality: 'TR', phone: '+90 542 333 44 55', email: 'fatma@example.com',    loyalty: 'Silver',   visits: 5,  totalSpent: 18000,  lastVisit: '2026-03-13', dob:'1990-03-01', tcNo:'98765432100', passport:'' },
+  { id: 'G-004', name: 'John Smith',      nationality: 'US', phone: '+1 555 678 9012',   email: 'john@example.com',     loyalty: 'None',     visits: 1,  totalSpent: 9000,   lastVisit: '2026-03-11', dob:'1985-11-30', tcNo:'',           passport:'US992010' },
+  { id: 'G-005', name: 'Maria Lopez',     nationality: 'ES', phone: '+34 600 123 456',   email: 'maria@example.com',    loyalty: 'Silver',   visits: 3,  totalSpent: 12000,  lastVisit: '2026-03-13', dob:'1995-07-19', tcNo:'',           passport:'ES440122' },
+  { id: 'G-006', name: 'Elif Çelik',      nationality: 'TR', phone: '+90 553 444 55 66', email: 'elif@example.com',     loyalty: 'Gold',     visits: 8,  totalSpent: 32000,  lastVisit: '2026-03-19', dob:'1988-12-05', tcNo:'55667788900', passport:'' },
+  { id: 'G-007', name: 'Pierre Dupont',   nationality: 'FR', phone: '+33 6 12 34 56 78', email: 'pierre@example.com',   loyalty: 'None',     visits: 1,  totalSpent: 7500,   lastVisit: '2026-03-20', dob:'1993-06-28', tcNo:'',           passport:'FR228811' },
+  { id: 'G-008', name: 'Kemal Arslan',    nationality: 'TR', phone: '+90 544 777 88 99', email: 'kemal@example.com',    loyalty: 'Silver',   visits: 4,  totalSpent: 22000,  lastVisit: '2026-03-14', dob:'1978-09-10', tcNo:'33445566700', passport:'' },
+  { id: 'G-009', name: 'Yuki Tanaka',     nationality: 'JP', phone: '+81 90 1234 5678',  email: 'yuki@example.com',     loyalty: 'Gold',     visits: 6,  totalSpent: 78000,  lastVisit: '2026-03-20', dob:'1987-02-15', tcNo:'',           passport:'JP8821004' },
+  { id: 'G-010', name: 'Carlos Rivera',   nationality: 'MX', phone: '+52 55 1234 5678',  email: 'carlos@example.com',   loyalty: 'None',     visits: 2,  totalSpent: 13500,  lastVisit: '2026-03-19', dob:'1991-11-03', tcNo:'',           passport:'MX552233' },
+  { id: 'G-011', name: 'Sheikh Al-Rashid',nationality: 'AE', phone: '+971 50 123 4567',  email: 'sheikh@example.com',   loyalty: 'Platinum', visits: 18, totalSpent: 540000, lastVisit: '2026-03-19', dob:'1965-04-20', tcNo:'',           passport:'AE998877' },
+  { id: 'G-012', name: 'Ali Rıza Bey',    nationality: 'TR', phone: '+90 533 888 99 00', email: 'aliriza@example.com',  loyalty: 'Platinum', visits: 15, totalSpent: 185000, lastVisit: '2026-03-15', dob:'1970-01-08', tcNo:'11223344500', passport:'' },
 ];
 
 const initialTasks = [
@@ -45,6 +88,11 @@ const initialTasks = [
   { id: 'T-003', type: 'technical',    room: '104', desc: 'Klima arızası — çalışmıyor',          priority: 'high',   status: 'bekliyor', assignee: 'Murat T.', created: '08:30', note:'' },
   { id: 'T-004', type: 'technical',    room: '201', desc: 'TV uzaktan kumanda değişimi',         priority: 'low',    status: 'bitti',    assignee: 'Murat T.', created: '07:45', note:'Yenisiyle değiştirildi' },
   { id: 'T-005', type: 'housekeeping', room: '105', desc: 'Check-out sonrası tam temizlik',      priority: 'normal', status: 'bekliyor', assignee: '',         created: '08:00', note:'' },
+  { id: 'T-006', type: 'housekeeping', room: '405', desc: 'Minibar dolum — çocuk atıştırmalık',  priority: 'normal', status: 'bekliyor', assignee: 'Ayşe H.',  created: '10:30', note:'' },
+  { id: 'T-007', type: 'technical',    room: '302', desc: 'Jakuzi su sıcaklık ayarı',            priority: 'high',   status: 'devam',    assignee: 'Murat T.', created: '11:00', note:'VVIP oda — acil' },
+  { id: 'T-008', type: 'housekeeping', room: '501', desc: 'VIP oda — ekstra yastık talebi',      priority: 'high',   status: 'bekliyor', assignee: 'Fatih H.', created: '09:45', note:'' },
+  { id: 'T-009', type: 'housekeeping', room: '106', desc: 'Check-out sonrası derin temizlik',    priority: 'normal', status: 'bitti',    assignee: 'Ayşe H.',  created: '07:30', note:'Tamamlandı' },
+  { id: 'T-010', type: 'technical',    room: '404', desc: 'WiFi sinyal güçlendirici kontrolü',   priority: 'low',    status: 'bekliyor', assignee: '',         created: '12:00', note:'' },
 ];
 
 const initialFolioLines = {
@@ -56,26 +104,69 @@ const initialFolioLines = {
   ],
   'RES-003': [{ id:'F-005', desc:'Konaklama (4 gece × ₺1500)', amount: 6000, type:'accommodation', date:'2026-03-13' }],
   'RES-004': [
-    { id:'F-006', desc:'Konaklama (3 gece × ₺2250)', amount: 6750, type:'accommodation', date:'2026-03-11' },
+    { id:'F-006', desc:'Konaklama (4 gece × ₺2250)', amount: 9000, type:'accommodation', date:'2026-03-11' },
     { id:'F-007', desc:'Restoran — Akşam Yemeği', amount: 850, type:'extra', date:'2026-03-12' },
     { id:'F-008', desc:'Minibar', amount: 220, type:'extra', date:'2026-03-13' },
     { id:'F-009', desc:'Oda servisi', amount: 180, type:'extra', date:'2026-03-14' },
   ],
   'RES-005': [{ id:'F-010', desc:'Konaklama (3 gece × ₺1500)', amount: 4500, type:'accommodation', date:'2026-03-13' }],
   'RES-008': [{ id:'F-011', desc:'Konaklama (3 gece × ₺2250)', amount: 6750, type:'accommodation', date:'2026-03-14' }],
+  'RES-009': [{ id:'F-012', desc:'Konaklama (4 gece × ₺1500)', amount: 6000, type:'accommodation', date:'2026-03-19' }],
+  'RES-010': [
+    { id:'F-013', desc:'Konaklama (5 gece × ₺1500)', amount: 7500, type:'accommodation', date:'2026-03-20' },
+    { id:'F-014', desc:'Oda Servisi — Şampanya', amount: 450, type:'extra', date:'2026-03-20' },
+  ],
+  'RES-011': [
+    { id:'F-015', desc:'Konaklama (4 gece × ₺4000)', amount: 16000, type:'accommodation', date:'2026-03-18' },
+    { id:'F-016', desc:'SPA — İsveç Masajı', amount: 600, type:'extra', date:'2026-03-19' },
+    { id:'F-017', desc:'Restoran — Gala Yemeği', amount: 1200, type:'extra', date:'2026-03-20' },
+  ],
+  'RES-013': [{ id:'F-018', desc:'Konaklama (3 gece × ₺2250)', amount: 6750, type:'accommodation', date:'2026-03-19' }],
+  'RES-014': [
+    { id:'F-019', desc:'Konaklama (9 gece × ₺7500)', amount: 67500, type:'accommodation', date:'2026-03-19' },
+    { id:'F-020', desc:'VIP Transfer — Havaalanı', amount: 2500, type:'extra', date:'2026-03-19' },
+    { id:'F-021', desc:'SPA — Özel Paket', amount: 3500, type:'extra', date:'2026-03-20' },
+    { id:'F-022', desc:'Restoran — Özel Menü', amount: 4800, type:'extra', date:'2026-03-21' },
+  ],
+  'RES-016': [{ id:'F-023', desc:'Konaklama (3 gece × ₺2500)', amount: 7500, type:'accommodation', date:'2026-03-18' }],
+  'RES-017': [
+    { id:'F-024', desc:'Konaklama (6 gece × ₺4500)', amount: 27000, type:'accommodation', date:'2026-03-17' },
+    { id:'F-025', desc:'Çamaşırhane', amount: 380, type:'extra', date:'2026-03-19' },
+  ],
+  'RES-019': [{ id:'F-026', desc:'Konaklama (3 gece × ₺1500)', amount: 4500, type:'accommodation', date:'2026-03-19' }],
+  'RES-020': [
+    { id:'F-027', desc:'Konaklama (5 gece × ₺5000)', amount: 25000, type:'accommodation', date:'2026-03-16' },
+    { id:'F-028', desc:'Minibar — Premium', amount: 680, type:'extra', date:'2026-03-17' },
+    { id:'F-029', desc:'Oda Servisi — Kahvaltı', amount: 390, type:'extra', date:'2026-03-18' },
+  ],
+  'RES-022': [
+    { id:'F-030', desc:'Konaklama (4 gece × ₺9000)', amount: 36000, type:'accommodation', date:'2026-03-15' },
+    { id:'F-031', desc:'Restoran — Özel Masa', amount: 2200, type:'extra', date:'2026-03-16' },
+    { id:'F-032', desc:'SPA — Türk Hamamı', amount: 400, type:'extra', date:'2026-03-17' },
+  ],
 };
 
 const initialCashTransactions = [
-  { id:'C-001', type:'gelir',  desc:'RES-001 Konaklama Tahsilatı', amount:4500, method:'Kredi Kartı', time:'09:12', date: TODAY },
-  { id:'C-002', type:'gelir',  desc:'RES-002 Ön Ödeme',             amount:3000, method:'Nakit',      time:'10:30', date: TODAY },
-  { id:'C-003', type:'gider',  desc:'Ofis Malzemesi Alımı',          amount:250,  method:'Nakit',      time:'11:05', date: TODAY },
-  { id:'C-004', type:'gelir',  desc:'RES-008 Tam Ödeme',             amount:6750, method:'EFT/Havale', time:'12:15', date: TODAY },
+  { id:'C-001', type:'gelir',  desc:'RES-001 Konaklama Tahsilatı',    amount:4500,  method:'Kredi Kartı', time:'09:12', date: TODAY },
+  { id:'C-002', type:'gelir',  desc:'RES-002 Ön Ödeme',               amount:3000,  method:'Nakit',      time:'10:30', date: TODAY },
+  { id:'C-003', type:'gider',  desc:'Ofis Malzemesi Alımı',            amount:250,   method:'Nakit',      time:'11:05', date: TODAY },
+  { id:'C-004', type:'gelir',  desc:'RES-008 Tam Ödeme',               amount:6750,  method:'EFT/Havale', time:'12:15', date: TODAY },
+  { id:'C-005', type:'gelir',  desc:'RES-011 VIP Tam Ödeme',           amount:16000, method:'Kredi Kartı',time:'08:45', date: TODAY },
+  { id:'C-006', type:'gelir',  desc:'RES-014 Penthouse Ödeme',         amount:67500, method:'EFT/Havale', time:'09:00', date: TODAY },
+  { id:'C-007', type:'gider',  desc:'Mutfak Malzeme Tedarik',          amount:8500,  method:'EFT/Havale', time:'10:00', date: TODAY },
+  { id:'C-008', type:'gelir',  desc:'RES-020 Suite Konaklama',         amount:25000, method:'Kredi Kartı',time:'14:30', date: TODAY },
+  { id:'C-009', type:'gelir',  desc:'Restoran — Dış Müşteri',          amount:1850,  method:'Nakit',      time:'13:15', date: TODAY },
+  { id:'C-010', type:'gider',  desc:'Çamaşırhane Kimyasal Malzeme',    amount:1200,  method:'Nakit',      time:'15:00', date: TODAY },
 ];
 
 // ─── Restaurant State ─────────────────────────────────────────────
 const initialRestaurantOrders = [
-  { id:'ORD-001', table: 'Masa 3', room: null, items:[{name:'Izgara Tavuk',qty:2,price:180},{name:'Salata',qty:1,price:75}], total:435, status:'hazır', time:'12:30', date: TODAY },
-  { id:'ORD-002', table: null, room: '203', items:[{name:'Club Sandwich',qty:1,price:220},{name:'Kola',qty:2,price:60}], total:340, status:'hazırlanıyor', time:'13:05', date: TODAY },
+  { id:'ORD-001', table: 'Masa 3',  room: null,  items:[{name:'Izgara Tavuk',qty:2,price:180},{name:'Salata',qty:1,price:75}], total:435,  status:'hazır',       time:'12:30', date: TODAY },
+  { id:'ORD-002', table: null,      room: '203', items:[{name:'Club Sandwich',qty:1,price:220},{name:'Kola',qty:2,price:60}], total:340,  status:'hazırlanıyor',time:'13:05', date: TODAY },
+  { id:'ORD-003', table: 'Masa 7',  room: null,  items:[{name:'Et Kavurma',qty:1,price:260},{name:'Çorba',qty:2,price:85},{name:'Su',qty:2,price:30}], total:490, status:'tamamlandı', time:'12:00', date: TODAY },
+  { id:'ORD-004', table: null,      room: '501', items:[{name:'Kahvaltı Tabağı',qty:2,price:195},{name:'Meyve Suyu',qty:2,price:75}], total:540, status:'hazır', time:'08:30', date: TODAY },
+  { id:'ORD-005', table: 'Masa 1',  room: null,  items:[{name:'Izgara Balık',qty:1,price:240},{name:'Künefe',qty:1,price:120},{name:'Kola / Soda',qty:1,price:60}], total:420, status:'hazırlanıyor', time:'13:20', date: TODAY },
+  { id:'ORD-006', table: null,      room: '302', items:[{name:'Gece Atıştırması',qty:1,price:165},{name:'Su',qty:3,price:30}], total:255, status:'hazır', time:'23:15', date: TODAY },
 ];
 
 const MENU_ITEMS = [
@@ -215,7 +306,7 @@ export const HotelProvider = ({ children }) => {
   const [inventory, setInventory]               = useState(initialInventory);
   const [kbsSent, setKbsSent]                   = useState(initialKbsSent);
 
-  const idCounter = useRef({ res: 8, guest: 5, task: 5, cash: 4, folio: 11, notif: 3, ord: 2, spa: 2, mb: 2, lau: 3, hr: 10 });
+  const idCounter = useRef({ res: 24, guest: 12, task: 10, cash: 10, folio: 32, notif: 3, ord: 6, spa: 2, mb: 2, lau: 3, hr: 10 });
   const nextId = (key, prefix, n = 3) => {
     idCounter.current[key]++;
     return `${prefix}-${String(idCounter.current[key]).padStart(n, '0')}`;
