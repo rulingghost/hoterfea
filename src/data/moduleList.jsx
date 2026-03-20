@@ -63,4 +63,8 @@ export const modulesConfig = [
   { id: 'checkout', name: 'Hızlı Check-out', icon: <CreditCard />, count: 3, color: '#1e293b', component: lazy(() => import('../components/modules/Checkout')) },
   { id: 'sales-marketing', name: 'Satış & Pazarlama', icon: <TrendingUp />, count: 0, color: '#3b82f6', component: lazy(() => import('../components/modules/SalesMarketing')) },
   { id: 'tours', name: 'Tur & Acente (Sedna)', icon: <Compass />, count: 3, color: '#f59e0b', component: lazy(() => import('../components/modules/TourManagement')) },
+  { id: 'system-admin', name: 'Sistem Yönetimi', icon: <Cpu />, count: 0, color: '#475569', component: lazy(() => import('../components/modules/SystemAdmin')) },
+  { id: 'dashboard-builder', name: 'Dashboard Oluşturucu', icon: <LayoutDashboard />, count: 0, color: '#6366f1', component: lazy(() => import('../components/modules/DashboardBuilder')) },
+  { id: 'executive-vision', name: 'Yönetici Görüşü', icon: <Globe />, count: 0, color: '#0ea5e9', component: lazy(() => import('../components/modules/ExecutiveVision')) },
+  { id: 'agency-contracts', name: 'Acente Sözleşmeleri', icon: <Handshake />, count: 0, color: '#059669', component: lazy(() => import('../components/modules/AgencyContracts')) },
 ];

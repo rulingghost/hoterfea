@@ -29,7 +29,7 @@ const MainHub = ({ user, onLogout }) => {
           {activeModuleId ? (
             <Suspense fallback={<div className="loading-screen">Modül Yükleniyor...</div>}>
               <div className="module-render-container">
-                {activeModule.component ? React.createElement(activeModule.component) : <div>Modül içeriği bulunamadı.</div>}
+                {activeModule?.component ? React.createElement(activeModule.component) : <div className="loading-screen">Modül içeriği bulunamadı.</div>}
               </div>
             </Suspense>
           ) : (
