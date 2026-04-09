@@ -1,535 +1,671 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   LayoutDashboard, Bed, Utensils, Users, ShieldCheck, Zap,
   Waves, CreditCard, BarChart3, Globe, Bot, ArrowRight,
-  Check, Star, ChevronDown, Play, Monitor, Smartphone, Tablet,
-  Clock, TrendingUp, Lock, Headphones, Sparkles, Building2,
-  Wifi, Coffee, Sunset, Mountain, Gem, Award, Heart
+  Check, ChevronDown, Play, Monitor, Sparkles, Building2,
+  Wifi, Lock, Search, Bell, Calendar, FileText,
+  TrendingUp, Layers, Database, Shield, Cpu, Eye,
+  MousePointer, Command, Rocket, Target, Activity
 } from 'lucide-react';
 
-const MODULES = [
-  { icon: <LayoutDashboard size={24} />, title: 'Akıllı Dashboard', desc: 'Tüm operasyonları gerçek zamanlı tek ekrandan yönetin.', color: '#3b82f6' },
-  { icon: <Bed size={24} />, title: 'Ön Büro & Rezervasyon', desc: 'Check-in/out, oda planı ve 50+ kanal entegrasyonu.', color: '#10b981' },
-  { icon: <Utensils size={24} />, title: 'Restoran & Bar', desc: 'Masa yönetimi, adisyon ve oda servisi bir arada.', color: '#f59e0b' },
-  { icon: <Users size={24} />, title: 'CRM & Sadakat', desc: 'Misafir profilleri ve kişiselleştirilmiş deneyimler.', color: '#8b5cf6' },
-  { icon: <CreditCard size={24} />, title: 'Finans & Muhasebe', desc: 'Kasa, folio, e-fatura ve bütçe yönetimi.', color: '#ef4444' },
-  { icon: <Waves size={24} />, title: 'SPA & Wellness', desc: 'Randevu, terapist ve paket satış yönetimi.', color: '#06b6d4' },
-  { icon: <Bot size={24} />, title: 'AI Strateji Merkezi', desc: 'Yapay zeka ile fiyatlama ve talep tahmini.', color: '#7c3aed' },
-  { icon: <Globe size={24} />, title: 'Kanal Yönetimi', desc: 'Tüm OTA kanallarını tek noktadan kontrol edin.', color: '#0ea5e9' },
-  { icon: <ShieldCheck size={24} />, title: 'Güvenlik & KBS', desc: 'KVKK uyumu ve otomatik polis bildirimi.', color: '#e11d48' },
+/* ═══════════════════════════════════════════
+   Animated Counter Hook
+   ═══════════════════════════════════════════ */
+const useCounter = (end, duration = 2000, startOnView = false) => {
+  const [count, setCount] = useState(0);
+  const [started, setStarted] = useState(!startOnView);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!startOnView) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setStarted(true); }, { threshold: 0.3 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [startOnView]);
+
+  useEffect(() => {
+    if (!started) return;
+    let start = 0;
+    const step = end / (duration / 16);
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= end) { setCount(end); clearInterval(timer); }
+      else setCount(Math.floor(start));
+    }, 16);
+    return () => clearInterval(timer);
+  }, [started, end, duration]);
+
+  return { count, ref };
+};
+
+/* ═══════════════════════════════════════════
+   Data
+   ═══════════════════════════════════════════ */
+const CORE_FEATURES = [
+  { icon: <Eye size={28} />, title: 'Gerçek Zamanlı Gösterge Paneli', desc: 'Doluluk, gelir, bekleyen check-in/out ve personel görevlerini canlı olarak izleyin. Tek bakışta tüm oteli kavrayın.', gradient: 'linear-gradient(135deg, #3b82f6, #6366f1)' },
+  { icon: <Bot size={28} />, title: 'Yapay Zeka Strateji Merkezi', desc: 'AI destekli dinamik fiyatlandırma, talep tahmini, anomali tespiti ve duygu analizi ile gelirinizi maksimize edin.', gradient: 'linear-gradient(135deg, #8b5cf6, #ec4899)' },
+  { icon: <Search size={28} />, title: 'Akıllı Fuzzy Arama', desc: 'Yazım hatalarını tolere eden NLP tabanlı arama motoru. "yemek" yazın, Restoran POS açılsın. "hens" yazın, Hans Müller bulansın.', gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)' },
+  { icon: <Layers size={28} />, title: 'Modüler Mimari', desc: '45+ bağımsız modül, ihtiyacınıza göre aktif edin. Ön büro, restoran, SPA, muhasebe — hepsi entegre çalışır.', gradient: 'linear-gradient(135deg, #06b6d4, #10b981)' },
+  { icon: <Shield size={28} />, title: 'Güvenlik & KBS Uyumu', desc: 'Otomatik polis bildirimi, KVKK veri koruma, rol bazlı yetkilendirme ve SSL şifreli veri transferi.', gradient: 'linear-gradient(135deg, #ef4444, #f97316)' },
+  { icon: <TrendingUp size={28} />, title: 'Gelişmiş Analitik & Raporlar', desc: 'RevPAR, ADR, GOP analizleri, departman bazlı performans, bütçe karşılaştırma ve trend tahminleri.', gradient: 'linear-gradient(135deg, #10b981, #3b82f6)' },
 ];
 
-const APP_FEATURES = [
-  { icon: <Sunset size={40} />, title: 'Gerçek Zamanlı İzleme', desc: 'Doluluk oranı, gelir, check-in/out durumları ve tüm operasyonları anlık olarak tek panelden takip edin.', gradient: 'linear-gradient(135deg, #f97316, #ec4899)' },
-  { icon: <Gem size={40} />, title: 'AI Destekli Fiyatlama', desc: 'Yapay zeka algoritmaları ile dinamik fiyatlandırma yapın, gelir optimizasyonunu otomatikleştirin.', gradient: 'linear-gradient(135deg, #8b5cf6, #3b82f6)' },
-  { icon: <Coffee size={40} />, title: 'Akıllı Arama Motoru', desc: 'Yazım hataları tolere eden fuzzy search ile modülleri, misafirleri ve özellikleri saniyede bulun.', gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)' },
-  { icon: <Waves size={40} />, title: 'Tam Entegrasyon', desc: 'Ön büro, restoran, SPA, housekeeping ve muhasebe modülleri birbirine entegre çalışır.', gradient: 'linear-gradient(135deg, #06b6d4, #10b981)' },
-  { icon: <Mountain size={40} />, title: 'Kolay Kullanım', desc: 'Modern ve sezgisel arayüz sayesinde personel eğitim süresi minimuma iner, verimlilik artar.', gradient: 'linear-gradient(135deg, #10b981, #3b82f6)' },
-  { icon: <Award size={40} />, title: 'Detaylı Raporlama', desc: 'Gelir, doluluk, departman performansı ve misafir analitiği gibi kapsamlı raporlara anında erişin.', gradient: 'linear-gradient(135deg, #f59e0b, #8b5cf6)' },
+const ALL_MODULES = [
+  { icon: <LayoutDashboard size={18} />, name: 'Dashboard', color: '#3b82f6' },
+  { icon: <Bed size={18} />, name: 'Ön Büro', color: '#10b981' },
+  { icon: <Calendar size={18} />, name: 'Rezervasyon', color: '#f59e0b' },
+  { icon: <Utensils size={18} />, name: 'Restoran POS', color: '#ef4444' },
+  { icon: <Users size={18} />, name: 'CRM', color: '#8b5cf6' },
+  { icon: <CreditCard size={18} />, name: 'Kasa', color: '#06b6d4' },
+  { icon: <Waves size={18} />, name: 'SPA & Wellness', color: '#ec4899' },
+  { icon: <FileText size={18} />, name: 'Folio / Hesap', color: '#6366f1' },
+  { icon: <Building2 size={18} />, name: 'Housekeeping', color: '#14b8a6' },
+  { icon: <ShieldCheck size={18} />, name: 'KBS Bildirimi', color: '#e11d48' },
+  { icon: <Globe size={18} />, name: 'Kanal Yönetimi', color: '#0ea5e9' },
+  { icon: <Bot size={18} />, name: 'AI Strateji', color: '#a855f7' },
+  { icon: <BarChart3 size={18} />, name: 'Raporlama', color: '#f97316' },
+  { icon: <Database size={18} />, name: 'Muhasebe', color: '#64748b' },
+  { icon: <Bell size={18} />, name: 'Bildirimler', color: '#eab308' },
+  { icon: <Activity size={18} />, name: 'Gelir Yönetimi', color: '#22c55e' },
 ];
 
-const STATS = [
-  { value: '45+', label: 'Entegre Modül' },
-  { value: '500+', label: 'Lüks Oda & Suite' },
-  { value: '50+', label: 'Kanal Entegrasyonu' },
-  { value: '7/24', label: 'Concierge Hizmeti' },
+const WORKFLOW_STEPS = [
+  { num: '01', title: 'Misafir Geliyor', desc: 'Rezervasyon sistemi otomatik olarak oda atar, ön büroya bildirim gönderir, oda kartı hazırlanır.', icon: <Calendar size={24} /> },
+  { num: '02', title: 'Check-in Yapılıyor', desc: 'Kimlik taraması, KBS bildirimi, oda durumu güncelleme ve hoş geldin mesajı — tek tıkla tamamlanır.', icon: <MousePointer size={24} /> },
+  { num: '03', title: 'Konaklama Süresince', desc: 'Restoran, SPA, minibar harcamaları otomatik folio\'ya eklenir. Housekeeping görevleri AI ile planlanır.', icon: <Activity size={24} /> },
+  { num: '04', title: 'Check-out & Analiz', desc: 'Tek tuşla hesap kapama, e-fatura, memnuniyet anketi gönderimi ve detaylı gelir raporu oluşturulur.', icon: <Target size={24} /> },
 ];
 
+/* ═══════════════════════════════════════════
+   Component
+   ═══════════════════════════════════════════ */
 const LandingPage = ({ onOpenDemo }) => {
   const [scrollY, setScrollY] = useState(0);
   const [visibleSections, setVisibleSections] = useState(new Set());
+  const [activeModuleIdx, setActiveModuleIdx] = useState(0);
+  const [typedText, setTypedText] = useState('');
+  const searchExamples = ['restoran bölümünü aç...', 'Hans Müller misafir ara...', 'bugünkü doluluk oranı...', 'yemek siparişi ekle...'];
+  const [exampleIdx, setExampleIdx] = useState(0);
 
+  // Scroll tracking
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    const h = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', h, { passive: true });
+    return () => window.removeEventListener('scroll', h);
   }, []);
 
+  // Intersection observer for animations
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            setVisibleSections(prev => new Set([...prev, entry.target.id]));
-          }
-        });
-      },
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach(e => { if (e.isIntersecting) setVisibleSections(prev => new Set([...prev, e.target.id])); }),
       { threshold: 0.1 }
     );
-    document.querySelectorAll('[data-animate]').forEach(el => observer.observe(el));
-    return () => observer.disconnect();
+    document.querySelectorAll('[data-animate]').forEach(el => obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
+
+  // Typing animation for search demo
+  useEffect(() => {
+    const fullText = searchExamples[exampleIdx];
+    let charIdx = 0;
+    setTypedText('');
+    const typeTimer = setInterval(() => {
+      charIdx++;
+      setTypedText(fullText.slice(0, charIdx));
+      if (charIdx >= fullText.length) {
+        clearInterval(typeTimer);
+        setTimeout(() => setExampleIdx(prev => (prev + 1) % searchExamples.length), 2000);
+      }
+    }, 60);
+    return () => clearInterval(typeTimer);
+  }, [exampleIdx]);
+
+  // Module carousel
+  useEffect(() => {
+    const t = setInterval(() => setActiveModuleIdx(prev => (prev + 1) % ALL_MODULES.length), 1500);
+    return () => clearInterval(t);
   }, []);
 
   const isVisible = (id) => visibleSections.has(id);
 
+  const modCounter = useCounter(45, 1800, true);
+  const channelCounter = useCounter(50, 2000, true);
+  const uptimeCounter = useCounter(99, 1600, true);
+
   return (
-    <div className="landing-page">
-      {/* ── Navbar ─────────────────────────────── */}
-      <nav className="lp-nav" style={{ background: scrollY > 50 ? 'rgba(8,12,21,0.92)' : 'transparent', backdropFilter: scrollY > 50 ? 'blur(20px)' : 'none', borderBottom: scrollY > 50 ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent' }}>
-        <div className="lp-nav-inner">
-          <div className="lp-brand">
-            <div className="lp-logo-icon">
-              <Sparkles size={18} />
-            </div>
-            <div>
-              <strong>HOTERFEA</strong>
-            </div>
+    <div className="lp">
+      {/* ═══ Floating Particles ═══ */}
+      <div className="particles">
+        {Array.from({ length: 30 }).map((_, i) => (
+          <div key={i} className="particle" style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            width: `${2 + Math.random() * 3}px`,
+            height: `${2 + Math.random() * 3}px`,
+            animationDelay: `${Math.random() * 20}s`,
+            animationDuration: `${15 + Math.random() * 20}s`,
+          }} />
+        ))}
+      </div>
+
+      {/* ═══ Navbar ═══ */}
+      <nav className="lp-nav" style={{
+        background: scrollY > 60 ? 'rgba(6,10,19,0.95)' : 'transparent',
+        backdropFilter: scrollY > 60 ? 'blur(24px) saturate(1.8)' : 'none',
+        borderBottom: scrollY > 60 ? '1px solid rgba(129,140,248,0.08)' : '1px solid transparent',
+        boxShadow: scrollY > 60 ? '0 4px 30px rgba(0,0,0,0.3)' : 'none',
+      }}>
+        <div className="nav-inner">
+          <div className="nav-brand">
+            <div className="nav-logo"><Sparkles size={18} /></div>
+            <strong>HOTERFEA</strong>
           </div>
-          <div className="lp-nav-links">
-            <a href="#highlights">Özellikler</a>
+          <div className="nav-links">
+            <a href="#features">Özellikler</a>
             <a href="#modules">Modüller</a>
+            <a href="#workflow">Nasıl Çalışır</a>
           </div>
-          <div className="lp-nav-actions">
-            <button className="lp-btn-glow" onClick={onOpenDemo}>
-              <Play size={14} /> Canlı Demo
-            </button>
-          </div>
+          <button className="nav-cta" onClick={onOpenDemo}>
+            <Play size={13} /> Canlı Demo
+          </button>
         </div>
       </nav>
 
-      {/* ── Hero ───────────────────────────────── */}
-      <section className="lp-hero">
-        <div className="hero-orbs">
-          <div className="orb orb-1" />
-          <div className="orb orb-2" />
-          <div className="orb orb-3" />
-        </div>
-        <div className="hero-content">
-          <div className="hero-badge">
-            <Sparkles size={12} /> Yapay Zeka Destekli Otel Yönetim Platformu
-          </div>
-          <h1>
-            Misafirlerinize <br/>
-            <span className="gradient-text-hero">Unutulmaz</span> Deneyimler Sunun
-          </h1>
-          <p>
-            500+ lüks oda, 5 restoran, SPA merkezi ve 45+ akıllı modül ile 
-            otelinizi geleceğe taşıyın. AI destekli yönetim sistemiyle her detayı kontrol altında tutun.
-          </p>
-          <div className="hero-actions">
-            <button className="lp-btn-hero" onClick={onOpenDemo}>
-              <Monitor size={18} /> Canlı Demo'yu Keşfet <ArrowRight size={16} />
-            </button>
-          </div>
-          <div className="hero-stats">
-            {STATS.map((s, i) => (
-              <div key={i} className="hero-stat">
-                <strong>{s.value}</strong>
-                <span>{s.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="hero-visual">
-          <div className="hero-mockup">
-            <div className="mockup-glow" />
-            <div className="mockup-bar">
-              <div className="mockup-dots">
-                <span style={{background:'#ef4444'}} />
-                <span style={{background:'#f59e0b'}} />
-                <span style={{background:'#10b981'}} />
-              </div>
-              <span className="mockup-url">
-                <Lock size={9} /> hoterfea.app
-              </span>
+      {/* ═══ Hero ═══ */}
+      <section className="hero">
+        <div className="hero-glow g1" />
+        <div className="hero-glow g2" />
+        <div className="hero-glow g3" />
+
+        <div className="hero-inner">
+          <div className="hero-text">
+            <div className="hero-chip">
+              <Cpu size={12} /> <span>AI-Powered Hotel Management</span>
             </div>
-            <div className="mockup-screen">
-              <div className="mockup-sidebar-v">
-                <div className="msv-logo"><Sparkles size={14} /></div>
-                {[1,2,3,4,5,6,7].map(i => (
-                  <div key={i} className={`msv-item ${i === 1 ? 'active' : ''}`}>
-                    <div className="msv-dot" style={{background: ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#e11d48'][i-1]}} />
+            <h1>
+              Otel Yönetimini<br />
+              <span className="grad">Yeniden Tanımlıyoruz</span>
+            </h1>
+            <p className="hero-desc">
+              <strong>Hoterfea</strong>, yapay zeka destekli akıllı arama motoru, 45+ entegre modül
+              ve gerçek zamanlı operasyon paneli ile otellerin tüm departmanlarını
+              tek bir platformdan yönetmelerini sağlayan yeni nesil ERP sistemidir.
+            </p>
+            <div className="hero-btns">
+              <button className="btn-primary-xl" onClick={onOpenDemo}>
+                <Rocket size={18} /> Demo'yu Başlat <ArrowRight size={16} />
+              </button>
+            </div>
+
+            {/* Counter stats */}
+            <div className="hero-counters" ref={modCounter.ref}>
+              <div className="hc-item">
+                <strong>{modCounter.count}+</strong>
+                <span>Entegre Modül</span>
+              </div>
+              <div className="hc-divider" />
+              <div className="hc-item" ref={channelCounter.ref}>
+                <strong>{channelCounter.count}+</strong>
+                <span>Kanal Entegrasyonu</span>
+              </div>
+              <div className="hc-divider" />
+              <div className="hc-item" ref={uptimeCounter.ref}>
+                <strong>{uptimeCounter.count}.9%</strong>
+                <span>Uptime</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Mockup */}
+          <div className="hero-mockup-wrap">
+            <div className="mockup-float">
+              <div className="mock">
+                <div className="mock-bar">
+                  <div className="mock-dots"><span /><span /><span /></div>
+                  <div className="mock-url"><Lock size={8} /> hoterfea.app</div>
+                </div>
+                <div className="mock-body">
+                  <div className="mock-side">
+                    <div className="mock-side-logo"><Sparkles size={11} /></div>
+                    {ALL_MODULES.slice(0, 8).map((m, i) => (
+                      <div key={i} className={`mock-side-item ${i === activeModuleIdx % 8 ? 'active' : ''}`}>
+                        <div className="msi-dot" style={{ background: m.color }} />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="mockup-main-v">
-                <div className="mmv-top">
-                  <div className="mmv-title" />
-                  <div className="mmv-search"><Wifi size={10} color="#475569" /></div>
-                </div>
-                <div className="mmv-cards">
-                  {[{c:'#3b82f6',v:'%84'},{c:'#10b981',v:'142'},{c:'#f59e0b',v:'₺245K'},{c:'#8b5cf6',v:'98%'}].map((card,i) => (
-                    <div key={i} className="mmv-card">
-                      <div className="mmv-card-icon" style={{background: `${card.c}20`, color: card.c}}><Building2 size={12}/></div>
-                      <div className="mmv-card-val" style={{color: card.c}}>{card.v}</div>
-                      <div className="mmv-card-bar"><div style={{width:`${60+i*10}%`, background: card.c}} /></div>
+                  <div className="mock-main">
+                    <div className="mock-header">
+                      <div className="mock-title-bar" />
+                      <div className="mock-search-bar">
+                        <Search size={8} color="#64748b" />
+                        <span className="mock-typed">{typedText}</span>
+                        <span className="mock-cursor" />
+                      </div>
                     </div>
-                  ))}
+                    <div className="mock-kpis">
+                      {[
+                        { label: 'Doluluk', val: '%84', c: '#3b82f6' },
+                        { label: 'İçeride', val: '142', c: '#10b981' },
+                        { label: 'Gelir', val: '₺245K', c: '#f59e0b' },
+                        { label: 'RevPAR', val: '₺1.2K', c: '#8b5cf6' },
+                      ].map((kpi, i) => (
+                        <div key={i} className="mock-kpi">
+                          <div className="mk-val" style={{ color: kpi.c }}>{kpi.val}</div>
+                          <div className="mk-label">{kpi.label}</div>
+                          <div className="mk-bar"><div style={{ width: `${55 + i * 12}%`, background: kpi.c }} /></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mock-chart-area">
+                      <svg viewBox="0 0 340 80" preserveAspectRatio="none">
+                        <defs>
+                          <linearGradient id="mg1" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#818cf8" stopOpacity="0.3" />
+                            <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
+                          </linearGradient>
+                          <linearGradient id="mg2" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.15" />
+                            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                        <path d="M0 65 C40 58 70 42 110 38 S180 30 220 35 S290 22 340 18 V80 H0Z" fill="url(#mg1)" />
+                        <path d="M0 65 C40 58 70 42 110 38 S180 30 220 35 S290 22 340 18" fill="none" stroke="#818cf8" strokeWidth="2" />
+                        <path d="M0 70 C50 65 90 55 140 52 S210 48 260 53 S310 42 340 38 V80 H0Z" fill="url(#mg2)" />
+                        <path d="M0 70 C50 65 90 55 140 52 S210 48 260 53 S310 42 340 38" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="4 3" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
-                <div className="mmv-chart">
-                  <svg viewBox="0 0 320 90" style={{width:'100%',height:'100%'}}>
-                    <defs>
-                      <linearGradient id="cg1" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.25" />
-                        <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
-                      </linearGradient>
-                      <linearGradient id="cg2" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    <path d="M0 70 Q40 60 80 50 T160 35 T240 42 T320 28 V90 H0Z" fill="url(#cg1)" />
-                    <path d="M0 70 Q40 60 80 50 T160 35 T240 42 T320 28" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round" />
-                    <path d="M0 75 Q40 68 80 62 T160 55 T240 60 T320 48 V90 H0Z" fill="url(#cg2)" />
-                    <path d="M0 75 Q40 68 80 62 T160 55 T240 60 T320 48" fill="none" stroke="#3b82f6" strokeWidth="2" strokeDasharray="4 3" />
-                  </svg>
+              </div>
+
+              {/* Floating notification cards */}
+              <div className="float-card fc-1">
+                <div className="fc-icon" style={{ background: '#10b981' }}><Check size={12} /></div>
+                <div><strong>Oda 204</strong><span>Check-in tamamlandı</span></div>
+              </div>
+              <div className="float-card fc-2">
+                <div className="fc-icon" style={{ background: '#f59e0b' }}><Bell size={12} /></div>
+                <div><strong>Restoran</strong><span>3 yeni sipariş</span></div>
+              </div>
+              <div className="float-card fc-3">
+                <div className="fc-icon" style={{ background: '#8b5cf6' }}><TrendingUp size={12} /></div>
+                <div><strong>Gelir</strong><span>+%12 artış</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="scroll-hint"><ChevronDown size={20} /></div>
+      </section>
+
+      {/* ═══ Marquee Module Strip ═══ */}
+      <div className="module-strip">
+        <div className="strip-track">
+          {[...ALL_MODULES, ...ALL_MODULES].map((m, i) => (
+            <div key={i} className="strip-item">
+              <span style={{ color: m.color }}>{m.icon}</span>
+              <span>{m.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ═══ Features ═══ */}
+      <section id="features" className="sec-features" data-animate>
+        <div className="sec-header">
+          <div className="sec-chip"><Zap size={12} /> Özellikler</div>
+          <h2>Neden <span className="grad">Hoterfea</span>?</h2>
+          <p>Her biri otel operasyonlarınız için özel olarak tasarlanmış güçlü yetenekler.</p>
+        </div>
+        <div className={`feat-grid ${isVisible('features') ? 'in' : ''}`}>
+          {CORE_FEATURES.map((f, i) => (
+            <div key={i} className="feat-card" style={{ '--d': `${i * 0.1}s` }}>
+              <div className="feat-icon" style={{ background: f.gradient }}>{f.icon}</div>
+              <h3>{f.title}</h3>
+              <p>{f.desc}</p>
+              <div className="feat-shine" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══ Search Demo Section ═══ */}
+      <section id="search-demo" className="sec-search" data-animate>
+        <div className={`search-demo-inner ${isVisible('search-demo') ? 'in' : ''}`}>
+          <div className="sd-left">
+            <div className="sec-chip"><Command size={12} /> Akıllı Arama</div>
+            <h2>Ne Aklınıza Gelirse <span className="grad">Yazın ve Bulun</span></h2>
+            <p>
+              Hoterfea'nın NLP tabanlı arama motoru, yazdığınız her şeyi anlar.
+              Modül adı, özellik, misafir ismi, hatta yanlış yazılmış kelimeler bile —
+              yapay zeka destekli fuzzy matching algoritması sayesinde doğru sonuca ulaşırsınız.
+            </p>
+            <div className="sd-examples">
+              <div className="sd-ex"><Command size={14} /> <code>"yemek"</code> → Restoran POS modülü açılır</div>
+              <div className="sd-ex"><Command size={14} /> <code>"hens"</code> → Hans Müller misafiri bulunur</div>
+              <div className="sd-ex"><Command size={14} /> <code>"spa randevu"</code> → SPA yönetimi açılır</div>
+              <div className="sd-ex"><Command size={14} /> <code>"kasa"</code> → Kasa işlemleri modülü açılır</div>
+            </div>
+          </div>
+          <div className="sd-right">
+            <div className="sd-mock-search">
+              <div className="sdms-bar">
+                <Search size={16} color="#818cf8" />
+                <span className="sdms-text">{typedText}</span>
+                <span className="sdms-cursor" />
+              </div>
+              <div className="sdms-results">
+                <div className="sdms-section">MODÜLLER / ÖZELLİKLER <span className="ai-chip">AI</span></div>
+                <div className="sdms-item active">
+                  <div className="sdms-dot" style={{ background: '#ef4444' }} />
+                  <div><strong>Restoran POS</strong><span>Yiyecek & İçecek</span></div>
+                </div>
+                <div className="sdms-item">
+                  <div className="sdms-dot" style={{ background: '#06b6d4' }} />
+                  <div><strong>SPA & Wellness</strong><span>Operasyon</span></div>
+                </div>
+                <div className="sdms-section" style={{ marginTop: 12 }}>MİSAFİRLER <span className="ai-chip">FUZZY</span></div>
+                <div className="sdms-item">
+                  <div className="sdms-dot" style={{ background: '#8b5cf6' }} />
+                  <div><strong>Hans Müller</strong><span>Oda 204 · Almanya</span></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="scroll-indicator">
-          <ChevronDown size={20} />
-        </div>
       </section>
 
-      {/* ── Hotel Highlights ────────────────────── */}
-      <section id="highlights" className="lp-highlights" data-animate>
-        <div className="section-header dark-header">
-          <div className="section-badge-glow"><Gem size={12} /> Özellikler</div>
-          <h2>Neden <span className="gradient-text-hero">Hoterfea</span>?</h2>
-          <p>Otelinizin tüm ihtiyaçlarını karşılayan güçlü özelliklerle operasyonlarınızı dönüştürün.</p>
+      {/* ═══ All Modules Grid ═══ */}
+      <section id="modules" className="sec-modules" data-animate>
+        <div className="sec-header">
+          <div className="sec-chip"><Layers size={12} /> 45+ Modül</div>
+          <h2><span className="grad">Her Departman</span> İçin Bir Modül</h2>
+          <p>Ön bürodan mutfağa, SPA'dan muhasebeye — tüm otel operasyonları tek çatı altında.</p>
         </div>
-        <div className={`highlights-grid ${isVisible('highlights') ? 'animate-in' : ''}`}>
-          {APP_FEATURES.map((h, i) => (
-            <div key={i} className="highlight-card" style={{'--delay': `${i * 0.1}s`}}>
-              <div className="hc-icon-wrap" style={{background: h.gradient}}>
-                {h.icon}
-              </div>
-              <h3>{h.title}</h3>
-              <p>{h.desc}</p>
+        <div className={`mod-grid ${isVisible('modules') ? 'in' : ''}`}>
+          {ALL_MODULES.map((m, i) => (
+            <div key={i} className="mod-pill" style={{ '--d': `${i * 0.04}s`, '--c': m.color }}>
+              <span style={{ color: m.color }}>{m.icon}</span>
+              <span>{m.name}</span>
             </div>
           ))}
         </div>
-      </section>
-
-
-
-      {/* ── Technology / Modules ────────────────── */}
-      <section id="modules" className="lp-modules" data-animate>
-        <div className="section-header dark-header">
-          <div className="section-badge-glow"><Zap size={12} /> Teknoloji</div>
-          <h2>45+ Akıllı Modül ile <span className="gradient-text-hero">Tam Kontrol</span></h2>
-          <p>Yapay zeka destekli yönetim sistemiyle otel operasyonlarınızı optimize edin.</p>
-        </div>
-        <div className={`modules-grid ${isVisible('modules') ? 'animate-in' : ''}`}>
-          {MODULES.map((m, i) => (
-            <div key={i} className="module-card" style={{'--delay': `${i * 0.06}s`, '--accent': m.color}}>
-              <div className="mc-icon" style={{color: m.color, background: `${m.color}10`, border: `1px solid ${m.color}20`}}>
-                {m.icon}
-              </div>
-              <div>
-                <h4>{m.title}</h4>
-                <p>{m.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="modules-cta">
-          <button className="lp-btn-hero" onClick={onOpenDemo}>
-            <Monitor size={18} /> Tüm Modülleri Deneyin <ArrowRight size={16} />
+        <div className="mod-cta">
+          <button className="btn-primary-xl" onClick={onOpenDemo}>
+            <Monitor size={18} /> Tüm Modülleri Keşfet <ArrowRight size={16} />
           </button>
         </div>
       </section>
 
-      {/* ── Final CTA ──────────────────────────── */}
-      <section className="lp-final-cta" data-animate id="final-cta">
-        <div className={`final-cta-inner ${isVisible('final-cta') ? 'animate-in' : ''}`}>
-          <Sparkles size={32} className="fci-sparkle" />
-          <h2>Geleceğin Otel Yönetimi <span className="gradient-text-hero">Bugün Başlıyor</span></h2>
-          <p>Kurulum gerektirmez. Tek tıkla tam özellikli demo ortamına erişin ve 45+ modülün gücünü keşfedin.</p>
-          <div className="fci-actions">
-            <button className="lp-btn-hero" onClick={onOpenDemo}>
-              <Play size={18} /> Canlı Demo <ArrowRight size={16} />
-            </button>
-          </div>
-          <div className="fci-badges">
-            <span><Clock size={13} /> Anında Erişim</span>
-            <span><Lock size={13} /> Güvenli Bağlantı</span>
-            <span><TrendingUp size={13} /> 45+ Modül</span>
-          </div>
+      {/* ═══ How It Works ═══ */}
+      <section id="workflow" className="sec-workflow" data-animate>
+        <div className="sec-header">
+          <div className="sec-chip"><Target size={12} /> Nasıl Çalışır</div>
+          <h2>Misafir Yolculuğu <span className="grad">Uçtan Uca</span> Otomatik</h2>
+          <p>Bir misafirin gelişinden ayrılışına kadar her adım Hoterfea tarafından yönetilir.</p>
+        </div>
+        <div className={`wf-timeline ${isVisible('workflow') ? 'in' : ''}`}>
+          {WORKFLOW_STEPS.map((s, i) => (
+            <div key={i} className="wf-step" style={{ '--d': `${i * 0.15}s` }}>
+              <div className="wf-num">{s.num}</div>
+              <div className="wf-icon">{s.icon}</div>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+            </div>
+          ))}
+          <div className="wf-line" />
         </div>
       </section>
 
-      {/* ── Footer ─────────────────────────────── */}
-      <footer className="lp-footer">
-        <div className="footer-simple">
-          <div className="lp-brand">
-            <div className="lp-logo-icon"><Sparkles size={18} /></div>
-            <div><strong>HOTERFEA</strong></div>
+      {/* ═══ Final CTA ═══ */}
+      <section className="sec-final" data-animate id="final">
+        <div className={`final-box ${isVisible('final') ? 'in' : ''}`}>
+          <div className="final-orb" />
+          <Sparkles size={36} className="final-sparkle" />
+          <h2>Hoterfea'yı <span className="grad">Şimdi Deneyin</span></h2>
+          <p>Kurulum gerektirmez. Tek tıkla tam özellikli demo ortamına erişin,<br/>45+ modülü keşfedin ve farkı yaşayın.</p>
+          <button className="btn-primary-xl" onClick={onOpenDemo}>
+            <Play size={18} /> Canlı Demo'yu Başlat <ArrowRight size={16} />
+          </button>
+        </div>
+      </section>
+
+      {/* ═══ Footer ═══ */}
+      <footer className="lp-foot">
+        <div className="foot-inner">
+          <div className="nav-brand">
+            <div className="nav-logo"><Sparkles size={16} /></div>
+            <strong>HOTERFEA</strong>
           </div>
-          <div className="footer-nav">
-            <a href="#highlights">Özellikler</a>
+          <div className="foot-links">
+            <a href="#features">Özellikler</a>
             <a href="#modules">Modüller</a>
-            <a href="#" onClick={(e)=>{e.preventDefault();onOpenDemo();}}>Demo</a>
+            <a href="#" onClick={e => { e.preventDefault(); onOpenDemo(); }}>Demo</a>
           </div>
-          <p className="footer-copy">© 2026 Hoterfea. Tüm hakları saklıdır.</p>
+          <span className="foot-copy">© 2026 Hoterfea</span>
         </div>
       </footer>
 
+      {/* ═══════════════════ STYLES ═══════════════════ */}
       <style>{`
-        /* ── BASE ────────────────────────────────── */
-        .landing-page {
-          background: #060a13;
-          color: #e2e8f0;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          overflow-x: hidden;
+        /* ── Reset & Base ─────────── */
+        .lp { background: #060a13; color: #e2e8f0; font-family: 'Inter', -apple-system, sans-serif; overflow-x: hidden; position: relative; }
+        .grad { background: linear-gradient(135deg, #818cf8, #c084fc, #f0abfc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+        /* ── Particles ────────────── */
+        .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+        .particle {
+          position: absolute; background: #818cf8; border-radius: 50%; opacity: 0;
+          animation: particleDrift linear infinite;
+        }
+        @keyframes particleDrift {
+          0% { opacity: 0; transform: translateY(0) scale(0); }
+          10% { opacity: 0.4; transform: scale(1); }
+          90% { opacity: 0.2; }
+          100% { opacity: 0; transform: translateY(-100vh) scale(0); }
         }
 
-        .gradient-text-hero {
-          background: linear-gradient(135deg, #818cf8, #c084fc, #f0abfc);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-        }
-
-        /* ── NAV ─────────────────────────────────── */
+        /* ── Nav ──────────────────── */
         .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; transition: all 0.4s; }
-        .lp-nav-inner { max-width: 1200px; margin: 0 auto; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
-        .lp-brand { display: flex; align-items: center; gap: 10px; }
-        .lp-logo-icon {
-          width: 40px; height: 40px;
-          background: linear-gradient(135deg, #818cf8, #c084fc);
-          border-radius: 12px; display: flex; align-items: center; justify-content: center;
-          color: white; font-weight: 900; font-size: 17px; flex-shrink: 0;
-          box-shadow: 0 0 20px rgba(129,140,248,0.3);
-        }
-        .lp-brand strong { font-size: 15px; font-weight: 900; letter-spacing: 2px; display: block; color: white; }
-        .lp-brand span { font-size: 10px; color: #64748b; font-weight: 600; }
-        .lp-nav-links { display: flex; gap: 32px; }
-        .lp-nav-links a { text-decoration: none; color: #94a3b8; font-size: 14px; font-weight: 600; transition: 0.2s; }
-        .lp-nav-links a:hover { color: #c084fc; }
-        .lp-nav-actions { display: flex; gap: 10px; align-items: center; }
+        .nav-inner { max-width: 1200px; margin: 0 auto; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 10px; }
+        .nav-logo { width: 38px; height: 38px; background: linear-gradient(135deg, #818cf8, #c084fc); border-radius: 11px; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 0 24px rgba(129,140,248,0.3); }
+        .nav-brand strong { font-size: 15px; font-weight: 900; letter-spacing: 2px; color: white; }
+        .nav-links { display: flex; gap: 28px; }
+        .nav-links a { text-decoration: none; color: #64748b; font-size: 13px; font-weight: 600; transition: 0.2s; position: relative; }
+        .nav-links a:hover { color: #c084fc; }
+        .nav-links a::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px; background: linear-gradient(90deg, #818cf8, #c084fc); border-radius: 2px; transition: width 0.3s; }
+        .nav-links a:hover::after { width: 100%; }
+        .nav-cta { padding: 10px 22px; background: linear-gradient(135deg, #818cf8, #a855f7); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 0 20px rgba(168,85,247,0.25); transition: 0.3s; }
+        .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(168,85,247,0.4); }
 
-        .lp-btn-ghost { padding: 10px 20px; background: transparent; border: none; color: #94a3b8; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .lp-btn-ghost:hover { color: #c084fc; }
+        /* ── Hero ─────────────────── */
+        .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; position: relative; padding: 100px 32px 40px; }
+        .hero-glow { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.12; pointer-events: none; animation: glowPulse 12s ease-in-out infinite; }
+        .g1 { width: 600px; height: 600px; background: #818cf8; top: -15%; right: -5%; }
+        .g2 { width: 450px; height: 450px; background: #c084fc; bottom: 5%; left: -8%; animation-delay: -4s; }
+        .g3 { width: 350px; height: 350px; background: #f0abfc; top: 35%; left: 40%; animation-delay: -8s; }
+        @keyframes glowPulse { 0%,100% { transform: scale(1); opacity: 0.12; } 50% { transform: scale(1.15); opacity: 0.18; } }
 
-        .lp-btn-glow {
-          padding: 10px 22px; background: linear-gradient(135deg, #818cf8, #a855f7);
-          color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
-          display: flex; align-items: center; gap: 6px; cursor: pointer;
-          box-shadow: 0 0 25px rgba(168,85,247,0.3); transition: all 0.3s;
-        }
-        .lp-btn-glow:hover { transform: translateY(-1px); box-shadow: 0 0 35px rgba(168,85,247,0.5); }
+        .hero-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 60px; position: relative; z-index: 1; }
+        .hero-text { flex: 1; max-width: 540px; }
+        .hero-chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; background: rgba(129,140,248,0.08); border: 1px solid rgba(129,140,248,0.15); border-radius: 40px; font-size: 11px; font-weight: 700; color: #a5b4fc; margin-bottom: 28px; letter-spacing: 0.5px; }
+        .hero-text h1 { font-size: 52px; font-weight: 900; line-height: 1.08; letter-spacing: -1.5px; color: white; margin-bottom: 22px; }
+        .hero-desc { font-size: 16px; color: #8892b0; line-height: 1.8; margin-bottom: 36px; }
+        .hero-desc strong { color: #c084fc; font-weight: 700; }
+        .hero-btns { margin-bottom: 48px; }
 
-        .lp-btn-hero {
-          padding: 16px 32px;
-          background: linear-gradient(135deg, #818cf8, #a855f7);
-          color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 800;
-          display: inline-flex; align-items: center; gap: 10px; cursor: pointer;
-          box-shadow: 0 0 35px rgba(168,85,247,0.3); transition: all 0.3s;
-        }
-        .lp-btn-hero:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(168,85,247,0.5); }
+        .btn-primary-xl { padding: 16px 34px; background: linear-gradient(135deg, #818cf8, #a855f7); color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 800; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 0 40px rgba(168,85,247,0.3); transition: all 0.3s; position: relative; overflow: hidden; }
+        .btn-primary-xl::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.08), transparent); transform: rotate(45deg); transition: 0.6s; }
+        .btn-primary-xl:hover { transform: translateY(-2px); box-shadow: 0 0 60px rgba(168,85,247,0.5); }
+        .btn-primary-xl:hover::before { left: 100%; }
 
-        .lp-btn-outline-dark {
-          padding: 16px 28px; background: transparent; border: 1.5px solid rgba(255,255,255,0.12);
-          color: #cbd5e1; border-radius: 14px; font-size: 15px; font-weight: 700;
-          display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.3s;
-        }
-        .lp-btn-outline-dark:hover { border-color: #818cf8; color: #818cf8; }
+        .hero-counters { display: flex; align-items: center; gap: 28px; }
+        .hc-item strong { font-size: 30px; font-weight: 900; color: white; display: block; }
+        .hc-item span { font-size: 11px; color: #475569; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .hc-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.06); }
 
-        /* ── HERO ────────────────────────────────── */
-        .lp-hero {
-          min-height: 100vh; display: flex; align-items: center; position: relative;
-          padding: 120px 32px 80px; gap: 60px; max-width: 1300px; margin: 0 auto;
-        }
-        .hero-orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-        .orb {
-          position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.15;
-          animation: orbFloat 20s ease-in-out infinite;
-        }
-        .orb-1 { width: 500px; height: 500px; background: #818cf8; top: -10%; right: -5%; animation-delay: 0s; }
-        .orb-2 { width: 400px; height: 400px; background: #c084fc; bottom: 10%; left: -10%; animation-delay: -7s; }
-        .orb-3 { width: 300px; height: 300px; background: #f0abfc; top: 40%; right: 30%; animation-delay: -14s; }
-        @keyframes orbFloat {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -20px) scale(1.05); }
-          66% { transform: translate(-20px, 15px) scale(0.95); }
-        }
+        /* ── Mockup ──────────────── */
+        .hero-mockup-wrap { flex: 1; max-width: 520px; position: relative; z-index: 1; }
+        .mockup-float { position: relative; animation: mockFloat 6s ease-in-out infinite; }
+        @keyframes mockFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
-        .hero-content { flex: 1; position: relative; z-index: 1; max-width: 560px; }
-        .hero-badge {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 8px 18px; background: rgba(129,140,248,0.1);
-          border: 1px solid rgba(129,140,248,0.2); border-radius: 40px;
-          font-size: 12px; font-weight: 700; color: #a5b4fc; margin-bottom: 28px;
-        }
-        .hero-content h1 {
-          font-size: 50px; font-weight: 900; line-height: 1.1; margin-bottom: 22px;
-          letter-spacing: -1px; color: white;
-        }
-        .hero-content p { font-size: 17px; color: #94a3b8; line-height: 1.8; margin-bottom: 36px; }
-        .hero-actions { display: flex; gap: 14px; margin-bottom: 52px; flex-wrap: wrap; }
-        .hero-stats { display: flex; gap: 36px; flex-wrap: wrap; }
-        .hero-stat strong { font-size: 28px; font-weight: 900; color: white; display: block; }
-        .hero-stat span { font-size: 12px; color: #64748b; font-weight: 600; }
+        .mock { background: #0b1120; border-radius: 16px; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(129,140,248,0.06); }
+        .mock-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #111827; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .mock-dots { display: flex; gap: 5px; }
+        .mock-dots span { width: 9px; height: 9px; border-radius: 50%; }
+        .mock-dots span:nth-child(1) { background: #ef4444; }
+        .mock-dots span:nth-child(2) { background: #f59e0b; }
+        .mock-dots span:nth-child(3) { background: #10b981; }
+        .mock-url { font-size: 10px; color: #334155; display: flex; align-items: center; gap: 4px; }
+        .mock-body { display: flex; min-height: 300px; }
+        .mock-side { width: 44px; background: #0a0e1a; padding: 8px 5px; display: flex; flex-direction: column; align-items: center; gap: 3px; border-right: 1px solid rgba(255,255,255,0.02); }
+        .mock-side-logo { width: 26px; height: 26px; background: linear-gradient(135deg, #818cf8, #a855f7); border-radius: 7px; display: flex; align-items: center; justify-content: center; color: white; margin-bottom: 6px; }
+        .mock-side-item { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: 0.3s; }
+        .mock-side-item.active { background: rgba(129,140,248,0.12); }
+        .msi-dot { width: 6px; height: 6px; border-radius: 50%; }
 
-        .hero-visual { flex: 1; position: relative; z-index: 1; max-width: 500px; }
-        .hero-mockup {
-          background: #0c1322; border-radius: 18px; overflow: hidden; position: relative;
-          box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
-          transform: perspective(1000px) rotateY(-4deg) rotateX(2deg); transition: transform 0.6s;
-        }
-        .hero-mockup:hover { transform: perspective(1000px) rotateY(0deg) rotateX(0deg); }
-        .mockup-glow {
-          position: absolute; top: -50%; right: -30%; width: 300px; height: 300px;
-          background: radial-gradient(circle, rgba(129,140,248,0.15), transparent); pointer-events: none; z-index: 0;
-        }
-        .mockup-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #111827; border-bottom: 1px solid rgba(255,255,255,0.04); position: relative; z-index: 1; }
-        .mockup-dots { display: flex; gap: 6px; }
-        .mockup-dots span { width: 10px; height: 10px; border-radius: 50%; }
-        .mockup-url { font-size: 11px; color: #475569; font-weight: 500; display: flex; align-items: center; gap: 4px; }
-        .mockup-screen { display: flex; min-height: 300px; position: relative; z-index: 1; }
+        .mock-main { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .mock-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .mock-title-bar { width: 100px; height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; }
+        .mock-search-bar { flex: 1; max-width: 200px; height: 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; display: flex; align-items: center; gap: 4px; padding: 0 8px; overflow: hidden; }
+        .mock-typed { font-size: 8px; color: #64748b; white-space: nowrap; }
+        .mock-cursor { width: 1px; height: 10px; background: #818cf8; animation: blink 1s infinite; flex-shrink: 0; }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
 
-        .mockup-sidebar-v {
-          width: 48px; background: #0a0f1a; padding: 10px 6px;
-          display: flex; flex-direction: column; gap: 4px; align-items: center;
-          border-right: 1px solid rgba(255,255,255,0.03);
-        }
-        .msv-logo {
-          width: 30px; height: 30px; background: linear-gradient(135deg, #818cf8, #a855f7);
-          border-radius: 8px; display: flex; align-items: center; justify-content: center;
-          color: white; margin-bottom: 8px;
-        }
-        .msv-item { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 7px; transition: 0.2s; }
-        .msv-item.active { background: rgba(129,140,248,0.15); }
-        .msv-dot { width: 7px; height: 7px; border-radius: 50%; }
+        .mock-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .mock-kpi { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); border-radius: 8px; padding: 10px 6px; text-align: center; }
+        .mk-val { font-size: 14px; font-weight: 900; }
+        .mk-label { font-size: 7px; color: #475569; margin: 2px 0 4px; font-weight: 600; text-transform: uppercase; }
+        .mk-bar { height: 3px; background: rgba(255,255,255,0.03); border-radius: 2px; overflow: hidden; }
+        .mk-bar > div { height: 100%; border-radius: 2px; transition: width 1s; }
 
-        .mockup-main-v { flex: 1; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: #0c1322; }
-        .mmv-top { display: flex; justify-content: space-between; align-items: center; }
-        .mmv-title { width: 140px; height: 12px; background: rgba(255,255,255,0.06); border-radius: 6px; }
-        .mmv-search { width: 100px; height: 26px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
-        .mmv-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-        .mmv-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px; padding: 10px 6px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .mmv-card-icon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
-        .mmv-card-val { font-size: 14px; font-weight: 900; }
-        .mmv-card-bar { width: 80%; height: 3px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
-        .mmv-card-bar > div { height: 100%; border-radius: 2px; }
-        .mmv-chart { flex: 1; min-height: 90px; background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; padding: 10px; }
+        .mock-chart-area { flex: 1; min-height: 80px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); border-radius: 8px; padding: 6px; }
+        .mock-chart-area svg { width: 100%; height: 100%; }
 
-        .scroll-indicator { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); color: #475569; animation: bounceDown 2s infinite; z-index: 1; }
-        @keyframes bounceDown {
-          0%, 100% { transform: translateX(-50%) translateY(0); }
-          50% { transform: translateX(-50%) translateY(8px); }
-        }
+        /* Floating cards */
+        .float-card { position: absolute; display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(15,23,42,0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; z-index: 2; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+        .float-card strong { font-size: 11px; color: white; display: block; }
+        .float-card span { font-size: 9px; color: #64748b; }
+        .fc-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; }
+        .fc-1 { top: 20%; right: -30px; animation: floatCard 5s ease-in-out infinite; }
+        .fc-2 { bottom: 30%; left: -35px; animation: floatCard 5s ease-in-out infinite 1.5s; }
+        .fc-3 { bottom: 8%; right: -20px; animation: floatCard 5s ease-in-out infinite 3s; }
+        @keyframes floatCard { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
-        /* ── SECTION SHARED ──────────────────────── */
-        .section-header, .dark-header { text-align: center; margin-bottom: 56px; }
-        .section-badge-glow {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 6px 18px; background: rgba(129,140,248,0.08);
-          border: 1px solid rgba(129,140,248,0.15); border-radius: 30px;
-          font-size: 12px; font-weight: 700; color: #a5b4fc; margin-bottom: 16px;
-        }
-        .dark-header h2 { font-size: 38px; font-weight: 900; margin-bottom: 14px; color: white; }
-        .dark-header p { font-size: 16px; color: #64748b; max-width: 560px; margin: 0 auto; line-height: 1.7; }
+        .scroll-hint { text-align: center; color: #334155; animation: bounceD 2s infinite; margin-top: 20px; position: relative; z-index: 1; }
+        @keyframes bounceD { 0%,100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
 
-        /* ── HIGHLIGHTS ──────────────────────────── */
-        .lp-highlights { padding: 120px 32px; max-width: 1200px; margin: 0 auto; }
-        .highlights-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-        .highlights-grid.animate-in .highlight-card { animation: cardUp 0.7s ease forwards; animation-delay: var(--delay); }
-        .highlight-card {
-          background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
-          border-radius: 20px; padding: 36px 28px; transition: all 0.4s;
-          opacity: 0; transform: translateY(30px);
-        }
-        .highlights-grid:not(.animate-in) .highlight-card { opacity: 1; transform: none; }
-        .highlight-card:hover { transform: translateY(-6px); border-color: rgba(129,140,248,0.2); background: rgba(255,255,255,0.04); box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
-        .hc-icon-wrap { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; margin-bottom: 22px; }
-        .highlight-card h3 { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: white; }
-        .highlight-card p { font-size: 14px; color: #94a3b8; line-height: 1.7; }
-        @keyframes cardUp { to { opacity: 1; transform: translateY(0); } }
+        /* ── Module Strip (Marquee) ── */
+        .module-strip { overflow: hidden; padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); position: relative; z-index: 1; }
+        .strip-track { display: flex; gap: 32px; animation: marquee 30s linear infinite; width: max-content; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .strip-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #475569; white-space: nowrap; }
 
-        /* ── EXPERIENCE ──────────────────────────── */
-        .lp-experience { padding: 80px 32px; }
-        .exp-inner {
-          max-width: 1100px; margin: 0 auto; display: flex; align-items: center; gap: 60px;
-          background: linear-gradient(135deg, rgba(129,140,248,0.06), rgba(168,85,247,0.04));
-          border: 1px solid rgba(129,140,248,0.08); border-radius: 28px; padding: 64px;
-          opacity: 0; transform: translateY(30px); transition: all 0.7s;
-        }
-        .exp-inner.animate-in { opacity: 1; transform: translateY(0); }
-        .exp-left { flex: 1; }
-        .exp-left h2 { font-size: 34px; font-weight: 900; margin-bottom: 16px; color: white; line-height: 1.2; }
-        .exp-left p { font-size: 15px; color: #94a3b8; line-height: 1.8; margin-bottom: 24px; }
-        .exp-features { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .exp-f { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #cbd5e1; }
-        .exp-f svg { color: #818cf8; }
+        /* ── Section Shared ────────── */
+        .sec-header { text-align: center; margin-bottom: 56px; }
+        .sec-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.12); border-radius: 30px; font-size: 11px; font-weight: 700; color: #a5b4fc; margin-bottom: 16px; }
+        .sec-header h2 { font-size: 38px; font-weight: 900; color: white; margin-bottom: 12px; }
+        .sec-header p { font-size: 15px; color: #64748b; max-width: 520px; margin: 0 auto; line-height: 1.7; }
 
-        .exp-right { flex: 0 0 280px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        .exp-card {
-          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 18px; padding: 24px 16px; text-align: center; transition: 0.3s;
-        }
-        .exp-card:hover { transform: translateY(-4px); border-color: rgba(129,140,248,0.2); }
-        .ec-num { font-size: 28px; font-weight: 900; color: white; display: flex; align-items: center; justify-content: center; gap: 4px; }
-        .ec-label { font-size: 11px; color: #64748b; font-weight: 600; margin-top: 4px; }
-        .ec-1 { border-color: rgba(129,140,248,0.15); }
-        .ec-2 { border-color: rgba(245,158,11,0.15); }
-        .ec-3 { border-color: rgba(16,185,129,0.15); }
-        .ec-4 { border-color: rgba(239,68,68,0.15); }
+        /* ── Features ─────────────── */
+        .sec-features { padding: 120px 32px; max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+        .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .feat-grid.in .feat-card { animation: cardIn 0.6s ease forwards; animation-delay: var(--d); }
+        .feat-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 18px; padding: 32px 26px; transition: 0.4s; opacity: 0; transform: translateY(24px); position: relative; overflow: hidden; }
+        .feat-grid:not(.in) .feat-card { opacity: 1; transform: none; }
+        .feat-card:hover { border-color: rgba(129,140,248,0.15); transform: translateY(-4px); background: rgba(255,255,255,0.035); }
+        .feat-card:hover .feat-shine { opacity: 1; }
+        .feat-shine { position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 30% 30%, rgba(129,140,248,0.04), transparent 60%); opacity: 0; transition: opacity 0.4s; pointer-events: none; }
+        .feat-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; margin-bottom: 20px; }
+        .feat-card h3 { font-size: 18px; font-weight: 800; color: white; margin-bottom: 8px; }
+        .feat-card p { font-size: 13px; color: #8892b0; line-height: 1.7; }
+        @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
 
-        /* ── MODULES ─────────────────────────────── */
-        .lp-modules { padding: 120px 32px; max-width: 1100px; margin: 0 auto; }
-        .modules-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-        .modules-grid.animate-in .module-card { animation: cardUp 0.5s ease forwards; animation-delay: var(--delay); }
-        .module-card {
-          display: flex; align-items: flex-start; gap: 14px;
-          background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04);
-          border-radius: 14px; padding: 22px 20px; transition: all 0.3s;
-          opacity: 0; transform: translateY(20px);
-        }
-        .modules-grid:not(.animate-in) .module-card { opacity: 1; transform: none; }
-        .module-card:hover { border-color: var(--accent); background: rgba(255,255,255,0.04); transform: translateY(-3px); }
-        .mc-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .module-card h4 { font-size: 15px; font-weight: 800; color: white; margin-bottom: 4px; }
-        .module-card p { font-size: 12px; color: #64748b; line-height: 1.5; }
-        .modules-cta { text-align: center; margin-top: 48px; }
+        /* ── Search Demo ──────────── */
+        .sec-search { padding: 80px 32px; position: relative; z-index: 1; }
+        .search-demo-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; gap: 56px; background: linear-gradient(135deg, rgba(129,140,248,0.05), rgba(168,85,247,0.03)); border: 1px solid rgba(129,140,248,0.07); border-radius: 24px; padding: 56px; opacity: 0; transform: translateY(24px); transition: 0.7s; }
+        .search-demo-inner.in { opacity: 1; transform: translateY(0); }
+        .sd-left { flex: 1; }
+        .sd-left h2 { font-size: 32px; font-weight: 900; color: white; margin-bottom: 14px; }
+        .sd-left p { font-size: 14px; color: #8892b0; line-height: 1.8; margin-bottom: 24px; }
+        .sd-examples { display: flex; flex-direction: column; gap: 8px; }
+        .sd-ex { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; font-weight: 600; }
+        .sd-ex svg { color: #818cf8; flex-shrink: 0; }
+        .sd-ex code { background: rgba(129,140,248,0.1); padding: 2px 8px; border-radius: 4px; font-size: 12px; color: #a5b4fc; }
 
-        /* ── FINAL CTA ───────────────────────────── */
-        .lp-final-cta { padding: 80px 32px; }
-        .final-cta-inner {
-          max-width: 700px; margin: 0 auto; text-align: center;
-          background: linear-gradient(135deg, #0f172a, #1e1b4b);
-          border: 1px solid rgba(129,140,248,0.12); border-radius: 28px; padding: 64px;
-          opacity: 0; transform: translateY(30px); transition: all 0.7s;
-          position: relative; overflow: hidden;
-        }
-        .final-cta-inner::before {
-          content: ''; position: absolute; top: -50%; left: -20%; width: 200px; height: 200px;
-          background: radial-gradient(circle, rgba(129,140,248,0.1), transparent); pointer-events: none;
-        }
-        .final-cta-inner.animate-in { opacity: 1; transform: translateY(0); }
-        .fci-sparkle { color: #818cf8; margin-bottom: 20px; }
-        .final-cta-inner h2 { font-size: 30px; font-weight: 900; color: white; margin-bottom: 14px; }
-        .final-cta-inner p { font-size: 15px; color: #94a3b8; margin-bottom: 28px; line-height: 1.7; }
-        .fci-actions { margin-bottom: 24px; }
-        .fci-badges { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
-        .fci-badges span { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b; font-weight: 600; }
-        .fci-badges svg { color: #818cf8; }
+        .sd-right { flex: 0 0 320px; }
+        .sd-mock-search { background: #0f172a; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .sdms-bar { display: flex; align-items: center; gap: 8px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .sdms-text { font-size: 13px; color: #94a3b8; }
+        .sdms-cursor { width: 2px; height: 14px; background: #818cf8; animation: blink 1s infinite; }
+        .sdms-results { padding: 12px; }
+        .sdms-section { font-size: 10px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 1px; padding: 4px 8px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .ai-chip { background: linear-gradient(135deg, #818cf8, #a855f7); color: white; padding: 1px 5px; border-radius: 3px; font-size: 8px; font-weight: 900; }
+        .sdms-item { display: flex; align-items: center; gap: 10px; padding: 10px 10px; border-radius: 8px; transition: 0.2s; margin-bottom: 2px; }
+        .sdms-item.active { background: rgba(129,140,248,0.08); }
+        .sdms-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .sdms-item strong { font-size: 13px; color: white; display: block; font-weight: 700; }
+        .sdms-item span { font-size: 10px; color: #64748b; }
 
-        /* ── FOOTER ──────────────────────────────── */
-        .lp-footer { background: #030711; color: white; padding: 40px 32px; border-top: 1px solid rgba(255,255,255,0.04); }
-        .footer-simple { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
-        .footer-nav { display: flex; gap: 24px; }
-        .footer-nav a { font-size: 13px; color: #475569; text-decoration: none; font-weight: 600; transition: 0.2s; }
-        .footer-nav a:hover { color: #a5b4fc; }
-        .footer-copy { font-size: 12px; color: #334155; margin: 0; }
+        /* ── Modules Grid ─────────── */
+        .sec-modules { padding: 120px 32px; max-width: 1000px; margin: 0 auto; position: relative; z-index: 1; }
+        .mod-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .mod-grid.in .mod-pill { animation: pillIn 0.4s ease forwards; animation-delay: var(--d); }
+        .mod-pill { display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; font-size: 13px; font-weight: 700; color: #cbd5e1; transition: 0.3s; opacity: 0; transform: scale(0.9); cursor: default; }
+        .mod-grid:not(.in) .mod-pill { opacity: 1; transform: none; }
+        .mod-pill:hover { border-color: var(--c); background: rgba(255,255,255,0.04); transform: translateY(-2px) !important; }
+        @keyframes pillIn { to { opacity: 1; transform: scale(1); } }
+        .mod-cta { text-align: center; margin-top: 48px; }
 
-        /* ── RESPONSIVE ──────────────────────────── */
+        /* ── Workflow ─────────────── */
+        .sec-workflow { padding: 120px 32px; max-width: 1000px; margin: 0 auto; position: relative; z-index: 1; }
+        .wf-timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; position: relative; }
+        .wf-line { position: absolute; top: 56px; left: 12%; right: 12%; height: 2px; background: linear-gradient(90deg, rgba(129,140,248,0.1), rgba(168,85,247,0.2), rgba(129,140,248,0.1)); z-index: 0; }
+        .wf-timeline.in .wf-step { animation: cardIn 0.6s ease forwards; animation-delay: var(--d); }
+        .wf-step { text-align: center; position: relative; z-index: 1; opacity: 0; transform: translateY(20px); }
+        .wf-timeline:not(.in) .wf-step { opacity: 1; transform: none; }
+        .wf-num { font-size: 11px; font-weight: 900; color: #818cf8; margin-bottom: 12px; letter-spacing: 2px; }
+        .wf-icon { width: 56px; height: 56px; margin: 0 auto 16px; background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #a5b4fc; }
+        .wf-step h3 { font-size: 15px; font-weight: 800; color: white; margin-bottom: 8px; }
+        .wf-step p { font-size: 12px; color: #64748b; line-height: 1.6; }
+
+        /* ── Final CTA ────────────── */
+        .sec-final { padding: 80px 32px; position: relative; z-index: 1; }
+        .final-box { max-width: 700px; margin: 0 auto; text-align: center; background: linear-gradient(135deg, #0f172a, #1a1444); border: 1px solid rgba(129,140,248,0.1); border-radius: 28px; padding: 64px; position: relative; overflow: hidden; opacity: 0; transform: translateY(24px); transition: 0.7s; }
+        .final-box.in { opacity: 1; transform: translateY(0); }
+        .final-orb { position: absolute; top: -40%; left: -20%; width: 250px; height: 250px; background: radial-gradient(circle, rgba(129,140,248,0.08), transparent); pointer-events: none; }
+        .final-sparkle { color: #818cf8; margin-bottom: 20px; }
+        .final-box h2 { font-size: 32px; font-weight: 900; color: white; margin-bottom: 14px; }
+        .final-box p { font-size: 15px; color: #8892b0; line-height: 1.7; margin-bottom: 28px; }
+
+        /* ── Footer ───────────────── */
+        .lp-foot { background: #030711; padding: 32px; border-top: 1px solid rgba(255,255,255,0.03); position: relative; z-index: 1; }
+        .foot-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+        .foot-links { display: flex; gap: 20px; }
+        .foot-links a { font-size: 12px; color: #334155; text-decoration: none; font-weight: 600; transition: 0.2s; }
+        .foot-links a:hover { color: #a5b4fc; }
+        .foot-copy { font-size: 11px; color: #1e293b; }
+
+        /* ── Responsive ───────────── */
         @media (max-width: 900px) {
-          .lp-hero { flex-direction: column; padding-top: 100px; gap: 40px; }
-          .hero-content h1 { font-size: 34px; }
-          .highlights-grid, .modules-grid { grid-template-columns: 1fr 1fr; }
-          .exp-inner { flex-direction: column; padding: 40px; }
-          .exp-right { flex: unset; width: 100%; }
-          .footer-inner { grid-template-columns: 1fr 1fr; }
-          .lp-nav-links { display: none; }
-          .hero-visual { max-width: 100%; }
-          .hero-stats { gap: 20px; }
+          .hero-inner { flex-direction: column; gap: 40px; }
+          .hero-text h1 { font-size: 34px; }
+          .hero-mockup-wrap { max-width: 100%; }
+          .feat-grid { grid-template-columns: 1fr 1fr; }
+          .search-demo-inner { flex-direction: column; padding: 36px; }
+          .sd-right { flex: unset; width: 100%; }
+          .wf-timeline { grid-template-columns: 1fr 1fr; }
+          .wf-line { display: none; }
+          .nav-links { display: none; }
+          .hero-counters { gap: 16px; }
+          .float-card { display: none; }
         }
         @media (max-width: 600px) {
-          .highlights-grid, .modules-grid { grid-template-columns: 1fr; }
-          .hero-content h1 { font-size: 28px; }
-          .footer-inner { grid-template-columns: 1fr; }
+          .feat-grid { grid-template-columns: 1fr; }
+          .wf-timeline { grid-template-columns: 1fr; }
+          .hero-text h1 { font-size: 28px; }
+          .hero-counters { flex-wrap: wrap; }
         }
       `}</style>
     </div>
