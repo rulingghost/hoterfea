@@ -78,7 +78,6 @@ const LandingPage = ({ onOpenDemo }) => {
           <div className="lp-nav-links">
             <a href="#highlights">Özellikler</a>
             <a href="#modules">Modüller</a>
-            <a href="#experience">Deneyim</a>
           </div>
           <div className="lp-nav-actions">
             <button className="lp-btn-glow" onClick={onOpenDemo}>
@@ -204,45 +203,7 @@ const LandingPage = ({ onOpenDemo }) => {
         </div>
       </section>
 
-      {/* ── Experience / CTA ──────────────────── */}
-      <section id="experience" className="lp-experience" data-animate>
-        <div className={`exp-inner ${isVisible('experience') ? 'animate-in' : ''}`}>
-          <div className="exp-left">
-            <div className="section-badge-glow" style={{marginBottom:20}}><Heart size={12} /> Deneyim</div>
-            <h2>Her Anı <span className="gradient-text-hero">Özel</span> Kılıyoruz</h2>
-            <p>Misafirlerimizin %96'sı tekrar gelmeyi tercih ediyor. Kişiye özel hizmet anlayışımız, yapay zeka destekli operasyonlarımız ve eğitimli kadromuzla farkı yaşayın.</p>
-            <div className="exp-features">
-              <div className="exp-f"><Check size={16} /> AI destekli kişisel öneri sistemi</div>
-              <div className="exp-f"><Check size={16} /> 7/24 özel concierge hizmeti</div>
-              <div className="exp-f"><Check size={16} /> Anlık oda servisi ve talep yönetimi</div>
-              <div className="exp-f"><Check size={16} /> Çok dilli personel kadrosu</div>
-              <div className="exp-f"><Check size={16} /> Çocuk dostu animasyon programları</div>
-              <div className="exp-f"><Check size={16} /> Özel transfer ve tur organizasyonu</div>
-            </div>
-            <button className="lp-btn-hero" onClick={onOpenDemo} style={{marginTop:28}}>
-              <Play size={18} /> Sistemi Keşfedin <ArrowRight size={16} />
-            </button>
-          </div>
-          <div className="exp-right">
-            <div className="exp-card ec-1">
-              <div className="ec-num">%96</div>
-              <div className="ec-label">Misafir Memnuniyeti</div>
-            </div>
-            <div className="exp-card ec-2">
-              <div className="ec-num">4.9<Star size={16} fill="#f59e0b" color="#f59e0b" /></div>
-              <div className="ec-label">Google Değerlendirme</div>
-            </div>
-            <div className="exp-card ec-3">
-              <div className="ec-num">15K+</div>
-              <div className="ec-label">Yıllık Misafir</div>
-            </div>
-            <div className="exp-card ec-4">
-              <div className="ec-num">12</div>
-              <div className="ec-label">Uluslararası Ödül</div>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* ── Technology / Modules ────────────────── */}
       <section id="modules" className="lp-modules" data-animate>
