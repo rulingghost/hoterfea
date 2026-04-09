@@ -19,13 +19,13 @@ const MODULES = [
   { icon: <ShieldCheck size={24} />, title: 'Güvenlik & KBS', desc: 'KVKK uyumu ve otomatik polis bildirimi.', color: '#e11d48' },
 ];
 
-const HOTEL_HIGHLIGHTS = [
-  { icon: <Sunset size={40} />, title: 'Eşsiz Konum', desc: 'Denize sıfır konumda, muhteşem gün batımı manzarasıyla unutulmaz anlar yaşayın. Özel plaj ve marina erişimi.', gradient: 'linear-gradient(135deg, #f97316, #ec4899)' },
-  { icon: <Gem size={40} />, title: 'Premium Konfor', desc: 'Dünya standartlarında döşenmiş odalar, ortopedik yataklar, yağmur duşları ve özel balkon manzarası.', gradient: 'linear-gradient(135deg, #8b5cf6, #3b82f6)' },
-  { icon: <Coffee size={40} />, title: 'Gastronomi Deneyimi', desc: '5 farklı restoran, uluslararası mutfak ve ödüllü şef kadrosuyla damak tadınıza hitap eden lezzetler.', gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)' },
-  { icon: <Waves size={40} />, title: 'SPA & Wellness', desc: 'Kapalı ve açık havuzlar, Türk hamamı, sauna, jakuzi ve profesyonel masaj terapileri.', gradient: 'linear-gradient(135deg, #06b6d4, #10b981)' },
-  { icon: <Mountain size={40} />, title: 'Aktivite & Macera', desc: 'Su sporları, dalış, tekne turları, doğa yürüyüşleri ve çocuk animasyon programları.', gradient: 'linear-gradient(135deg, #10b981, #3b82f6)' },
-  { icon: <Award size={40} />, title: 'Ödüllü Hizmet', desc: 'Dünya turizm ödülleri sahibi, 7/24 concierge hizmeti ve kişiye özel misafir deneyimi.', gradient: 'linear-gradient(135deg, #f59e0b, #8b5cf6)' },
+const APP_FEATURES = [
+  { icon: <Sunset size={40} />, title: 'Gerçek Zamanlı İzleme', desc: 'Doluluk oranı, gelir, check-in/out durumları ve tüm operasyonları anlık olarak tek panelden takip edin.', gradient: 'linear-gradient(135deg, #f97316, #ec4899)' },
+  { icon: <Gem size={40} />, title: 'AI Destekli Fiyatlama', desc: 'Yapay zeka algoritmaları ile dinamik fiyatlandırma yapın, gelir optimizasyonunu otomatikleştirin.', gradient: 'linear-gradient(135deg, #8b5cf6, #3b82f6)' },
+  { icon: <Coffee size={40} />, title: 'Akıllı Arama Motoru', desc: 'Yazım hataları tolere eden fuzzy search ile modülleri, misafirleri ve özellikleri saniyede bulun.', gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)' },
+  { icon: <Waves size={40} />, title: 'Tam Entegrasyon', desc: 'Ön büro, restoran, SPA, housekeeping ve muhasebe modülleri birbirine entegre çalışır.', gradient: 'linear-gradient(135deg, #06b6d4, #10b981)' },
+  { icon: <Mountain size={40} />, title: 'Kolay Kullanım', desc: 'Modern ve sezgisel arayüz sayesinde personel eğitim süresi minimuma iner, verimlilik artar.', gradient: 'linear-gradient(135deg, #10b981, #3b82f6)' },
+  { icon: <Award size={40} />, title: 'Detaylı Raporlama', desc: 'Gelir, doluluk, departman performansı ve misafir analitiği gibi kapsamlı raporlara anında erişin.', gradient: 'linear-gradient(135deg, #f59e0b, #8b5cf6)' },
 ];
 
 const STATS = [
@@ -187,12 +187,12 @@ const LandingPage = ({ onOpenDemo }) => {
       {/* ── Hotel Highlights ────────────────────── */}
       <section id="highlights" className="lp-highlights" data-animate>
         <div className="section-header dark-header">
-          <div className="section-badge-glow"><Gem size={12} /> Otelimiz</div>
-          <h2>Lüksün ve Teknolojinin <span className="gradient-text-hero">Buluştuğu</span> Nokta</h2>
-          <p>Eşsiz konforumuz, ödüllü gastronomi deneyimimiz ve dünya standartlarında hizmetlerimizle sizi bekliyoruz.</p>
+          <div className="section-badge-glow"><Gem size={12} /> Özellikler</div>
+          <h2>Neden <span className="gradient-text-hero">Hoterfea</span>?</h2>
+          <p>Otelinizin tüm ihtiyaçlarını karşılayan güçlü özelliklerle operasyonlarınızı dönüştürün.</p>
         </div>
         <div className={`highlights-grid ${isVisible('highlights') ? 'animate-in' : ''}`}>
-          {HOTEL_HIGHLIGHTS.map((h, i) => (
+          {APP_FEATURES.map((h, i) => (
             <div key={i} className="highlight-card" style={{'--delay': `${i * 0.1}s`}}>
               <div className="hc-icon-wrap" style={{background: h.gradient}}>
                 {h.icon}
