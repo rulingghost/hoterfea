@@ -54,7 +54,6 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
         <div className="logo-box">H</div>
         <div>
           <strong>HOTERFEA</strong>
-          <div className="logo-sub">Smart Hotel Suite</div>
         </div>
       </div>
 

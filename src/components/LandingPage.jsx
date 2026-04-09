@@ -73,16 +73,14 @@ const LandingPage = ({ onOpenDemo }) => {
             </div>
             <div>
               <strong>HOTERFEA</strong>
-              <span>Smart Hotel Suite</span>
             </div>
           </div>
           <div className="lp-nav-links">
-            <a href="#highlights">Otelimiz</a>
-            <a href="#modules">Teknoloji</a>
+            <a href="#highlights">Özellikler</a>
+            <a href="#modules">Modüller</a>
             <a href="#experience">Deneyim</a>
           </div>
           <div className="lp-nav-actions">
-            <button className="lp-btn-ghost" onClick={onOpenDemo}>Giriş Yap</button>
             <button className="lp-btn-glow" onClick={onOpenDemo}>
               <Play size={14} /> Canlı Demo
             </button>
@@ -112,9 +110,6 @@ const LandingPage = ({ onOpenDemo }) => {
           <div className="hero-actions">
             <button className="lp-btn-hero" onClick={onOpenDemo}>
               <Monitor size={18} /> Canlı Demo'yu Keşfet <ArrowRight size={16} />
-            </button>
-            <button className="lp-btn-outline-dark">
-              <Headphones size={16} /> Bize Ulaşın
             </button>
           </div>
           <div className="hero-stats">
@@ -297,38 +292,17 @@ const LandingPage = ({ onOpenDemo }) => {
 
       {/* ── Footer ─────────────────────────────── */}
       <footer className="lp-footer">
-        <div className="footer-inner">
-          <div className="footer-brand">
-            <div className="lp-brand">
-              <div className="lp-logo-icon"><Sparkles size={18} /></div>
-              <div>
-                <strong>HOTERFEA</strong>
-                <span>Smart Hotel Suite v3.0</span>
-              </div>
-            </div>
-            <p>Yapay zeka destekli, yeni nesil otel yönetim ve misafir deneyimi platformu.</p>
+        <div className="footer-simple">
+          <div className="lp-brand">
+            <div className="lp-logo-icon"><Sparkles size={18} /></div>
+            <div><strong>HOTERFEA</strong></div>
           </div>
-          <div className="footer-links">
-            <h4>Keşfet</h4>
-            <a href="#highlights">Otelimiz</a>
-            <a href="#modules">Teknoloji</a>
+          <div className="footer-nav">
+            <a href="#highlights">Özellikler</a>
+            <a href="#modules">Modüller</a>
             <a href="#" onClick={(e)=>{e.preventDefault();onOpenDemo();}}>Demo</a>
           </div>
-          <div className="footer-links">
-            <h4>Hizmetler</h4>
-            <a href="#">Konaklama</a>
-            <a href="#">Restoran</a>
-            <a href="#">SPA & Wellness</a>
-          </div>
-          <div className="footer-links">
-            <h4>İletişim</h4>
-            <a href="#">info@hoterfea.com</a>
-            <a href="#">+90 242 555 0000</a>
-            <a href="#">Antalya, Türkiye</a>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <p>© 2026 Hoterfea. Tüm hakları saklıdır.</p>
+          <p className="footer-copy">© 2026 Hoterfea. Tüm hakları saklıdır.</p>
         </div>
       </footer>
 
@@ -572,14 +546,12 @@ const LandingPage = ({ onOpenDemo }) => {
         .fci-badges svg { color: #818cf8; }
 
         /* ── FOOTER ──────────────────────────────── */
-        .lp-footer { background: #030711; color: white; padding: 80px 32px 0; border-top: 1px solid rgba(255,255,255,0.04); }
-        .footer-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; padding-bottom: 48px; }
-        .footer-brand p { font-size: 13px; color: #475569; margin-top: 16px; line-height: 1.7; }
-        .footer-links h4 { font-size: 12px; font-weight: 800; margin-bottom: 16px; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; }
-        .footer-links a { display: block; font-size: 13px; color: #475569; text-decoration: none; padding: 5px 0; transition: 0.2s; }
-        .footer-links a:hover { color: #a5b4fc; }
-        .footer-bottom { border-top: 1px solid rgba(255,255,255,0.04); text-align: center; padding: 24px 0; max-width: 1100px; margin: 0 auto; }
-        .footer-bottom p { font-size: 12px; color: #334155; }
+        .lp-footer { background: #030711; color: white; padding: 40px 32px; border-top: 1px solid rgba(255,255,255,0.04); }
+        .footer-simple { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+        .footer-nav { display: flex; gap: 24px; }
+        .footer-nav a { font-size: 13px; color: #475569; text-decoration: none; font-weight: 600; transition: 0.2s; }
+        .footer-nav a:hover { color: #a5b4fc; }
+        .footer-copy { font-size: 12px; color: #334155; margin: 0; }
 
         /* ── RESPONSIVE ──────────────────────────── */
         @media (max-width: 900px) {
