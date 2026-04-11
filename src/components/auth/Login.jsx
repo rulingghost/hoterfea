@@ -99,9 +99,9 @@ const Login = ({ onLogin }) => {
               required
             >
               <option value="">Seçiniz...</option>
-              <option value="grand-resort">Grand Resort Hotel</option>
-              <option value="spa-city">City Spa & Wellness</option>
-              <option value="beach-club">Beach Club Suites</option>
+              <option value="grand-resort">Demo Otel 1</option>
+              <option value="spa-city">Demo Otel 2</option>
+              <option value="beach-club">Demo Otel 3</option>
             </select>
           </div>
 
