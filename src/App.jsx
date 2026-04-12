@@ -2,15 +2,20 @@ import React, { useState } from 'react';
 import LandingPage from './components/LandingPage';
 import Login from './components/auth/Login';
 import MainHub from './components/MainHub';
+import PresentationMode from './components/PresentationMode';
 import { HotelProvider } from './context/HotelContext';
 
 function App() {
-  // 'landing' | 'login' | 'app'
+  // 'landing' | 'login' | 'app' | 'presentation'
   const [page, setPage] = useState('landing');
   const [userContext, setUserContext] = useState(null);
 
   const handleOpenDemo = () => {
     setPage('login');
+  };
+
+  const handleOpenPresentation = () => {
+    setPage('presentation');
   };
 
   const handleLogin = (data) => {
@@ -23,8 +28,12 @@ function App() {
     setUserContext(null);
   };
 
+  if (page === 'presentation') {
+    return <PresentationMode onBack={() => setPage('landing')} />;
+  }
+
   if (page === 'landing') {
-    return <LandingPage onOpenDemo={handleOpenDemo} />;
+    return <LandingPage onOpenDemo={handleOpenDemo} onOpenPresentation={handleOpenPresentation} />;
   }
 
   if (page === 'login') {

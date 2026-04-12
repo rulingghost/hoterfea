@@ -79,7 +79,7 @@ const WORKFLOW_STEPS = [
 /* ═══════════════════════════════════════════
    Component
    ═══════════════════════════════════════════ */
-const LandingPage = ({ onOpenDemo }) => {
+const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
   const [scrollY, setScrollY] = useState(0);
   const [visibleSections, setVisibleSections] = useState(new Set());
   const [activeModuleIdx, setActiveModuleIdx] = useState(0);
@@ -164,6 +164,7 @@ const LandingPage = ({ onOpenDemo }) => {
             <a href="#features">Özellikler</a>
             <a href="#modules">Modüller</a>
             <a href="#workflow">Nasıl Çalışır</a>
+            <a href="#" onClick={e => { e.preventDefault(); onOpenPresentation(); }} style={{ color: '#D4AF37' }}><Sparkles size={12} style={{marginRight:4, display:'inline'}} /> Sunumu Gör</a>
           </div>
           <button className="nav-cta" onClick={onOpenDemo}>
             <Play size={13} /> Canlı Demo
@@ -194,6 +195,9 @@ const LandingPage = ({ onOpenDemo }) => {
             <div className="hero-btns">
               <button className="btn-primary-xl" onClick={onOpenDemo}>
                 <Rocket size={18} /> Demo'yu Başlat <ArrowRight size={16} />
+              </button>
+              <button className="btn-secondary-xl" onClick={onOpenPresentation} style={{ marginLeft: '16px' }}>
+                <Eye size={18} /> Sunumu İncele
               </button>
             </div>
 
@@ -499,6 +503,9 @@ const LandingPage = ({ onOpenDemo }) => {
         .btn-primary-xl::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.08), transparent); transform: rotate(45deg); transition: 0.6s; }
         .btn-primary-xl:hover { transform: translateY(-2px); box-shadow: 0 0 60px rgba(168,85,247,0.5); }
         .btn-primary-xl:hover::before { left: 100%; }
+
+        .btn-secondary-xl { padding: 16px 34px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; font-size: 16px; font-weight: 800; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; backdrop-filter: blur(10px); }
+        .btn-secondary-xl:hover { background: rgba(255,255,255,0.1); border-color: rgba(212, 175, 55, 0.4); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2); color: #D4AF37; }
 
         .hero-counters { display: flex; align-items: center; gap: 28px; }
         .hc-item strong { font-size: 30px; font-weight: 900; color: white; display: block; }
