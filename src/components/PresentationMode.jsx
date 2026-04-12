@@ -354,11 +354,10 @@ const PresentationMode = ({ onBack }) => {
                      width: '100%' 
                    }}
                 >
-                  {slide.tag && (
-                    <motion.span variants={itemVariants} className="pres-tag" style={{ fontSize: '1.1vw', padding: '0.6vw 1.2vw', marginBottom: '1.5vw' }}>
-                      {slide.tag}
-                    </motion.span>
-                  )}
+                  {/* 
+                     User requested complete removal of the 'saha otomasyonu' style tags 
+                     to completely fix text overlapping issues. 
+                  */}
 
                   <motion.h1 
                     variants={itemVariants} 
