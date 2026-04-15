@@ -52,7 +52,7 @@ const Login = ({ onLogin }) => {
         <div className="login-header">
           <div className="logo-section">
             <Building2 size={48} className="logo-icon" />
-            <h1>HOTEL ERP</h1>
+            <h1>HOTERFEA</h1>
           </div>
         </div>
 
@@ -137,7 +137,7 @@ const Login = ({ onLogin }) => {
 
       <footer className="login-footer">
         <div className="footer-left">
-          <span>Grand-X ERP v2.0.26</span>
+          <span>Hoterfea v2.0.26</span>
           <span className="status"><span className="status-dot"></span> Sunucu: Aktif</span>
           <span>Kullanıcı IP: 192.168.1.1</span>
         </div>

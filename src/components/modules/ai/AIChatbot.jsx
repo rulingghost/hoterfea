@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useHotel } from '../../../context/HotelContext';
+import { modulesConfig } from '../../../data/moduleList';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Bot, User, Sparkles, RotateCcw } from 'lucide-react';
 
 const QUICK_QUESTIONS = [
+  '🧭 Uygulamayı nasıl kullanırım?',
+  '🔍 Fatura ekranı nerede?',
   '📊 Bugün doluluk oranı kaç?',
   '💰 Bugünkü gelir ne kadar?',
   '🏨 Boş oda var mı?',
@@ -73,7 +76,30 @@ const AIChatbot = () => {
     if (query.includes('bakiye') || query.includes('ödenmemiş')) return `💳 **Açık Bakiyeler (${openBal.length} res.):**\n\n${openBal.map(r => `- **${r.guest}** (Oda ${r.room}): ₺${r.balance.toLocaleString()}`).join('\n')}\n\nToplam: ₺${openBal.reduce((s, r) => s + r.balance, 0).toLocaleString()}`;
     if (query.includes('personel') || query.includes('staff')) return `👥 **Personel Durumu:**\n\n- Aktif: ${staff.filter(s => s.status === 'aktif').length}\n- İzinli: ${staff.filter(s => s.status === 'izinli').length}\n\n**Departman Dağılımı:**\n${[...new Set(staff.map(s => s.dept))].map(d => `- ${d}: ${staff.filter(s => s.dept === d).length} kişi`).join('\n')}`;
     
-    return `🤔 Sorunuzu tam anlayamadım. Şunları yapabilirim:\n\n- Bilgi veririm (Doluluk, gelir, boş odalar, stok)\n- Görev oluştururum ("Oda 102 temizlenecek" veya "Oda 205 klima bozuk")\n- Sipariş otomatize edebilirim ("Kritik stok sipariş ver")`;
+    // APP GUIDE INTENT DETECTION
+    if (query.includes('nasıl kullanırım') || query.includes('rehber')) {
+      return `🧭 **Hoterfea Yapay Zeka Rehberine Hoş Geldiniz!**\n\nBen sistemin her köşesini bilen asistanınızım. Aklınıza gelen işlemi direkt bana sorabilirsiniz. Örnek:\n\n- "Fatura nasıl kesilir?"\n- "Acente sözleşmesini nerede bulurum?"\n- "Oda temizlik listesi hangi menüde?"\n\nSistemi 49 farklı modül üzerinden en verimli şekilde kullanmanız için size yol göstereceğim. Ne yapmak istersiniz?`;
+    }
+
+    const findingKeywords = ['nerede', 'nerden', 'nereden', 'hangi menü', 'bulurum', 'bulabilirim', 'nasıl yap', 'girebilirim', 'eklerim'];
+    const isSeekingGuide = findingKeywords.some(fk => query.includes(fk));
+
+    if (isSeekingGuide || query.length > 5) {
+      // Find matching module
+      const matchedModule = modulesConfig.find(m => {
+        const matchesName = m.name.toLowerCase().includes(query.replace(/nerede|nasıl|yapılır/gi, '').trim());
+        const matchesKeyword = m.keywords.some(k => query.includes(k.toLowerCase()));
+        return matchesName || matchesKeyword;
+      });
+
+      if (matchedModule) {
+        return `🧭 **Uygulama İçi Rehber**\n\nBu işlemi yapmak için sol menüden veya ana sayfaki listeden şu modülü kullanabilirsiniz:\n\n- Kategori: **${matchedModule.category}**\n- İlgili Modül: **${matchedModule.name}**\n\n(Bu menüye tıklayarak ilgili departmanın veya işlemin kontrol ekranına ulaşabilirsiniz.)`;
+      } else if (isSeekingGuide) {
+        return `🤔 Yapmak istediğiniz işlemi sistemdeki 49 modülden biriyle tam olarak eşleştiremedim. Biraz daha farklı kelimelerle, örneğin "Rezervasyon ekleme", "Stok durumu" gibi tarif edebilir misiniz?`;
+      }
+    }
+
+    return `🤔 Sorunuzu tam anlayamadım. Şunları yapabilirim:\n\n- Uygulama rehberliği ("Fatura menüsü nerede?")\n- Bilgi veririm (Doluluk, gelir, boş odalar, stok)\n- Görev oluştururum ("Oda 102 temizlenecek" veya "Oda 205 klima bozuk")\n- Sipariş otomatize edebilirim ("Kritik stok sipariş ver")`;
   };
 
   const sendMessage = (text) => {
