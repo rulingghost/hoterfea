@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { useHotel } from '../../context/HotelContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { Bell, LogOut, Search, X, CheckCircle, AlertCircle, Activity, LayoutGrid, Users } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { modulesConfig } from '../../data/moduleList';
 
-// Levenshtein mesafesi (Yazım yanlışı toleransı için)
+// Levenshtein mesafesi
 const getLevenshteinDistance = (a, b) => {
   if (a.length === 0) return b.length;
   if (b.length === 0) return a.length;
@@ -28,7 +29,6 @@ const isFuzzyMatch = (str, query) => {
   const lowerStr = str.toLowerCase();
   if (lowerStr.includes(query)) return true;
   if (query.length < 3) return false;
-  
   const allowedTypos = query.length > 5 ? 2 : 1;
   const words = lowerStr.split(' ');
   for (const word of words) {
@@ -41,61 +41,50 @@ const isFuzzyMatch = (str, query) => {
 
 const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) => {
   const { notifications, stats, guests, reservations } = useHotel();
+  const { lang, toggleLang, t } = useLanguage();
   const [showNotifs, setShowNotifs] = useState(false);
   const [search, setSearch] = useState('');
 
   const unread = notifications.filter(n => n.type === 'warn').length;
 
-  // Akıllı Arama & Niyet (Intent) Motoru
   const searchResults = useMemo(() => {
     if (!search || search.trim().length < 2) return null;
     const q = search.trim().toLowerCase();
 
-    // 1. Modül Skorlama (Intent & Keyword Search)
     const scoredModules = modulesConfig.map(m => {
       let score = 0;
-      
-      // Doğrudan isim eşleşmesi
-      if (m.name.toLowerCase().includes(q)) score += 10;
-      else if (isFuzzyMatch(m.name, q)) score += 6;
-      
-      // Intent (Keywords) araması 
-      // Örn: "yemek aç" yazıldıysa, "yemek" keyword'ü bunu yakalar.
+      const displayName = lang === 'en' ? (m.nameEN || m.name) : m.name;
+      if (displayName.toLowerCase().includes(q)) score += 10;
+      else if (isFuzzyMatch(displayName, q)) score += 6;
       if (m.keywords) {
         m.keywords.forEach(k => {
           const lowerK = k.toLowerCase();
-          // Eğer keyword direkt cümlenin içindeyse (Niyet algoritması)
           if (q.includes(lowerK) || lowerK.includes(q)) score += 5;
-          // Bulanık match
           else if (isFuzzyMatch(lowerK, q)) score += 3;
         });
       }
-      return { ...m, score };
-    }).filter(m => m.score > 0).sort((a, b) => b.score - a.score).slice(0, 5); // İlk 5 en iyi sonuç
+      return { ...m, score, displayName };
+    }).filter(m => m.score > 0).sort((a, b) => b.score - a.score).slice(0, 5);
 
-    // 2. Misafir Bulanık (Fuzzy) Arama (Örn: "hens" -> "Hans Müller")
     const allGuests = guests || [];
     const scoredGuests = allGuests.map(g => {
       let score = 0;
       if (g.name.toLowerCase().includes(q)) score += 10;
       else if (isFuzzyMatch(g.name, q)) score += 5;
-      
       if (g.phone && g.phone.includes(q)) score += 5;
       if (g.email && g.email.toLowerCase().includes(q)) score += 5;
-
       return { ...g, score };
     }).filter(g => g.score > 0).sort((a, b) => b.score - a.score).slice(0, 4);
 
     return { modules: scoredModules, guests: scoredGuests };
-  }, [search, guests]);
+  }, [search, guests, lang]);
 
   const handleSelectModule = (id) => {
     if (onSelectModule) onSelectModule(id);
     setSearch('');
   };
 
-  const handleSelectGuest = (guestId) => {
-    // Misafiri seçince CRM veya Front Office'e yönlendirebiliriz.
+  const handleSelectGuest = () => {
     if (onSelectModule) onSelectModule('crm');
     setSearch('');
   };
@@ -105,21 +94,21 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
       <div className="header-left">
         {onBack && (
           <button className="back-btn" onClick={onBack}>
-            ← <span>Hub</span>
+            {t('backToHub')}
           </button>
         )}
         <div className="app-branding">
-          <h2>{activeModuleName || 'Hoterfea — Operasyon Merkezi'}</h2>
-          {!activeModuleName && <span>Tüm modüller erişilebilir</span>}
+          <h2>{activeModuleName || t('operationCenter')}</h2>
+          {!activeModuleName && <span>{t('allModulesAccessible')}</span>}
         </div>
       </div>
 
       <div className="header-right">
         {!activeModuleName && (
           <div className="quick-stats">
-            <div className="qs-pill blue">%{stats.occupancyRate} Doluluk</div>
-            <div className="qs-pill green">{stats.inHouse} İç Misafir</div>
-            {stats.totalBalance > 0 && <div className="qs-pill red">₺{(stats.totalBalance/1000).toFixed(1)}K Bakiye</div>}
+            <div className="qs-pill blue">%{stats.occupancyRate} {t('occupancyStat')}</div>
+            <div className="qs-pill green">{stats.inHouse} {t('inHouseStat')}</div>
+            {stats.totalBalance > 0 && <div className="qs-pill red">₺{(stats.totalBalance/1000).toFixed(1)}K {t('balanceStat')}</div>}
           </div>
         )}
 
@@ -129,7 +118,7 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
             <Search size={16} color={search ? '#3b82f6' : '#94a3b8'}/>
             <input
               type="text"
-              placeholder="Akıllı arama (Örn: restoran bölümünü aç)"
+              placeholder={t('smartSearchPlaceholder')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               autoComplete="off"
@@ -140,27 +129,23 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
           <AnimatePresence>
             {searchResults && (searchResults.modules.length > 0 || searchResults.guests.length > 0) && (
               <motion.div className="search-dropdown" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:10}}>
-                
-                {/* Modüller */}
                 {searchResults.modules.length > 0 && (
                   <div className="sd-section">
-                    <h4>Modüller / Özellikler <span className="ai-badge">AI UYUMLU</span></h4>
+                    <h4>{t('searchModulesLabel')} <span className="ai-badge">{t('aiCompatible')}</span></h4>
                     {searchResults.modules.map(mod => (
-                       <button key={mod.id} className="sd-item" onClick={() => handleSelectModule(mod.id)}>
-                         <div className="sd-icon" style={{color: mod.color}}><LayoutGrid size={14}/></div>
-                         <div>
-                           <span>{mod.name}</span>
-                           <small style={{color: '#94a3b8'}}>{mod.category || 'Modül'}</small>
-                         </div>
-                       </button>
+                      <button key={mod.id} className="sd-item" onClick={() => handleSelectModule(mod.id)}>
+                        <div className="sd-icon" style={{color: mod.color}}><LayoutGrid size={14}/></div>
+                        <div>
+                          <span>{mod.displayName}</span>
+                          <small style={{color: '#94a3b8'}}>{lang === 'en' ? (mod.categoryEN || mod.category) : mod.category}</small>
+                        </div>
+                      </button>
                     ))}
                   </div>
                 )}
-
-                {/* Misafirler */}
                 {searchResults.guests.length > 0 && (
                   <div className="sd-section">
-                    <h4>Misafirler (Fuzzy Match)</h4>
+                    <h4>{t('searchGuestsLabel')}</h4>
                     {searchResults.guests.map(guest => (
                       <button key={guest.id} className="sd-item" onClick={() => handleSelectGuest(guest.id)}>
                         <div className="sd-icon" style={{color: '#8b5cf6'}}><Users size={14}/></div>
@@ -174,21 +159,27 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
                 )}
               </motion.div>
             )}
-            
-            {/* Sonuç Yok */}
+
             {searchResults && searchResults.modules.length === 0 && searchResults.guests.length === 0 && (
-               <motion.div className="search-dropdown" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:10}}>
-                 <div className="sd-section" style={{textAlign:'center', padding:'20px 0'}}>
-                   <Search size={24} color="#cbd5e1" style={{marginBottom:'10px'}}/>
-                   <div style={{fontSize:'13px', color:'#64748b'}}>Aradığınız kriterlere uygun sonuç bulunamadı.</div>
-                   <div style={{fontSize:'11px', color:'#94a3b8', marginTop:'4px'}}>Eşanlamlı veya farklı kelimeler deneyin.</div>
-                 </div>
-               </motion.div>
+              <motion.div className="search-dropdown" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:10}}>
+                <div className="sd-section" style={{textAlign:'center', padding:'20px 0'}}>
+                  <Search size={24} color="#cbd5e1" style={{marginBottom:'10px'}}/>
+                  <div style={{fontSize:'13px', color:'#64748b'}}>{t('noResultsMsg')}</div>
+                  <div style={{fontSize:'11px', color:'#94a3b8', marginTop:'4px'}}>{t('noResultsHint')}</div>
+                </div>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Notifs */}
+        {/* Language Toggle */}
+        <button className="lang-toggle" onClick={toggleLang} title={lang === 'tr' ? 'Switch to English' : "Türkçe'ye Geç"}>
+          <span className={lang === 'tr' ? 'active' : ''}>TR</span>
+          <span className="divider-lang">|</span>
+          <span className={lang === 'en' ? 'active' : ''}>EN</span>
+        </button>
+
+        {/* Notifications */}
         <div className="notif-wrapper">
           <button className="icon-btn" onClick={() => setShowNotifs(!showNotifs)}>
             <Bell size={20}/>
@@ -204,7 +195,7 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
               >
                 <div className="np-head">
-                  <strong>Bildirimler</strong>
+                  <strong>{t('notificationsTitle')}</strong>
                   <button onClick={() => setShowNotifs(false)}><X size={16}/></button>
                 </div>
                 <div className="np-list">
@@ -231,10 +222,10 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
         <div className="user-profile">
           <div className="user-info">
             <strong>{user?.username || 'Admin'}</strong>
-            <span>Süper Yönetici</span>
+            <span>{t('superAdminTitle')}</span>
           </div>
           <div className="avatar">{(user?.username || 'A')[0].toUpperCase()}</div>
-          <button className="logout-btn" onClick={onLogout} title="Çıkış Yap">
+          <button className="logout-btn" onClick={onLogout} title={t('logoutTitle')}>
             <LogOut size={16}/>
           </button>
         </div>
@@ -254,8 +245,13 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
         .qs-pill.green { background: #f0fdf4; color: #10b981; }
         .qs-pill.red   { background: #fef2f2; color: #ef4444; }
 
+        .lang-toggle { display: flex; align-items: center; gap: 4px; padding: 7px 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white; font-size: 12px; font-weight: 700; color: #94a3b8; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .lang-toggle:hover { border-color: #3b82f6; }
+        .lang-toggle .active { color: #3b82f6; }
+        .lang-toggle .divider-lang { color: #e2e8f0; }
+
         .search-wrapper { position: relative; }
-        .search-bar { display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 9px 14px; border-radius: 12px; transition: 0.2s; width: 350px; }
+        .search-bar { display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 9px 14px; border-radius: 12px; transition: 0.2s; width: 320px; }
         .search-bar.focused { border-color: #3b82f6; background: white; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
         .search-bar input { border: none; background: transparent; outline: none; font-size: 13px; color: #475569; width: 100%; }
         .search-bar button { background: transparent; border: none; color: #94a3b8; cursor: pointer; display: flex; }
@@ -263,10 +259,8 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
         .search-dropdown { position: absolute; top: calc(100% + 10px); left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); padding: 12px; max-height: 500px; overflow-y: auto; z-index: 300; }
         .sd-section { margin-bottom: 16px; }
         .sd-section:last-child { margin-bottom: 0; }
-        
         .sd-section h4 { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; padding-left: 8px; display: flex; align-items: center; gap: 6px; }
         .ai-badge { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; padding: 2px 6px; border-radius: 4px; font-size: 8px; letter-spacing: 0.5px; font-weight: 900; }
-        
         .sd-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: none; background: transparent; border-radius: 10px; cursor: pointer; text-align: left; transition: 0.2s; }
         .sd-item:hover { background: #f8fafc; }
         .sd-icon { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: #f1f5f9; flex-shrink: 0; }

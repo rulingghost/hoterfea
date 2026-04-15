@@ -1,38 +1,20 @@
 import React, { useState } from 'react';
 import { useHotel } from '../../context/HotelContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronRight, Search, Star, TrendingUp, Clock,
   Zap, Bed, LogIn, LogOut, CreditCard, LayoutGrid
 } from 'lucide-react';
 
-const GROUP_ORDER = [
-  { key: 'front', label: '🏨 Ön Büro & Operasyon', color:'#3b82f6' },
-  { key: 'revenue', label: '💰 Gelir & Finans', color:'#10b981' },
-  { key: 'fb', label: '🍽️ Yiyecek & İçecek', color:'#f59e0b' },
-  { key: 'guest', label: '👥 Misafir İlişkileri', color:'#8b5cf6' },
-  { key: 'operations', label: '⚙️ Operasyon & Destek', color:'#ef4444' },
-  { key: 'analytics', label: '📊 Analiz & Raporlama', color:'#64748b' },
-  { key: 'system', label: '🔧 Sistem & Entegrasyon', color:'#475569' },
-];
-
-const MODULE_GROUPS = {
-  front:      ['dashboard','front-office','new-reservation','res-list','res-card','reservations-tape','checkout','room-rack','tape-chart','kbs','night-audit','housekeeping'],
-  revenue:    ['revenue','cash-desk','folio','finance','accounting','budget','cost-control','forecast'],
-  fb:         ['pos','minibar','spa','entertainment','laundry','banquet'],
-  guest:      ['crm','loyalty','surveys','group-res','lost-found'],
-  operations: ['tech-service','stock','purchasing','hr','smart-room','contracts','tours'],
-  analytics:  ['global-vision','ai-strategy','sales-marketing','kvkk'],
-  system:     ['channel','crs','it-infra','integrations','system-admin'],
-};
-
-const PINNED = ['dashboard','front-office','new-reservation','folio','cash-desk','room-rack','housekeeping','checkout'];
+const PINNED_DEFAULT = ['dashboard','front-office','new-reservation','folio','cash-desk','room-rack','housekeeping','checkout'];
 
 const ModuleGrid = ({ modules, onSelectModule }) => {
   const { stats, reservations, tasks } = useHotel();
-  const [search, setSearch]   = useState('');
-  const [view, setView]       = useState('grouped'); // 'grouped' | 'grid'
-  const [pinned, setPinned]   = useState(PINNED);
+  const { lang, t } = useLanguage();
+  const [search, setSearch] = useState('');
+  const [view, setView] = useState('grouped');
+  const [pinned, setPinned] = useState(PINNED_DEFAULT);
 
   const pendingCI   = reservations.filter(r=>r.status==='gelecek').length;
   const pendingCO   = reservations.filter(r=>r.status==='check-in').length;
@@ -45,7 +27,30 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
     'kbs': 2, 'tech-service': tasks.filter(t=>t.type==='technical'&&t.status!=='bitti').length,
   };
 
-  const getModule = (id) => modules.find(m => m.id === id) || modules.find(m => m.id === `${id}-`);
+  const getModuleName = (mod) => lang === 'en' ? (mod.nameEN || mod.name) : mod.name;
+  const getCategory = (mod) => lang === 'en' ? (mod.categoryEN || mod.category) : mod.category;
+
+  // Group definitions with translated labels
+  const GROUP_ORDER = [
+    { key: 'front',      label: t('groupFront'),      color:'#3b82f6' },
+    { key: 'revenue',    label: t('groupRevenue'),     color:'#10b981' },
+    { key: 'fb',         label: t('groupFB'),          color:'#f59e0b' },
+    { key: 'guest',      label: t('groupGuest'),       color:'#8b5cf6' },
+    { key: 'operations', label: t('groupOperations'),  color:'#ef4444' },
+    { key: 'analytics',  label: t('groupAnalytics'),   color:'#64748b' },
+    { key: 'system',     label: t('groupSystem'),      color:'#475569' },
+  ];
+
+  const MODULE_GROUPS = {
+    front:      ['dashboard','front-office','new-reservation','res-list','res-card','reservations-tape','checkout','room-rack','tape-chart','kbs','night-audit','housekeeping'],
+    revenue:    ['revenue','cash-desk','folio','finance','accounting','budget','cost-control','forecast'],
+    fb:         ['pos','minibar','spa','entertainment','laundry','banquet'],
+    guest:      ['crm','loyalty','surveys','group-res','lost-found'],
+    operations: ['tech-service','stock','purchasing','hr','smart-room','contracts','tours'],
+    analytics:  ['global-vision','ai-strategy','sales-marketing','kvkk'],
+    system:     ['channel','crs','it-infra','integrations','system-admin'],
+  };
+
   const pinnedMods = pinned.map(id => modules.find(m=>m.id===id)).filter(Boolean);
 
   const togglePin = (e, id) => {
@@ -53,7 +58,13 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
     setPinned(p => p.includes(id) ? p.filter(x=>x!==id) : [...p, id]);
   };
 
-  const filteredAll = search ? modules.filter(m => m.name.toLowerCase().includes(search.toLowerCase())) : [];
+  const filteredAll = search
+    ? modules.filter(m => {
+        const name = getModuleName(m).toLowerCase();
+        const q = search.toLowerCase();
+        return name.includes(q) || (m.keywords && m.keywords.some(k => k.toLowerCase().includes(q)));
+      })
+    : [];
 
   const ModCard = ({ mod, compact=false }) => {
     if (!mod) return null;
@@ -70,10 +81,10 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
           {badge > 0 && <span className="mc-badge">{badge}</span>}
         </div>
         <div className="mc-info">
-          <strong>{mod.name}</strong>
-          {!compact && <span>Operasyonel Modül</span>}
+          <strong>{getModuleName(mod)}</strong>
+          {!compact && <span>{t('operationalModule')}</span>}
         </div>
-        <button className={`pin-btn ${pinned.includes(mod.id)?'pinned':''}`} onClick={e=>togglePin(e,mod.id)} title={pinned.includes(mod.id)?'Sabitlenmiş':'Sabitle'}>
+        <button className={`pin-btn ${pinned.includes(mod.id)?'pinned':''}`} onClick={e=>togglePin(e,mod.id)} title={pinned.includes(mod.id)?t('pinned'):t('pin')}>
           <Star size={12} fill={pinned.includes(mod.id)?'currentColor':'none'}/>
         </button>
         <ChevronRight size={14} className="arr"/>
@@ -86,25 +97,25 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
       {/* Top Hero */}
       <div className="hub-hero">
         <div className="hero-left">
-          <h1>Hoş Geldiniz 👋</h1>
-          <p>Tüm otel operasyonunuz tek ekranda. Bugün {pendingCI} giriş, {pendingCO} çıkış bekleniyor.</p>
+          <h1>{t('welcomeTitle')}</h1>
+          <p>{t('welcomeDesc')(pendingCI, pendingCO)}</p>
         </div>
         <div className="hero-stats">
           <div className="hs-item" onClick={()=>onSelectModule('front-office')}>
             <LogIn size={18} color="#3b82f6"/>
-            <div><strong>{pendingCI}</strong><span>Bekleyen Giriş</span></div>
+            <div><strong>{pendingCI}</strong><span>{t('pendingCheckIn')}</span></div>
           </div>
           <div className="hs-item" onClick={()=>onSelectModule('checkout')}>
             <LogOut size={18} color="#ef4444"/>
-            <div><strong>{pendingCO}</strong><span>İçerideki</span></div>
+            <div><strong>{pendingCO}</strong><span>{t('checkedIn')}</span></div>
           </div>
           <div className="hs-item">
             <Bed size={18} color="#8b5cf6"/>
-            <div><strong>%{stats.occupancyRate}</strong><span>Doluluk</span></div>
+            <div><strong>%{stats.occupancyRate}</strong><span>{t('occupancyLabel')}</span></div>
           </div>
           <div className="hs-item" onClick={()=>onSelectModule('folio')}>
             <CreditCard size={18} color="#f59e0b"/>
-            <div><strong>{openBalance}</strong><span>Açık Bakiye</span></div>
+            <div><strong>{openBalance}</strong><span>{t('openBalance')}</span></div>
           </div>
         </div>
       </div>
@@ -114,21 +125,21 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
         <div className="hub-search">
           <Search size={16} color="#94a3b8"/>
           <input
-            placeholder="Modül ara... (Restoran, KBS, Kasa...)"
+            placeholder={t('moduleSearchPlaceholder')}
             value={search}
             onChange={e=>setSearch(e.target.value)}
           />
         </div>
         <div className="view-toggle">
-          <button className={view==='grouped'?'active':''} onClick={()=>setView('grouped')}>Kategorili</button>
-          <button className={view==='grid'?'active':''} onClick={()=>setView('grid')}>Izgara</button>
+          <button className={view==='grouped'?'active':''} onClick={()=>setView('grouped')}>{t('grouped')}</button>
+          <button className={view==='grid'?'active':''} onClick={()=>setView('grid')}>{t('grid')}</button>
         </div>
       </div>
 
       {/* Search Results */}
       {search && (
         <div className="search-results">
-          <h3>"{search}" için {filteredAll.length} sonuç:</h3>
+          <h3>{t('searchResultsLabel')(search, filteredAll.length)}</h3>
           <div className="compact-grid">
             {filteredAll.map(m => <ModCard key={m.id} mod={m} compact/>)}
           </div>
@@ -140,7 +151,7 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
         <div className="hub-section">
           <div className="section-head">
             <Star size={16} color="#f59e0b" fill="#f59e0b"/>
-            <h2>Sabitlenmiş Modüller</h2>
+            <h2>{t('pinnedModules')}</h2>
           </div>
           <div className="pinned-grid">
             {pinnedMods.map(m => (
@@ -155,7 +166,7 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
                   {React.cloneElement(m.icon, { size: 24 })}
                   {LIVE_BADGES[m.id] > 0 && <span className="mc-badge big">{LIVE_BADGES[m.id]}</span>}
                 </div>
-                <strong>{m.name}</strong>
+                <strong>{getModuleName(m)}</strong>
                 <button className="pin-btn pinned" onClick={e=>togglePin(e,m.id)}><Star size={12} fill="currentColor"/></button>
               </motion.div>
             ))}
@@ -175,7 +186,7 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
                 <div className="section-head">
                   <div className="sh-dot" style={{background:grp.color}}/>
                   <h2>{grp.label}</h2>
-                  <span>{mods.length} modül</span>
+                  <span>{mods.length} {t('modules')}</span>
                 </div>
                 <div className="mod-grid">
                   {mods.map((m,i) => (
@@ -194,7 +205,7 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
                         {LIVE_BADGES[m.id] > 0 && <span className="mc-badge">{LIVE_BADGES[m.id]}</span>}
                       </div>
                       <div className="mc-info">
-                        <strong>{m.name}</strong>
+                        <strong>{getModuleName(m)}</strong>
                       </div>
                       <button className={`pin-btn ${pinned.includes(m.id)?'pinned':''}`} onClick={e=>togglePin(e,m.id)}>
                         <Star size={11} fill={pinned.includes(m.id)?'currentColor':'none'}/>
@@ -224,7 +235,7 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
                     {React.cloneElement(m.icon, { size:20 })}
                     {LIVE_BADGES[m.id] > 0 && <span className="mc-badge">{LIVE_BADGES[m.id]}</span>}
                   </div>
-                  <div className="mc-info"><strong>{m.name}</strong></div>
+                  <div className="mc-info"><strong>{getModuleName(m)}</strong></div>
                   <ChevronRight size={13} className="arr"/>
                 </motion.div>
               ))}
@@ -236,7 +247,6 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
       <style>{`
         .hub-page { padding: 28px; display: flex; flex-direction: column; gap: 24px; max-width: 1400px; }
 
-        /* Hero */
         .hub-hero { background: linear-gradient(135deg, #1e293b 0%, #1e40af 100%); border-radius: 22px; padding: 28px 32px; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
         .hero-left h1 { font-size: 24px; font-weight: 900; color: white; margin-bottom: 6px; }
         .hero-left p { font-size: 14px; color: #93c5fd; font-weight: 500; }
@@ -247,7 +257,6 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
         .hs-item strong { display: block; font-size: 22px; font-weight: 900; color: white; line-height: 1; }
         .hs-item span { font-size: 11px; color: #93c5fd; font-weight: 700; }
 
-        /* Controls */
         .hub-controls { display: flex; gap: 14px; align-items: center; }
         .hub-search { flex: 1; display: flex; align-items: center; gap: 10px; background: white; border: 1.5px solid #e2e8f0; padding: 12px 18px; border-radius: 14px; max-width: 480px; }
         .hub-search input { border: none; background: transparent; outline: none; font-size: 14px; color: #475569; width: 100%; }
@@ -255,24 +264,20 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
         .view-toggle button { padding: 10px 18px; border: none; background: transparent; font-size: 13px; font-weight: 700; color: #64748b; cursor: pointer; }
         .view-toggle button.active { background: #1e293b; color: white; }
 
-        /* Search results */
         .search-results h3 { font-size: 14px; font-weight: 700; color: #64748b; margin-bottom: 14px; }
         .compact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 10px; }
 
-        /* Section */
         .hub-section { display: flex; flex-direction: column; gap: 14px; }
         .section-head { display: flex; align-items: center; gap: 10px; }
         .section-head h2 { font-size: 16px; font-weight: 800; color: #1e293b; }
         .section-head span { font-size: 12px; color: #94a3b8; font-weight: 700; }
         .sh-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
-        /* Pinned */
         .pinned-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 12px; }
         .pinned-card { background: white; border: 1.5px solid #e2e8f0; border-radius: 18px; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; position: relative; text-align: center; }
         .pinned-card strong { font-size: 12px; font-weight: 700; color: #1e293b; }
         .pc-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; position: relative; }
 
-        /* Module grid */
         .mod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 10px; }
         .mod-card { background: white; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; position: relative; }
         .mod-card:hover { border-color: #3b82f6; }

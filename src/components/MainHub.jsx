@@ -1,42 +1,72 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { modulesConfig } from '../data/moduleList';
 import Sidebar from './layout/Sidebar';
 import Header from './layout/Header';
 import ModuleGrid from './layout/ModuleGrid';
+import { useLanguage } from '../context/LanguageContext';
+
+const getModuleFromHash = () => {
+  const hash = window.location.hash;
+  const match = hash.match(/^#app\/(.+)$/);
+  return match ? match[1] : null;
+};
 
 const MainHub = ({ user, onLogout }) => {
-  const [activeModuleId, setActiveModuleId] = useState(null);
+  const { t } = useLanguage();
+  const [activeModuleId, setActiveModuleId] = useState(() => getModuleFromHash());
+
+  // Sync hash → state (browser back/forward)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#app')) {
+        setActiveModuleId(getModuleFromHash());
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleSelectModule = (id) => {
+    window.location.hash = `#app/${id}`;
+  };
+
+  const handleBack = () => {
+    window.location.hash = '#app';
+  };
 
   const activeModule = modulesConfig.find(m => m.id === activeModuleId);
 
   return (
     <div className="app-layout">
-      <Sidebar 
-        activeModule={activeModuleId} 
-        onSelectModule={setActiveModuleId} 
-        modules={modulesConfig} 
+      <Sidebar
+        activeModule={activeModuleId}
+        onSelectModule={handleSelectModule}
+        modules={modulesConfig}
       />
-      
+
       <main className="main-viewport">
-        <Header 
-          user={user} 
-          activeModuleName={activeModule?.name} 
+        <Header
+          user={user}
+          activeModuleName={activeModule?.name}
           onLogout={onLogout}
-          onBack={activeModuleId ? () => setActiveModuleId(null) : null}
-          onSelectModule={setActiveModuleId}
+          onBack={activeModuleId ? handleBack : null}
+          onSelectModule={handleSelectModule}
         />
-        
+
         <div className="content-area">
           {activeModuleId ? (
-            <Suspense fallback={<div className="loading-screen">Modül Yükleniyor...</div>}>
+            <Suspense fallback={<div className="loading-screen">{t('loadingModule')}</div>}>
               <div className="module-render-container">
-                {activeModule?.component ? React.createElement(activeModule.component) : <div className="loading-screen">Modül içeriği bulunamadı.</div>}
+                {activeModule?.component
+                  ? React.createElement(activeModule.component)
+                  : <div className="loading-screen">{t('moduleNotFound')}</div>}
               </div>
             </Suspense>
           ) : (
-            <ModuleGrid 
-              modules={modulesConfig} 
-              onSelectModule={setActiveModuleId} 
+            <ModuleGrid
+              modules={modulesConfig}
+              onSelectModule={handleSelectModule}
             />
           )}
         </div>
@@ -62,8 +92,7 @@ const MainHub = ({ user, onLogout }) => {
         .content-area {
           flex: 1;
           overflow-y: auto;
-          background-image: 
-            radial-gradient(#e2e8f0 1px, transparent 1px);
+          background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
           background-size: 30px 30px;
         }
 

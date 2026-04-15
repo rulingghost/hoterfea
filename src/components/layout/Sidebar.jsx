@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useHotel } from '../../context/HotelContext';
-import {
-  Settings, Search, X, ChevronDown, ChevronRight
-} from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
+import { Settings, Search, X, ChevronDown, ChevronRight } from 'lucide-react';
 
 const Sidebar = ({ activeModule, onSelectModule, modules }) => {
   const { stats, reservations, tasks } = useHotel();
+  const { lang, t } = useLanguage();
   const [search, setSearch] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [expandedCats, setExpandedCats] = useState({});
@@ -20,18 +20,24 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
     'checkout':       pendingCO > 0 ? pendingCO : null,
     'housekeeping':   openTasks > 0 ? openTasks : null,
     'folio':          openBalance > 0 ? openBalance : null,
-    'kbs':            2, // static demo
+    'kbs':            2,
   };
 
+  const getModuleName = (mod) => lang === 'en' ? (mod.nameEN || mod.name) : mod.name;
+  const getCategory = (mod) => lang === 'en' ? (mod.categoryEN || mod.category) : mod.category;
+
   const filteredModules = search
-    ? modules.filter(m => 
-        m.name.toLowerCase().includes(search.toLowerCase()) || 
-        (m.keywords && m.keywords.some(k => k.toLowerCase().includes(search.toLowerCase())))
-      )
+    ? modules.filter(m => {
+        const name = getModuleName(m).toLowerCase();
+        const cat = getCategory(m).toLowerCase();
+        const q = search.toLowerCase();
+        return name.includes(q) || cat.includes(q) ||
+          (m.keywords && m.keywords.some(k => k.toLowerCase().includes(q)));
+      })
     : modules;
 
   const groupedModules = filteredModules.reduce((acc, mod) => {
-    const cat = mod.category || 'Diğer';
+    const cat = getCategory(mod) || 'Other';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(mod);
     return acc;
@@ -60,26 +66,25 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
       {/* Live Stats strip */}
       <div className="live-strip">
         <div className="ls-item">
-          <span>Doluluk</span>
+          <span>{t('occupancyShort')}</span>
           <strong style={{color:'#3b82f6'}}>%{stats.occupancyRate}</strong>
         </div>
         <div className="ls-div"/>
         <div className="ls-item">
-          <span>İçeride</span>
+          <span>{t('inHouseShort')}</span>
           <strong style={{color:'#10b981'}}>{stats.inHouse}</strong>
         </div>
         <div className="ls-div"/>
         <div className="ls-item">
-          <span>Görev</span>
+          <span>{t('taskShort')}</span>
           <strong style={{color: openTasks > 0 ? '#f59e0b' : '#10b981'}}>{openTasks}</strong>
         </div>
       </div>
 
       <nav className="sidebar-nav">
-        {/* All modules under headers */}
         <div className="nav-group mt-16">
           <div className="all-mod-head">
-            <label>MODÜLLER</label>
+            <label>{t('modulesLabel')}</label>
             <button className="search-toggle" onClick={()=>{ setSearchOpen(!searchOpen); setSearch(''); }}>
               {searchOpen ? <X size={13}/> : <Search size={13}/>}
             </button>
@@ -87,7 +92,7 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
           {searchOpen && (
             <input
               className="mod-search"
-              placeholder="Modül veya özellik ara..."
+              placeholder={t('searchModulePlaceholder')}
               value={search}
               onChange={e=>setSearch(e.target.value)}
               autoFocus
@@ -112,7 +117,7 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
                         <div className="mini-icon" style={{ color: activeModule === module.id ? 'white' : module.color }}>
                           {React.cloneElement(module.icon, { size: 14 })}
                         </div>
-                        <span>{module.name}</span>
+                        <span>{getModuleName(module)}</span>
                         {BADGES[module.id] && (
                           <span className="nav-badge red">{BADGES[module.id]}</span>
                         )}
@@ -123,14 +128,16 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
               </div>
             ))}
             {filteredModules.length === 0 && (
-              <div className="no-mod">Hiçbir sonuç bulunamadı.</div>
+              <div className="no-mod">{t('noModuleFound')}</div>
             )}
           </div>
         </div>
       </nav>
 
       <div className="sidebar-footer">
-        <button className="nav-item" onClick={()=>onSelectModule('system-admin')}><Settings size={16}/><span>Sistem Ayarları</span></button>
+        <button className="nav-item" onClick={()=>onSelectModule('system-admin')}>
+          <Settings size={16}/><span>{t('systemSettings')}</span>
+        </button>
       </div>
 
       <style>{`
@@ -160,7 +167,7 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
         .sidebar-nav { flex: 1; padding: 14px 12px; overflow: hidden; display: flex; flex-direction: column; gap: 0; }
         .nav-group { display: flex; flex-direction: column; height: 100%; }
         .nav-group label { display: block; font-size: 9px; font-weight: 800; color: #475569; margin-bottom: 8px; letter-spacing: 1.5px; padding: 0 6px; }
-        
+
         .all-mod-head { display: flex; justify-content: space-between; align-items: center; padding: 0 6px; margin-bottom: 8px; }
         .all-mod-head label { margin: 0; }
         .search-toggle { background: transparent; border: none; color: #64748b; cursor: pointer; padding: 4px; display: flex; }
@@ -214,4 +221,3 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
 };
 
 export default Sidebar;
-
