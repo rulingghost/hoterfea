@@ -1,43 +1,43 @@
 import React, { useState } from 'react';
 import { useHotel } from '../../context/HotelContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronRight, Search, Star, TrendingUp, Clock,
   Zap, Bed, LogIn, LogOut, CreditCard, LayoutGrid
 } from 'lucide-react';
 
-const GROUP_ORDER = [
-  { key: 'front', label: '🏨 Ön Büro & Operasyon', color:'#3b82f6' },
-  { key: 'revenue', label: '💰 Gelir & Finans', color:'#10b981' },
-  { key: 'fb', label: '🍽️ Yiyecek & İçecek', color:'#f59e0b' },
-  { key: 'guest', label: '👥 Misafir İlişkileri', color:'#8b5cf6' },
-  { key: 'operations', label: '⚙️ Operasyon & Destek', color:'#ef4444' },
-  { key: 'analytics', label: '📊 Analiz & Raporlama', color:'#64748b' },
-  { key: 'system', label: '🔧 Sistem & Entegrasyon', color:'#475569' },
-];
-
-const MODULE_GROUPS = {
-  front:      ['dashboard','front-office','new-reservation','res-list','res-card','reservations-tape','checkout','room-rack','tape-chart','kbs','night-audit','housekeeping'],
-  revenue:    ['revenue','cash-desk','folio','finance','accounting','budget','cost-control','forecast'],
-  fb:         ['pos','minibar','spa','entertainment','laundry','banquet'],
-  guest:      ['crm','loyalty','surveys','group-res','lost-found'],
-  operations: ['tech-service','stock','purchasing','hr','smart-room','contracts','tours'],
-  analytics:  ['global-vision','ai-strategy','sales-marketing','kvkk'],
-  system:     ['channel','crs','it-infra','integrations','system-admin'],
-};
-
-const PINNED = ['dashboard','front-office','new-reservation','folio','cash-desk','room-rack','housekeeping','checkout'];
-
 const ModuleGrid = ({ modules, onSelectModule }) => {
   const { stats, reservations, tasks } = useHotel();
+  const { t, language } = useLanguage();
   const [search, setSearch]   = useState('');
   const [view, setView]       = useState('grouped'); // 'grouped' | 'grid'
-  const [pinned, setPinned]   = useState(PINNED);
+  const [pinned, setPinned]   = useState(['dashboard','front-office','new-reservation','folio','cash-desk','room-rack','housekeeping','checkout']);
 
   const pendingCI   = reservations.filter(r=>r.status==='gelecek').length;
   const pendingCO   = reservations.filter(r=>r.status==='check-in').length;
   const openTasks   = tasks.filter(t=>t.status!=='bitti').length;
   const openBalance = reservations.filter(r=>r.status==='check-in'&&r.balance>0).length;
+
+  const GROUP_ORDER = [
+    { key: 'front', label: language === 'tr' ? '🏨 Ön Büro & Operasyon' : '🏨 Front Office & Ops', color:'#3b82f6' },
+    { key: 'revenue', label: language === 'tr' ? '💰 Gelir & Finans' : '💰 Revenue & Finance', color:'#10b981' },
+    { key: 'fb', label: language === 'tr' ? '🍽️ Yiyecek & İçecek' : '🍽️ Food & Beverage', color:'#f59e0b' },
+    { key: 'guest', label: language === 'tr' ? '👥 Misafir İlişkileri' : '👥 Guest Relations', color:'#8b5cf6' },
+    { key: 'operations', label: language === 'tr' ? '⚙️ Operasyon & Destek' : '⚙️ Ops & Support', color:'#ef4444' },
+    { key: 'analytics', label: language === 'tr' ? '📊 Analiz & Raporlama' : '📊 Analysis & Reporting', color:'#64748b' },
+    { key: 'system', label: language === 'tr' ? '🔧 Sistem & Entegrasyon' : '🔧 System & Integration', color:'#475569' },
+  ];
+
+  const MODULE_GROUPS = {
+    front:      ['dashboard','front-office','new-reservation','res-list','res-card','reservations-tape','checkout','room-rack','tape-chart','kbs','night-audit','housekeeping'],
+    revenue:    ['revenue','cash-desk','folio','finance','accounting','budget','cost-control','forecast'],
+    fb:         ['pos','minibar','spa','entertainment','laundry','banquet'],
+    guest:      ['crm','loyalty','surveys','group-res','lost-found'],
+    operations: ['tech-service','stock','purchasing','hr','smart-room','contracts','tours'],
+    analytics:  ['global-vision','ai-strategy','sales-marketing','kvkk'],
+    system:     ['channel','crs','it-infra','integrations','system-admin'],
+  };
 
   const LIVE_BADGES = {
     'front-office': pendingCI, 'checkout': pendingCO,
@@ -45,7 +45,10 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
     'kbs': 2, 'tech-service': tasks.filter(t=>t.type==='technical'&&t.status!=='bitti').length,
   };
 
-  const getModule = (id) => modules.find(m => m.id === id) || modules.find(m => m.id === `${id}-`);
+  const getTranslatedName = (mod) => {
+    return t(`landing.moduleNames.${mod.id.replace(/-./g, x => x[1].toUpperCase())}`) || mod.name;
+  };
+
   const pinnedMods = pinned.map(id => modules.find(m=>m.id===id)).filter(Boolean);
 
   const togglePin = (e, id) => {
@@ -53,7 +56,9 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
     setPinned(p => p.includes(id) ? p.filter(x=>x!==id) : [...p, id]);
   };
 
-  const filteredAll = search ? modules.filter(m => m.name.toLowerCase().includes(search.toLowerCase())) : [];
+  const filteredAll = search
+    ? modules.filter((m) => getTranslatedName(m).toLowerCase().includes(search.toLowerCase()))
+    : [];
 
   const ModCard = ({ mod, compact=false }) => {
     if (!mod) return null;
@@ -70,10 +75,14 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
           {badge > 0 && <span className="mc-badge">{badge}</span>}
         </div>
         <div className="mc-info">
-          <strong>{mod.name}</strong>
-          {!compact && <span>Operasyonel Modül</span>}
+          <strong>{getTranslatedName(mod)}</strong>
+          {!compact && <span>{t('hub.operationalModule')}</span>}
         </div>
-        <button className={`pin-btn ${pinned.includes(mod.id)?'pinned':''}`} onClick={e=>togglePin(e,mod.id)} title={pinned.includes(mod.id)?'Sabitlenmiş':'Sabitle'}>
+        <button
+          className={`pin-btn ${pinned.includes(mod.id)?'pinned':''}`}
+          onClick={e=>togglePin(e,mod.id)}
+          title={pinned.includes(mod.id) ? (language === 'tr' ? 'Sabitlenmiş' : 'Pinned') : (language === 'tr' ? 'Sabitle' : 'Pin')}
+        >
           <Star size={12} fill={pinned.includes(mod.id)?'currentColor':'none'}/>
         </button>
         <ChevronRight size={14} className="arr"/>
@@ -86,25 +95,25 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
       {/* Top Hero */}
       <div className="hub-hero">
         <div className="hero-left">
-          <h1>Hoş Geldiniz 👋</h1>
-          <p>Tüm otel operasyonunuz tek ekranda. Bugün {pendingCI} giriş, {pendingCO} çıkış bekleniyor.</p>
+          <h1>{t('hub.welcome')}</h1>
+          <p>{t('hub.heroSubtitle')}</p>
         </div>
         <div className="hero-stats">
           <div className="hs-item" onClick={()=>onSelectModule('front-office')}>
             <LogIn size={18} color="#3b82f6"/>
-            <div><strong>{pendingCI}</strong><span>Bekleyen Giriş</span></div>
+            <div><strong>{pendingCI}</strong><span>{t('hub.stats.pendingCI')}</span></div>
           </div>
           <div className="hs-item" onClick={()=>onSelectModule('checkout')}>
             <LogOut size={18} color="#ef4444"/>
-            <div><strong>{pendingCO}</strong><span>İçerideki</span></div>
+            <div><strong>{pendingCO}</strong><span>{t('hub.stats.pendingCO')}</span></div>
           </div>
           <div className="hs-item">
             <Bed size={18} color="#8b5cf6"/>
-            <div><strong>%{stats.occupancyRate}</strong><span>Doluluk</span></div>
+            <div><strong>%{stats.occupancyRate}</strong><span>{t('hub.stats.occupancy')}</span></div>
           </div>
           <div className="hs-item" onClick={()=>onSelectModule('folio')}>
             <CreditCard size={18} color="#f59e0b"/>
-            <div><strong>{openBalance}</strong><span>Açık Bakiye</span></div>
+            <div><strong>{openBalance}</strong><span>{t('hub.stats.openBalance')}</span></div>
           </div>
         </div>
       </div>
@@ -114,21 +123,21 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
         <div className="hub-search">
           <Search size={16} color="#94a3b8"/>
           <input
-            placeholder="Modül ara... (Restoran, KBS, Kasa...)"
+            placeholder={t('hub.searchPlaceholder')}
             value={search}
             onChange={e=>setSearch(e.target.value)}
           />
         </div>
         <div className="view-toggle">
-          <button className={view==='grouped'?'active':''} onClick={()=>setView('grouped')}>Kategorili</button>
-          <button className={view==='grid'?'active':''} onClick={()=>setView('grid')}>Izgara</button>
+          <button className={view==='grouped'?'active':''} onClick={()=>setView('grouped')}>{t('hub.grouped')}</button>
+          <button className={view==='grid'?'active':''} onClick={()=>setView('grid')}>{t('hub.grid')}</button>
         </div>
       </div>
 
       {/* Search Results */}
       {search && (
         <div className="search-results">
-          <h3>"{search}" için {filteredAll.length} sonuç:</h3>
+          <h3>{language === 'tr' ? `"${search}" için ${filteredAll.length} sonuç:` : `${filteredAll.length} results for "${search}":`}</h3>
           <div className="compact-grid">
             {filteredAll.map(m => <ModCard key={m.id} mod={m} compact/>)}
           </div>
@@ -140,7 +149,7 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
         <div className="hub-section">
           <div className="section-head">
             <Star size={16} color="#f59e0b" fill="#f59e0b"/>
-            <h2>Sabitlenmiş Modüller</h2>
+            <h2>{t('hub.pinnedTitle')}</h2>
           </div>
           <div className="pinned-grid">
             {pinnedMods.map(m => (
@@ -155,7 +164,7 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
                   {React.cloneElement(m.icon, { size: 24 })}
                   {LIVE_BADGES[m.id] > 0 && <span className="mc-badge big">{LIVE_BADGES[m.id]}</span>}
                 </div>
-                <strong>{m.name}</strong>
+                <strong>{getTranslatedName(m)}</strong>
                 <button className="pin-btn pinned" onClick={e=>togglePin(e,m.id)}><Star size={12} fill="currentColor"/></button>
               </motion.div>
             ))}
@@ -175,7 +184,7 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
                 <div className="section-head">
                   <div className="sh-dot" style={{background:grp.color}}/>
                   <h2>{grp.label}</h2>
-                  <span>{mods.length} modül</span>
+                  <span>{mods.length} {t('hub.moduleCount')}</span>
                 </div>
                 <div className="mod-grid">
                   {mods.map((m,i) => (
@@ -194,7 +203,7 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
                         {LIVE_BADGES[m.id] > 0 && <span className="mc-badge">{LIVE_BADGES[m.id]}</span>}
                       </div>
                       <div className="mc-info">
-                        <strong>{m.name}</strong>
+                        <strong>{getTranslatedName(m)}</strong>
                       </div>
                       <button className={`pin-btn ${pinned.includes(m.id)?'pinned':''}`} onClick={e=>togglePin(e,m.id)}>
                         <Star size={11} fill={pinned.includes(m.id)?'currentColor':'none'}/>
@@ -224,7 +233,7 @@ const ModuleGrid = ({ modules, onSelectModule }) => {
                     {React.cloneElement(m.icon, { size:20 })}
                     {LIVE_BADGES[m.id] > 0 && <span className="mc-badge">{LIVE_BADGES[m.id]}</span>}
                   </div>
-                  <div className="mc-info"><strong>{m.name}</strong></div>
+                  <div className="mc-info"><strong>{getTranslatedName(m)}</strong></div>
                   <ChevronRight size={13} className="arr"/>
                 </motion.div>
               ))}

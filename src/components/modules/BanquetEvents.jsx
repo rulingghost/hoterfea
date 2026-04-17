@@ -1,25 +1,36 @@
 import React, { useState, useMemo } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   Users, Plus, Calendar, Clock, MapPin, CheckCircle, X,
-  Search, Filter, Edit2, Trash2, DollarSign, BarChart3,
-  Phone, Mail, Eye, Download
+  Search, Edit2, DollarSign, BarChart3, Phone, Mail, Eye
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
 
-const HALLS = ['Büyük Salon (A)', 'Küçük Salon (B)', 'Havuz Başı', 'Teras', 'Toplantı Odası 1', 'Toplantı Odası 2'];
-const TYPES = ['Düğün','Nişan','Doğum Günü','Toplantı','Seminer','Gala','Özel Kutlama'];
-const STATUS_MAP = {
-  bekliyor:   { label:'Bekliyor', color:'#f59e0b', bg:'#fffbeb' },
-  onaylı:     { label:'Onaylı', color:'#10b981', bg:'#f0fdf4' },
-  devam:      { label:'Devam Ediyor', color:'#3b82f6', bg:'#eff6ff' },
-  tamamlandı: { label:'Tamamlandı', color:'#64748b', bg:'#f1f5f9' },
-  iptal:      { label:'İptal', color:'#ef4444', bg:'#fef2f2' },
-};
-
 const BanquetEvents = () => {
+  const { mt, language } = useModuleTranslation();
+  const _t = (k) => mt('banquet.' + k);
+  const _c = (k) => mt('common.' + k);
   const { addCashTransaction, addNotification, TODAY } = useHotel();
+
+  const HALLS = language === 'tr'
+    ? ['Büyük Salon (A)','Küçük Salon (B)','Havuz Başı','Teras','Toplantı Odası 1','Toplantı Odası 2']
+    : ['Grand Hall (A)','Small Hall (B)','Poolside','Terrace','Meeting Room 1','Meeting Room 2'];
+
+  const TYPES = language === 'tr'
+    ? ['Düğün','Nişan','Doğum Günü','Toplantı','Seminer','Gala','Özel Kutlama']
+    : ['Wedding','Engagement','Birthday','Meeting','Seminar','Gala','Special Event'];
+
+  const STATUS_MAP = {
+    bekliyor:   { labelTr:'Bekliyor',      labelEn:'Pending',     color:'#f59e0b', bg:'#fffbeb' },
+    onaylı:     { labelTr:'Onaylı',        labelEn:'Confirmed',   color:'#10b981', bg:'#f0fdf4' },
+    devam:      { labelTr:'Devam Ediyor',  labelEn:'Ongoing',     color:'#3b82f6', bg:'#eff6ff' },
+    tamamlandı: { labelTr:'Tamamlandı',    labelEn:'Completed',   color:'#64748b', bg:'#f1f5f9' },
+    iptal:      { labelTr:'İptal',         labelEn:'Cancelled',   color:'#ef4444', bg:'#fef2f2' },
+  };
+  const stLabel = (key) => language === 'tr' ? STATUS_MAP[key]?.labelTr : STATUS_MAP[key]?.labelEn;
+
   const [events, setEvents] = useState([
     { id:'EV-001', name:'Yılmaz Düğünü', type:'Düğün', hall:'Büyük Salon (A)', date:'2026-03-16', time:'18:00', pax:180, status:'onaylı', total:85000, paid:30000, contact:'Ahmet Yılmaz', phone:'0532 111 2233', email:'ahmet@email.com', notes:'Canlı müzik + DJ' },
     { id:'EV-002', name:'Tech Summit 2026', type:'Seminer', hall:'Toplantı Odası 1', date:'2026-03-15', time:'09:00', pax:45, status:'bekliyor', total:22000, paid:0, contact:'HR Müdürü', phone:'0212 555 4466', email:'hr@techcorp.com', notes:'Projeksiyon + mikrofon lazım' },
@@ -32,118 +43,104 @@ const BanquetEvents = () => {
   const [editEvent, setEditEvent] = useState(null);
   const [detailEvent, setDetailEvent] = useState(null);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('tümü');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [form, setForm] = useState({ name:'', type:TYPES[0], hall:HALLS[0], date:'', time:'18:00', pax:'', total:'', paid:'', contact:'', phone:'', email:'', notes:'' });
-  const set = (k,v) => setForm(p=>({...p,[k]:v}));
-
+  const set = (k, v) => setForm(p => ({...p, [k]: v}));
   const idCounter = React.useRef(5);
 
-  const openNew = () => {
-    setEditEvent(null);
-    setForm({ name:'', type:TYPES[0], hall:HALLS[0], date:'', time:'18:00', pax:'', total:'', paid:'', contact:'', phone:'', email:'', notes:'' });
-    setShowForm(true);
-  };
-
-  const openEdit = (ev) => {
-    setEditEvent(ev);
-    setForm({ ...ev, pax: String(ev.pax), total: String(ev.total), paid: String(ev.paid || 0) });
-    setShowForm(true);
-  };
+  const openNew = () => { setEditEvent(null); setForm({ name:'', type:TYPES[0], hall:HALLS[0], date:'', time:'18:00', pax:'', total:'', paid:'', contact:'', phone:'', email:'', notes:'' }); setShowForm(true); };
+  const openEdit = (ev) => { setEditEvent(ev); setForm({ ...ev, pax:String(ev.pax), total:String(ev.total), paid:String(ev.paid||0) }); setShowForm(true); };
 
   const submit = (e) => {
     e.preventDefault();
     if (editEvent) {
-      setEvents(p => p.map(ev => ev.id === editEvent.id ? { ...ev, ...form, pax: Number(form.pax), total: Number(form.total), paid: Number(form.paid) || 0 } : ev));
-      addNotification({ type:'success', msg:`Etkinlik güncellendi: ${form.name}` });
+      setEvents(p => p.map(ev => ev.id === editEvent.id ? {...ev, ...form, pax:Number(form.pax), total:Number(form.total), paid:Number(form.paid)||0} : ev));
+      addNotification({ type:'success', msg:`${language === 'tr' ? 'Etkinlik güncellendi' : 'Event updated'}: ${form.name}` });
     } else {
       idCounter.current++;
       const id = `EV-${String(idCounter.current).padStart(3,'0')}`;
-      setEvents(p => [...p, { ...form, id, status:'bekliyor', pax:Number(form.pax), total:Number(form.total), paid:Number(form.paid)||0 }]);
-      addNotification({ type:'info', msg:`Yeni etkinlik: ${form.name} — ${form.date}` });
+      setEvents(p => [...p, {...form, id, status:'bekliyor', pax:Number(form.pax), total:Number(form.total), paid:Number(form.paid)||0}]);
+      addNotification({ type:'info', msg:`${language === 'tr' ? 'Yeni etkinlik' : 'New event'}: ${form.name} — ${form.date}` });
     }
     setForm({ name:'', type:TYPES[0], hall:HALLS[0], date:'', time:'18:00', pax:'', total:'', paid:'', contact:'', phone:'', email:'', notes:'' });
-    setShowForm(false);
-    setEditEvent(null);
+    setShowForm(false); setEditEvent(null);
   };
 
   const updateStatus = (id, status) => {
-    setEvents(p => p.map(e => e.id === id ? { ...e, status } : e));
+    setEvents(p => p.map(e => e.id === id ? {...e, status} : e));
     if (status === 'tamamlandı') {
       const ev = events.find(e => e.id === id);
-      if (ev) addCashTransaction({ type:'gelir', desc:`Etkinlik Geliri — ${ev.name}`, amount: ev.total, method:'EFT/Havale' });
-      addNotification({ type:'success', msg:`Etkinlik tamamlandı ve ₺${ev?.total.toLocaleString()} gelir kaydedildi` });
+      if (ev) addCashTransaction({ type:'gelir', desc:`${language === 'tr' ? 'Etkinlik Geliri' : 'Event Revenue'} — ${ev.name}`, amount:ev.total, method:'EFT/Havale' });
+      addNotification({ type:'success', msg:`${language === 'tr' ? 'Etkinlik tamamlandı' : 'Event completed'}: ₺${events.find(e => e.id === id)?.total.toLocaleString()}` });
     } else {
-      addNotification({ type:'info', msg:`Etkinlik durumu güncellendi: ${STATUS_MAP[status]?.label}` });
+      addNotification({ type:'info', msg:`${language === 'tr' ? 'Durum güncellendi' : 'Status updated'}: ${stLabel(status)}` });
     }
   };
 
   const deleteEvent = (id) => {
     const ev = events.find(e => e.id === id);
     setEvents(p => p.filter(e => e.id !== id));
-    addNotification({ type:'info', msg:`Etkinlik silindi: ${ev?.name}` });
+    addNotification({ type:'info', msg:`${language === 'tr' ? 'Etkinlik silindi' : 'Event deleted'}: ${ev?.name}` });
     setDetailEvent(null);
   };
 
   const collectPayment = (id, amount) => {
-    setEvents(p => p.map(e => e.id === id ? { ...e, paid: (e.paid || 0) + amount } : e));
-    addCashTransaction({ type:'gelir', desc:`Etkinlik Ön Ödeme — ${events.find(e=>e.id===id)?.name}`, amount, method:'Nakit' });
-    addNotification({ type:'success', msg:`₺${amount.toLocaleString()} tahsilat alındı` });
-    setDetailEvent(prev => prev ? { ...prev, paid: (prev.paid||0) + amount } : null);
+    setEvents(p => p.map(e => e.id === id ? {...e, paid:(e.paid||0)+amount} : e));
+    addCashTransaction({ type:'gelir', desc:`${language === 'tr' ? 'Etkinlik Ödeme' : 'Event Payment'} — ${events.find(e => e.id === id)?.name}`, amount, method:language === 'tr' ? 'Nakit' : 'Cash' });
+    addNotification({ type:'success', msg:`₺${amount.toLocaleString()} ${language === 'tr' ? 'tahsilat alındı' : 'collected'}` });
+    setDetailEvent(prev => prev ? {...prev, paid:(prev.paid||0)+amount} : null);
   };
 
-  // Filtreleme
   const filtered = useMemo(() => events.filter(ev => {
     const q = search.toLowerCase();
     const matchSearch = !q || ev.name.toLowerCase().includes(q) || ev.contact.toLowerCase().includes(q) || ev.hall.toLowerCase().includes(q);
-    const matchStatus = statusFilter === 'tümü' || ev.status === statusFilter;
+    const matchStatus = statusFilter === 'all' || ev.status === statusFilter;
     return matchSearch && matchStatus;
   }), [events, search, statusFilter]);
 
-  // KPI hesaplamaları
   const kpis = useMemo(() => {
     const active = events.filter(e => e.status !== 'iptal');
     const todayCount = events.filter(e => e.date === TODAY).length;
     const totalRevenue = active.reduce((s,e) => s + e.total, 0);
     const totalPaid = active.reduce((s,e) => s + (e.paid||0), 0);
     const totalPax = active.reduce((s,e) => s + e.pax, 0);
-    return { todayCount, totalRevenue, totalPaid, totalPax, pending: totalRevenue - totalPaid };
+    return { todayCount, totalRevenue, totalPaid, totalPax, pending:totalRevenue-totalPaid };
   }, [events, TODAY]);
 
-  // Grafik verileri
   const typeChartData = useMemo(() => {
     const map = {};
-    events.filter(e=>e.status!=='iptal').forEach(e => { map[e.type] = (map[e.type]||0) + 1; });
+    events.filter(e => e.status !== 'iptal').forEach(e => { map[e.type] = (map[e.type]||0) + 1; });
     return Object.entries(map).map(([name,value]) => ({name,value}));
   }, [events]);
 
   const hallRevenueData = useMemo(() => {
     const map = {};
-    events.filter(e=>e.status!=='iptal').forEach(e => { map[e.hall] = (map[e.hall]||0) + e.total; });
-    return Object.entries(map).map(([name,val]) => ({name: name.split(' ')[0] + (name.includes('(') ? ' ' + name.match(/\((.)\)/)?.[1] || '' : ''), gelir: val}));
+    events.filter(e => e.status !== 'iptal').forEach(e => { map[e.hall] = (map[e.hall]||0) + e.total; });
+    return Object.entries(map).map(([name,val]) => ({name:name.split(' ')[0], gelir:val}));
   }, [events]);
 
   const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4'];
+  const statusKeys = Object.keys(STATUS_MAP);
 
   return (
     <div className="bq-page">
       <div className="bq-head">
         <div>
-          <h2><Users size={20}/> Ziyafet & Etkinlik Yönetimi</h2>
-          <span>Salon rezervasyonları, organizasyon, tahsilat ve faturalama</span>
+          <h2><Users size={20}/> {_t('title')}</h2>
+          <span>{_t('subtitle')}</span>
         </div>
-        <button className="btn-primary" onClick={openNew}><Plus size={15}/> Yeni Etkinlik</button>
+        <button className="btn-primary" onClick={openNew}><Plus size={15}/> {language === 'tr' ? 'Yeni Etkinlik' : 'New Event'}</button>
       </div>
 
-      {/* KPI Kartları */}
       <div className="bq-kpi">
         {[
-          { label:'Toplam Etkinlik', val: events.filter(e=>e.status!=='iptal').length, color:'#3b82f6', icon:<Calendar size={18}/> },
-          { label:'Bugün', val: kpis.todayCount, color:'#f59e0b', icon:<Clock size={18}/> },
-          { label:'Toplam Kişi', val: kpis.totalPax, color:'#8b5cf6', icon:<Users size={18}/> },
-          { label:'Tahmini Gelir', val:`₺${kpis.totalRevenue.toLocaleString()}`, color:'#10b981', icon:<DollarSign size={18}/> },
-          { label:'Tahsil Edilen', val:`₺${kpis.totalPaid.toLocaleString()}`, color:'#3b82f6', icon:<CheckCircle size={18}/> },
-          { label:'Kalan Alacak', val:`₺${kpis.pending.toLocaleString()}`, color: kpis.pending > 0 ? '#ef4444' : '#10b981', icon:<BarChart3 size={18}/> },
-        ].map((k,i)=>(
+          { label: language === 'tr' ? 'Toplam Etkinlik' : 'Total Events', val:events.filter(e=>e.status!=='iptal').length, color:'#3b82f6', icon:<Calendar size={18}/> },
+          { label: language === 'tr' ? 'Bugün' : 'Today',                  val:kpis.todayCount, color:'#f59e0b', icon:<Clock size={18}/> },
+          { label: language === 'tr' ? 'Toplam Kişi' : 'Total Guests',     val:kpis.totalPax, color:'#8b5cf6', icon:<Users size={18}/> },
+          { label: language === 'tr' ? 'Tahmini Gelir' : 'Est. Revenue',   val:`₺${kpis.totalRevenue.toLocaleString()}`, color:'#10b981', icon:<DollarSign size={18}/> },
+          { label: language === 'tr' ? 'Tahsil Edilen' : 'Collected',      val:`₺${kpis.totalPaid.toLocaleString()}`, color:'#3b82f6', icon:<CheckCircle size={18}/> },
+          { label: language === 'tr' ? 'Kalan Alacak' : 'Outstanding',     val:`₺${kpis.pending.toLocaleString()}`, color:kpis.pending>0?'#ef4444':'#10b981', icon:<BarChart3 size={18}/> },
+        ].map((k,i) => (
           <motion.div key={i} className="bk" whileHover={{y:-2}}>
             <div className="bk-icon" style={{color:k.color}}>{k.icon}</div>
             <div><strong style={{color:k.color}}>{k.val}</strong><span>{k.label}</span></div>
@@ -151,23 +148,21 @@ const BanquetEvents = () => {
         ))}
       </div>
 
-      {/* Arama ve Filtre */}
       <div className="bq-filters">
-        <div className="bq-search"><Search size={14}/><input placeholder="Etkinlik, salon veya iletişim ara..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+        <div className="bq-search"><Search size={14}/><input placeholder={_c('search')} value={search} onChange={e => setSearch(e.target.value)}/></div>
         <div className="status-pills">
-          {['tümü',...Object.keys(STATUS_MAP)].map(s=>(
-            <button key={s} className={`sp ${statusFilter===s?'active':''}`} onClick={()=>setStatusFilter(s)}>
-              {s==='tümü'?'Tümü':STATUS_MAP[s]?.label}
-              {s!=='tümü' && <span className="sp-count">{events.filter(e=>e.status===s).length}</span>}
+          {['all', ...statusKeys].map(s => (
+            <button key={s} className={`sp ${statusFilter === s ? 'active' : ''}`} onClick={() => setStatusFilter(s)}>
+              {s === 'all' ? _c('all') : stLabel(s)}
+              {s !== 'all' && <span className="sp-count">{events.filter(e=>e.status===s).length}</span>}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Grafikler */}
       <div className="bq-charts">
         <div className="chart-box">
-          <h4>Etkinlik Türü Dağılımı</h4>
+          <h4>{language === 'tr' ? 'Etkinlik Türü Dağılımı' : 'Event Type Distribution'}</h4>
           <ResponsiveContainer width="100%" height={140}>
             <PieChart>
               <Pie data={typeChartData} dataKey="value" cx="50%" cy="50%" innerRadius={30} outerRadius={55} paddingAngle={3}>
@@ -177,18 +172,18 @@ const BanquetEvents = () => {
             </PieChart>
           </ResponsiveContainer>
           <div className="chart-legend">
-            {typeChartData.map((d,i)=>(
+            {typeChartData.map((d,i) => (
               <div key={d.name} className="cl-item"><div className="cl-dot" style={{background:COLORS[i%COLORS.length]}}/>{d.name}: {d.value}</div>
             ))}
           </div>
         </div>
         <div className="chart-box flex1">
-          <h4>Salon Bazlı Gelir</h4>
+          <h4>{language === 'tr' ? 'Salon Bazlı Gelir' : 'Revenue by Hall'}</h4>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={hallRevenueData} barSize={16}>
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:10}}/>
               <YAxis hide/>
-              <Tooltip formatter={v=>[`₺${v.toLocaleString()}`,'Gelir']}/>
+              <Tooltip formatter={v => [`₺${v.toLocaleString()}`, language === 'tr' ? 'Gelir' : 'Revenue']}/>
               <Bar dataKey="gelir" fill="#3b82f6" radius={[4,4,0,0]}/>
             </BarChart>
           </ResponsiveContainer>
@@ -198,124 +193,122 @@ const BanquetEvents = () => {
       {/* Form Modal */}
       <AnimatePresence>
         {showForm && (
-          <motion.div className="modal-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={()=>{setShowForm(false);setEditEvent(null);}}>
+          <motion.div className="modal-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={() => {setShowForm(false);setEditEvent(null);}}>
             <motion.form className="modal-box" initial={{scale:0.9,y:20}} animate={{scale:1,y:0}} onClick={e=>e.stopPropagation()} onSubmit={submit}>
-              <div className="mb-head"><h3>{editEvent ? 'Etkinlik Düzenle' : 'Yeni Etkinlik / Salon Rezervasyonu'}</h3><button type="button" onClick={()=>{setShowForm(false);setEditEvent(null);}}><X size={18}/></button></div>
+              <div className="mb-head">
+                <h3>{editEvent ? (language === 'tr' ? 'Etkinlik Düzenle' : 'Edit Event') : (language === 'tr' ? 'Yeni Etkinlik' : 'New Event')}</h3>
+                <button type="button" onClick={() => {setShowForm(false);setEditEvent(null);}}><X size={18}/></button>
+              </div>
               <div className="fg-grid">
-                <div className="fg full"><label>Etkinlik Adı *</label><input value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Etkinlik adı" required/></div>
-                <div className="fg"><label>Tür</label><select value={form.type} onChange={e=>set('type',e.target.value)}>{TYPES.map(t=><option key={t}>{t}</option>)}</select></div>
-                <div className="fg"><label>Salon</label><select value={form.hall} onChange={e=>set('hall',e.target.value)}>{HALLS.map(h=><option key={h}>{h}</option>)}</select></div>
-                <div className="fg"><label>Tarih *</label><input type="date" value={form.date} onChange={e=>set('date',e.target.value)} required/></div>
-                <div className="fg"><label>Saat</label><input type="time" value={form.time} onChange={e=>set('time',e.target.value)}/></div>
-                <div className="fg"><label>Kişi Sayısı</label><input type="number" value={form.pax} onChange={e=>set('pax',e.target.value)} placeholder="0"/></div>
-                <div className="fg"><label>Toplam Tutar (₺)</label><input type="number" value={form.total} onChange={e=>set('total',e.target.value)} placeholder="0"/></div>
-                <div className="fg"><label>Ön Ödeme (₺)</label><input type="number" value={form.paid} onChange={e=>set('paid',e.target.value)} placeholder="0"/></div>
-                <div className="fg"><label>İletişim Kişisi</label><input value={form.contact} onChange={e=>set('contact',e.target.value)} placeholder="Ad Soyad"/></div>
-                <div className="fg"><label>Telefon</label><input value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="+90 5xx..."/></div>
-                <div className="fg"><label>E-posta</label><input value={form.email} onChange={e=>set('email',e.target.value)} placeholder="email@..."/></div>
-                <div className="fg full"><label>Notlar</label><input value={form.notes} onChange={e=>set('notes',e.target.value)} placeholder="Özel istekler, detaylar..."/></div>
+                <div className="fg full"><label>{language === 'tr' ? 'Etkinlik Adı *' : 'Event Name *'}</label><input value={form.name} onChange={e=>set('name',e.target.value)} placeholder={language === 'tr' ? 'Etkinlik adı' : 'Event name'} required/></div>
+                <div className="fg"><label>{language === 'tr' ? 'Tür' : 'Type'}</label><select value={form.type} onChange={e=>set('type',e.target.value)}>{TYPES.map(t=><option key={t}>{t}</option>)}</select></div>
+                <div className="fg"><label>{language === 'tr' ? 'Salon' : 'Hall'}</label><select value={form.hall} onChange={e=>set('hall',e.target.value)}>{HALLS.map(h=><option key={h}>{h}</option>)}</select></div>
+                <div className="fg"><label>{_c('date')} *</label><input type="date" value={form.date} onChange={e=>set('date',e.target.value)} required/></div>
+                <div className="fg"><label>{language === 'tr' ? 'Saat' : 'Time'}</label><input type="time" value={form.time} onChange={e=>set('time',e.target.value)}/></div>
+                <div className="fg"><label>{language === 'tr' ? 'Kişi Sayısı' : 'Guest Count'}</label><input type="number" value={form.pax} onChange={e=>set('pax',e.target.value)} placeholder="0"/></div>
+                <div className="fg"><label>{language === 'tr' ? 'Toplam Tutar (₺)' : 'Total Amount (₺)'}</label><input type="number" value={form.total} onChange={e=>set('total',e.target.value)} placeholder="0"/></div>
+                <div className="fg"><label>{language === 'tr' ? 'Ön Ödeme (₺)' : 'Deposit (₺)'}</label><input type="number" value={form.paid} onChange={e=>set('paid',e.target.value)} placeholder="0"/></div>
+                <div className="fg"><label>{language === 'tr' ? 'İletişim Kişisi' : 'Contact Person'}</label><input value={form.contact} onChange={e=>set('contact',e.target.value)} placeholder={language === 'tr' ? 'Ad Soyad' : 'Full Name'}/></div>
+                <div className="fg"><label>{language === 'tr' ? 'Telefon' : 'Phone'}</label><input value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="+90 5xx..."/></div>
+                <div className="fg"><label>E-mail</label><input value={form.email} onChange={e=>set('email',e.target.value)} placeholder="email@..."/></div>
+                <div className="fg full"><label>{language === 'tr' ? 'Notlar' : 'Notes'}</label><input value={form.notes} onChange={e=>set('notes',e.target.value)} placeholder={language === 'tr' ? 'Özel istekler...' : 'Special requests...'}/></div>
               </div>
               <div className="form-foot">
-                <button type="button" className="btn-cancel" onClick={()=>{setShowForm(false);setEditEvent(null);}}>İptal</button>
-                <button type="submit" className="btn-primary">{editEvent ? 'Güncelle' : 'Etkinlik Oluştur'}</button>
+                <button type="button" className="btn-cancel" onClick={() => {setShowForm(false);setEditEvent(null);}}>{_c('cancel')}</button>
+                <button type="submit" className="btn-primary">{editEvent ? _c('update') : (language === 'tr' ? 'Etkinlik Oluştur' : 'Create Event')}</button>
               </div>
             </motion.form>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Etkinlik Kartları */}
+      {/* Event Cards */}
       <div className="ev-cards">
-        {filtered.map((ev,i)=>{
+        {filtered.map((ev,i) => {
           const st = STATUS_MAP[ev.status];
           const remaining = ev.total - (ev.paid||0);
           return (
-            <motion.div key={ev.id} className={`ev-card ${ev.status==='iptal'?'cancelled':''}`} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:i*0.04}}>
+            <motion.div key={ev.id} className={`ev-card ${ev.status === 'iptal' ? 'cancelled' : ''}`} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:i*0.04}}>
               <div className="ec-top">
-                <div>
-                  <div className="ev-type">{ev.type}</div>
-                  <h3>{ev.name}</h3>
-                </div>
-                <span className="ev-status" style={{background:st.bg,color:st.color}}>{st.label}</span>
+                <div><div className="ev-type">{ev.type}</div><h3>{ev.name}</h3></div>
+                <span className="ev-status" style={{background:st.bg,color:st.color}}>{stLabel(ev.status)}</span>
               </div>
               <div className="ev-details">
                 <div><MapPin size={13}/> {ev.hall}</div>
                 <div><Calendar size={13}/> {ev.date} {ev.time && `— ${ev.time}`}</div>
-                <div><Users size={13}/> {ev.pax} kişi</div>
+                <div><Users size={13}/> {ev.pax} {language === 'tr' ? 'kişi' : 'guests'}</div>
                 {ev.notes && <div className="ev-notes">💡 {ev.notes}</div>}
               </div>
-              <div className="ev-contact-row">
-                <span><Phone size={11}/> {ev.contact} · {ev.phone}</span>
-              </div>
-              {/* Ödeme Durumu Bar */}
+              <div className="ev-contact-row"><span><Phone size={11}/> {ev.contact} · {ev.phone}</span></div>
               <div className="ev-payment">
                 <div className="ep-info">
-                  <span>Ödeme: ₺{(ev.paid||0).toLocaleString()} / ₺{ev.total.toLocaleString()}</span>
-                  <strong className={remaining>0?'ep-remaining':'ep-paid'}>{remaining>0?`₺${remaining.toLocaleString()} kalan`:'Tam ödendi ✓'}</strong>
+                  <span>{language === 'tr' ? 'Ödeme' : 'Payment'}: ₺{(ev.paid||0).toLocaleString()} / ₺{ev.total.toLocaleString()}</span>
+                  <strong className={remaining > 0 ? 'ep-remaining' : 'ep-paid'}>
+                    {remaining > 0 ? `₺${remaining.toLocaleString()} ${language === 'tr' ? 'kalan' : 'remaining'}` : `✓ ${language === 'tr' ? 'Tam ödendi' : 'Paid in full'}`}
+                  </strong>
                 </div>
                 <div className="ep-bar-bg"><div className="ep-bar" style={{width:`${Math.min(100,(ev.paid||0)/ev.total*100)}%`}}/></div>
               </div>
               <div className="ec-foot">
                 <strong className="ev-total">₺{ev.total.toLocaleString()}</strong>
                 <div className="act-btns">
-                  <button className="mb grey" onClick={()=>setDetailEvent(ev)} title="Detay"><Eye size={12}/></button>
-                  <button className="mb grey" onClick={()=>openEdit(ev)} title="Düzenle"><Edit2 size={12}/></button>
-                  {ev.status==='bekliyor' && <button className="mb green" onClick={()=>updateStatus(ev.id,'onaylı')}>Onayla</button>}
-                  {ev.status==='onaylı' && <button className="mb blue" onClick={()=>updateStatus(ev.id,'devam')}>Başlat</button>}
-                  {ev.status==='devam' && <button className="mb purple" onClick={()=>updateStatus(ev.id,'tamamlandı')}>Tamamla</button>}
-                  {ev.status!=='tamamlandı'&&ev.status!=='iptal' && <button className="mb red" onClick={()=>updateStatus(ev.id,'iptal')}>İptal</button>}
+                  <button className="mb grey" onClick={() => setDetailEvent(ev)} title={language === 'tr' ? 'Detay' : 'Detail'}><Eye size={12}/></button>
+                  <button className="mb grey" onClick={() => openEdit(ev)} title={_c('edit')}><Edit2 size={12}/></button>
+                  {ev.status === 'bekliyor'   && <button className="mb green"  onClick={() => updateStatus(ev.id,'onaylı')}>{language === 'tr' ? 'Onayla' : 'Confirm'}</button>}
+                  {ev.status === 'onaylı'     && <button className="mb blue"   onClick={() => updateStatus(ev.id,'devam')}>{language === 'tr' ? 'Başlat' : 'Start'}</button>}
+                  {ev.status === 'devam'      && <button className="mb purple" onClick={() => updateStatus(ev.id,'tamamlandı')}>{language === 'tr' ? 'Tamamla' : 'Complete'}</button>}
+                  {ev.status !== 'tamamlandı' && ev.status !== 'iptal' && <button className="mb red" onClick={() => updateStatus(ev.id,'iptal')}>{language === 'tr' ? 'İptal' : 'Cancel'}</button>}
                 </div>
               </div>
             </motion.div>
           );
         })}
-        {filtered.length===0 && <div className="no-data"><Calendar size={48} color="#e2e8f0"/><p>Eşleşen etkinlik bulunamadı</p></div>}
+        {filtered.length === 0 && <div className="no-data"><Calendar size={48} color="#e2e8f0"/><p>{language === 'tr' ? 'Eşleşen etkinlik bulunamadı' : 'No matching events found'}</p></div>}
       </div>
 
-      {/* Detay Modal */}
+      {/* Detail Modal */}
       <AnimatePresence>
         {detailEvent && (
-          <motion.div className="modal-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={()=>setDetailEvent(null)}>
+          <motion.div className="modal-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={() => setDetailEvent(null)}>
             <motion.div className="modal-box lg" initial={{scale:0.9}} animate={{scale:1}} onClick={e=>e.stopPropagation()}>
               <div className="mb-head">
                 <h3>{detailEvent.name}</h3>
                 <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                  <span className="ev-status" style={{background:STATUS_MAP[detailEvent.status]?.bg,color:STATUS_MAP[detailEvent.status]?.color}}>{STATUS_MAP[detailEvent.status]?.label}</span>
-                  <button onClick={()=>setDetailEvent(null)}><X size={18}/></button>
+                  <span className="ev-status" style={{background:STATUS_MAP[detailEvent.status]?.bg,color:STATUS_MAP[detailEvent.status]?.color}}>{stLabel(detailEvent.status)}</span>
+                  <button onClick={() => setDetailEvent(null)}><X size={18}/></button>
                 </div>
               </div>
               <div className="detail-grid">
-                <div className="d-item"><span>Etkinlik Türü</span><strong>{detailEvent.type}</strong></div>
-                <div className="d-item"><span>Salon</span><strong>{detailEvent.hall}</strong></div>
-                <div className="d-item"><span>Tarih & Saat</span><strong>{detailEvent.date} {detailEvent.time}</strong></div>
-                <div className="d-item"><span>Kişi Sayısı</span><strong>{detailEvent.pax} kişi</strong></div>
-                <div className="d-item"><span>Toplam Tutar</span><strong style={{color:'#10b981'}}>₺{detailEvent.total.toLocaleString()}</strong></div>
-                <div className="d-item"><span>Tahsil Edilen</span><strong>₺{(detailEvent.paid||0).toLocaleString()}</strong></div>
+                <div className="d-item"><span>{language === 'tr' ? 'Etkinlik Türü' : 'Event Type'}</span><strong>{detailEvent.type}</strong></div>
+                <div className="d-item"><span>{language === 'tr' ? 'Salon' : 'Hall'}</span><strong>{detailEvent.hall}</strong></div>
+                <div className="d-item"><span>{language === 'tr' ? 'Tarih & Saat' : 'Date & Time'}</span><strong>{detailEvent.date} {detailEvent.time}</strong></div>
+                <div className="d-item"><span>{language === 'tr' ? 'Kişi Sayısı' : 'Guests'}</span><strong>{detailEvent.pax} {language === 'tr' ? 'kişi' : 'guests'}</strong></div>
+                <div className="d-item"><span>{language === 'tr' ? 'Toplam Tutar' : 'Total'}</span><strong style={{color:'#10b981'}}>₺{detailEvent.total.toLocaleString()}</strong></div>
+                <div className="d-item"><span>{language === 'tr' ? 'Tahsil Edilen' : 'Collected'}</span><strong>₺{(detailEvent.paid||0).toLocaleString()}</strong></div>
               </div>
               <div className="detail-contact">
-                <h4>İletişim Bilgileri</h4>
+                <h4>{language === 'tr' ? 'İletişim Bilgileri' : 'Contact Info'}</h4>
                 <div className="dc-row"><Phone size={14}/> {detailEvent.contact} — {detailEvent.phone}</div>
                 {detailEvent.email && <div className="dc-row"><Mail size={14}/> {detailEvent.email}</div>}
-                {detailEvent.notes && <div className="dc-notes">📝 {detailEvent.notes}</div>}
+                {detailEvent.notes && <div className="dc-notes">{detailEvent.notes}</div>}
               </div>
-              {/* Tahsilat Butonu */}
               {detailEvent.status !== 'iptal' && detailEvent.status !== 'tamamlandı' && (detailEvent.total - (detailEvent.paid||0)) > 0 && (
                 <div className="pay-section">
-                  <h4>Hızlı Tahsilat</h4>
+                  <h4>{language === 'tr' ? 'Hızlı Tahsilat' : 'Quick Collection'}</h4>
                   <div className="pay-btns">
-                    {[5000,10000,25000].filter(a=>a<=(detailEvent.total-(detailEvent.paid||0))).map(amount=>(
-                      <button key={amount} className="pay-btn" onClick={()=>collectPayment(detailEvent.id,amount)}>₺{amount.toLocaleString()}</button>
+                    {[5000,10000,25000].filter(a => a <= (detailEvent.total-(detailEvent.paid||0))).map(amount => (
+                      <button key={amount} className="pay-btn" onClick={() => collectPayment(detailEvent.id,amount)}>₺{amount.toLocaleString()}</button>
                     ))}
-                    <button className="pay-btn full" onClick={()=>collectPayment(detailEvent.id,detailEvent.total-(detailEvent.paid||0))}>
-                      Tamamını Tahsil: ₺{(detailEvent.total-(detailEvent.paid||0)).toLocaleString()}
+                    <button className="pay-btn full" onClick={() => collectPayment(detailEvent.id, detailEvent.total-(detailEvent.paid||0))}>
+                      {language === 'tr' ? 'Tamamını Tahsil' : 'Collect All'}: ₺{(detailEvent.total-(detailEvent.paid||0)).toLocaleString()}
                     </button>
                   </div>
                 </div>
               )}
               <div className="mf-foot">
-                <button className="btn-cancel" style={{color:'#ef4444',borderColor:'#fecaca'}} onClick={()=>deleteEvent(detailEvent.id)}>Etkinliği Sil</button>
-                <button className="mb blue" onClick={()=>{openEdit(detailEvent);setDetailEvent(null);}}>Düzenle</button>
-                <button className="btn-primary" onClick={()=>setDetailEvent(null)}>Kapat</button>
+                <button className="btn-cancel" style={{color:'#ef4444',borderColor:'#fecaca'}} onClick={() => deleteEvent(detailEvent.id)}>{language === 'tr' ? 'Etkinliği Sil' : 'Delete Event'}</button>
+                <button className="mb blue" onClick={() => {openEdit(detailEvent);setDetailEvent(null);}}>{_c('edit')}</button>
+                <button className="btn-primary" onClick={() => setDetailEvent(null)}>{_c('close')}</button>
               </div>
             </motion.div>
           </motion.div>

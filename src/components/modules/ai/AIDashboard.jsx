@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useHotel } from '../../../context/HotelContext';
+import { useLanguage } from '../../../context/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { TrendingUp, TrendingDown, Zap, Users, Bed, DollarSign, AlertTriangle, CheckCircle, ArrowRight, Lightbulb, Loader2 } from 'lucide-react';
 
 const AIDashboard = () => {
   const { rooms, reservations, guests, cashTransactions, stats, tasks, inventory, staff, TODAY, addNotification } = useHotel();
+  const { isEn } = useLanguage();
   const [actingOn, setActingOn] = useState(null);
   const [completedActions, setCompletedActions] = useState([]);
 
@@ -32,34 +34,34 @@ const AIDashboard = () => {
   });
 
   const revenueData = [
-    { gun: 'Pzt', gelir: 95000, gider: 22000 },
-    { gun: 'Sal', gelir: 110000, gider: 18000 },
-    { gun: 'Çar', gelir: 88000, gider: 25000 },
-    { gun: 'Per', gelir: 125000, gider: 20000 },
-    { gun: 'Cum', gelir: 145000, gider: 30000 },
-    { gun: 'Cmt', gelir: 180000, gider: 28000 },
-    { gun: 'Paz', gelir: todayRev || 130000, gider: todayExp || 15000 },
+    { gun: isEn ? 'Mon' : 'Pzt', gelir: 95000, gider: 22000 },
+    { gun: isEn ? 'Tue' : 'Sal', gelir: 110000, gider: 18000 },
+    { gun: isEn ? 'Wed' : 'Çar', gelir: 88000, gider: 25000 },
+    { gun: isEn ? 'Thu' : 'Per', gelir: 125000, gider: 20000 },
+    { gun: isEn ? 'Fri' : 'Cum', gelir: 145000, gider: 30000 },
+    { gun: isEn ? 'Sat' : 'Cmt', gelir: 180000, gider: 28000 },
+    { gun: isEn ? 'Sun' : 'Paz', gelir: todayRev || 130000, gider: todayExp || 15000 },
   ];
 
   const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
   const insights = useMemo(() => {
     const rawInsights = [];
-    if (occRate > 80) rawInsights.push({ id:'occHigh', type: 'success', icon: <TrendingUp size={16}/>, title: 'Yüksek Doluluk Fırsatı', desc: `Doluluk oranı %${occRate} — fiyatların %10 artırılması önerilir.`, impact: `+₺${Math.round(avgRate * 0.1 * occupied).toLocaleString()}`, action: 'Fiyatları %10 Artır' });
-    if (occRate < 60) rawInsights.push({ id:'occLow', type: 'warn', icon: <TrendingDown size={16}/>, title: 'Düşük Doluluk Uyarısı', desc: `%${occRate} doluluk — OTA'lara kampanya aktivasyonu önerilir.`, impact: 'Kampanya Uygula', action: 'Kanal İndirimi Başlat' });
-    if (lowStockItems.length > 0) rawInsights.push({ id:'stock', type: 'warn', icon: <AlertTriangle size={16}/>, title: 'Kritik Stok Uyarıları', desc: `${lowStockItems.map(i => i.name).join(', ')} minimum seviyenin altında.`, impact: `${lowStockItems.length} Stok Riski`, action: 'Otomatik Sipariş Ver' });
-    if (openBalance > 0) rawInsights.push({ id:'balance', type: 'info', icon: <DollarSign size={16}/>, title: 'Ödenmemiş Bakiyeler', desc: `Toplam ₺${openBalance.toLocaleString()} açık hesap tespit edildi.`, impact: `₺${openBalance.toLocaleString()}`, action: 'Hatırlatma E-Postası At' });
-    if (pendingTasks.length > 3) rawInsights.push({ id:'tasks', type: 'warn', icon: <Zap size={16}/>, title: 'Görev Yığılması', desc: `${pendingTasks.length} adet bekleyen görev var, personel yükü optimize edilebilir.`, impact: `${pendingTasks.length} Bekleyen`, action: 'Rota Optimizasyonu Yap' });
-    if (goldGuests.length > 0) rawInsights.push({ id:'vip', type: 'success', icon: <Users size={16}/>, title: 'VIP Misafir Fırsatı', desc: `${goldGuests.length} üst düzey misafir için özel teklif gönder.`, impact: `${goldGuests.length} VIP`, action: 'Teklif Maili Gönder' });
+    if (occRate > 80) rawInsights.push({ id:'occHigh', type: 'success', icon: <TrendingUp size={16}/>, title: isEn ? 'High Occupancy Opportunity' : 'Yüksek Doluluk Fırsatı', desc: isEn ? `Occupancy %${occRate} — 10% rate increase suggested.` : `Doluluk oranı %${occRate} — fiyatların %10 artırılması önerilir.`, impact: `+₺${Math.round(avgRate * 0.1 * occupied).toLocaleString()}`, action: isEn ? 'Increase Rates 10%' : 'Fiyatları %10 Artır' });
+    if (occRate < 60) rawInsights.push({ id:'occLow', type: 'warn', icon: <TrendingDown size={16}/>, title: isEn ? 'Low Occupancy Alert' : 'Düşük Doluluk Uyarısı', desc: isEn ? `%${occRate} occupancy — OTA campaign recommended.` : `%${occRate} doluluk — OTA'lara kampanya aktivasyonu önerilir.`, impact: isEn ? 'Apply Campaign' : 'Kampanya Uygula', action: isEn ? 'Launch Channel Discount' : 'Kanal İndirimi Başlat' });
+    if (lowStockItems.length > 0) rawInsights.push({ id:'stock', type: 'warn', icon: <AlertTriangle size={16}/>, title: isEn ? 'Critical Stock Alerts' : 'Kritik Stok Uyarıları', desc: `${lowStockItems.map(i => i.name).join(', ')} ` + (isEn ? 'below minimum level.' : 'minimum seviyenin altında.'), impact: `${lowStockItems.length} ` + (isEn ? 'Stock Risk' : 'Stok Riski'), action: isEn ? 'Auto-Order' : 'Otomatik Sipariş Ver' });
+    if (openBalance > 0) rawInsights.push({ id:'balance', type: 'info', icon: <DollarSign size={16}/>, title: isEn ? 'Unpaid Balances' : 'Ödenmemiş Bakiyeler', desc: isEn ? `Total ₺${openBalance.toLocaleString()} open accounts detected.` : `Toplam ₺${openBalance.toLocaleString()} açık hesap tespit edildi.`, impact: `₺${openBalance.toLocaleString()}`, action: isEn ? 'Send Reminder Email' : 'Hatırlatma E-Postası At' });
+    if (pendingTasks.length > 3) rawInsights.push({ id:'tasks', type: 'warn', icon: <Zap size={16}/>, title: isEn ? 'Task Overload' : 'Görev Yığılması', desc: isEn ? `${pendingTasks.length} pending tasks, staff routing can be optimized.` : `${pendingTasks.length} adet bekleyen görev var, personel yükü optimize edilebilir.`, impact: `${pendingTasks.length} ` + (isEn ? 'Pending' : 'Bekleyen'), action: isEn ? 'Optimize Routes' : 'Rota Optimizasyonu Yap' });
+    if (goldGuests.length > 0) rawInsights.push({ id:'vip', type: 'success', icon: <Users size={16}/>, title: isEn ? 'VIP Guest Opportunity' : 'VIP Misafir Fırsatı', desc: isEn ? `Send special offers for ${goldGuests.length} VIP guests.` : `${goldGuests.length} üst düzey misafir için özel teklif gönder.`, impact: `${goldGuests.length} VIP`, action: isEn ? 'Send Offer Email' : 'Teklif Maili Gönder' });
     
     return rawInsights.filter(ins => !completedActions.includes(ins.id));
   }, [occRate, lowStockItems, openBalance, pendingTasks, goldGuests, completedActions]);
 
   const kpiCards = [
-    { label: 'Doluluk Oranı', val: `%${occRate}`, sub: `${occupied}/${total} oda`, color: '#3b82f6', trend: occRate > 75 ? 'up' : 'down' },
-    { label: 'Günlük Gelir', val: `₺${todayRev.toLocaleString()}`, sub: `Gider: ₺${todayExp.toLocaleString()}`, color: '#10b981', trend: 'up' },
-    { label: 'RevPAR', val: `₺${revPAR.toLocaleString()}`, sub: 'Oda başı gelir', color: '#8b5cf6', trend: 'up' },
-    { label: 'ADR (Ort. Fiyat)', val: `₺${avgRate.toLocaleString()}`, sub: 'Dolu oda ort.', color: '#f59e0b', trend: 'up' },
+    { label: isEn ? 'Occupancy Rate' : 'Doluluk Oranı', val: `%${occRate}`, sub: isEn ? `${occupied}/${total} rooms` : `${occupied}/${total} oda`, color: '#3b82f6', trend: occRate > 75 ? 'up' : 'down' },
+    { label: isEn ? 'Daily Revenue' : 'Günlük Gelir', val: `₺${todayRev.toLocaleString()}`, sub: (isEn ? 'Exp: ₺' : 'Gider: ₺') + todayExp.toLocaleString(), color: '#10b981', trend: 'up' },
+    { label: 'RevPAR', val: `₺${revPAR.toLocaleString()}`, sub: isEn ? 'Rev per room' : 'Oda başı gelir', color: '#8b5cf6', trend: 'up' },
+    { label: isEn ? 'ADR (Avg Price)' : 'ADR (Ort. Fiyat)', val: `₺${avgRate.toLocaleString()}`, sub: isEn ? 'Occ room avg.' : 'Dolu oda ort.', color: '#f59e0b', trend: 'up' },
   ];
 
   const handleActionClick = (insight) => {
@@ -67,7 +69,7 @@ const AIDashboard = () => {
     setTimeout(() => {
       setActingOn(null);
       setCompletedActions(p => [...p, insight.id]);
-      addNotification({ type: 'success', msg: `AI İşlemi Tamamlandı: ${insight.action}` });
+      addNotification({ type: 'success', msg: `${isEn ? 'AI Action Completed' : 'AI İşlemi Tamamlandı'}: ${insight.action}` });
     }, 1500);
   };
 
@@ -80,14 +82,14 @@ const AIDashboard = () => {
             <span className="kpi-label">{k.label}</span>
             <div className="kpi-val" style={{ color: k.color }}>{k.val}</div>
             <span className="kpi-sub">{k.sub}</span>
-            <div className={`kpi-trend ${k.trend}`}>{k.trend === 'up' ? <TrendingUp size={12}/> : <TrendingDown size={12}/>} {k.trend === 'up' ? 'Artış' : 'Düşüş'}</div>
+            <div className={`kpi-trend ${k.trend}`}>{k.trend === 'up' ? <TrendingUp size={12}/> : <TrendingDown size={12}/>} {k.trend === 'up' ? (isEn ? 'Up' : 'Artış') : (isEn ? 'Down' : 'Düşüş')}</div>
           </motion.div>
         ))}
       </div>
 
       <div className="dash-grid">
         <div className="dash-chart-card">
-          <h3>Haftalık Gelir & Gider</h3>
+          <h3>{isEn ? 'Weekly Revenue & Expenses' : 'Haftalık Gelir & Gider'}</h3>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={revenueData}>
               <defs>
@@ -104,7 +106,7 @@ const AIDashboard = () => {
         </div>
 
         <div className="dash-chart-card">
-          <h3>Kanal Dağılımı</h3>
+          <h3>{isEn ? 'Channel Distribution' : 'Kanal Dağılımı'}</h3>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie data={channelData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={4} dataKey="value">
@@ -119,7 +121,7 @@ const AIDashboard = () => {
 
       <div className="dash-grid">
         <div className="dash-chart-card">
-          <h3>Oda Tipi Doluluk</h3>
+          <h3>{isEn ? 'Room Type Occupancy' : 'Oda Tipi Doluluk'}</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={roomTypeData} barSize={32}>
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
@@ -133,13 +135,13 @@ const AIDashboard = () => {
         </div>
 
         <div className="dash-chart-card insights-card">
-          <div className="ins-head"><Lightbulb size={18} color="#f59e0b"/><h3>AI Aksiyon Önerileri</h3><span className="live-dot">Canlı</span></div>
+          <div className="ins-head"><Lightbulb size={18} color="#f59e0b"/><h3>{isEn ? 'AI Action Insights' : 'AI Aksiyon Önerileri'}</h3><span className="live-dot">{isEn ? 'Live' : 'Canlı'}</span></div>
           <div className="ins-list">
             <AnimatePresence>
               {insights.length === 0 && (
                 <motion.div className="ins-empty" initial={{opacity:0}} animate={{opacity:1}}>
                   <CheckCircle size={32} color="#10b981" />
-                  <p>Tüm öneriler uygulandı, sistem optimize.</p>
+                  <p>{isEn ? 'All recommendations applied, system optimized.' : 'Tüm öneriler uygulandı, sistem optimize.'}</p>
                 </motion.div>
               )}
               {insights.map((ins, i) => (
@@ -151,7 +153,7 @@ const AIDashboard = () => {
                     <div className="ins-bot-row">
                       <span className="ins-impact">{ins.impact}</span>
                       <button className="ins-action-btn" onClick={() => handleActionClick(ins)} disabled={actingOn === ins.id}>
-                        {actingOn === ins.id ? <><Loader2 size={12} className="spin"/> İşleniyor...</> : <>{ins.action} <ArrowRight size={12}/></>}
+                        {actingOn === ins.id ? <><Loader2 size={12} className="spin"/> {isEn ? 'Processing...' : 'İşleniyor...'}</> : <>{ins.action} <ArrowRight size={12}/></>}
                       </button>
                     </div>
                   </div>

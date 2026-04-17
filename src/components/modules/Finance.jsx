@@ -1,83 +1,103 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion } from 'framer-motion';
-import {
-  Receipt, Plus, Search, Download, Filter,
-  CheckCircle, Clock, AlertCircle, Building, X
-} from 'lucide-react';
+import { Receipt, Plus, Search, Download, CheckCircle, Clock } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
-const INVOICE_TYPES = ['Satış','Gider','İade'];
-const CATS = ['Konaklama','Restoran','SPA','Teknik','Tedarikçi','Diğer'];
-
 const Finance = () => {
+  const { mt, language } = useModuleTranslation();
+  const isEn = language === 'en';
+  const _t = (k) => mt('finance.' + k);
+  const _c = (k) => mt('common.' + k);
   const { cashTransactions, addNotification } = useHotel();
+
+  const INVOICE_TYPES = ['Satış','Gider','İade'];
+  const CATS = ['Konaklama','Restoran','SPA','Teknik','Tedarikçi','Diğer'];
+  const TYPE_DISPLAY = { 'Satış': isEn?'Sales':'Satış', 'Gider': isEn?'Expense':'Gider', 'İade': isEn?'Refund':'İade' };
+  const CAT_DISPLAY  = { 'Konaklama': isEn?'Accommodation':'Konaklama', 'Restoran': isEn?'Restaurant':'Restoran', 'SPA':'SPA', 'Teknik': isEn?'Technical':'Teknik', 'Tedarikçi': isEn?'Supplier':'Tedarikçi', 'Diğer': isEn?'Other':'Diğer' };
+
   const [invoices, setInvoices] = useState([
     { id:'INV-2026-001', type:'Satış', cat:'Konaklama', customer:'Johnson & Co', amount:18500, date:'2026-03-13', status:'ödendi', vkn:'1234567890' },
     { id:'INV-2026-002', type:'Satış', cat:'Restoran',  customer:'Müller GmbH',  amount:4200,  date:'2026-03-14', status:'bekliyor', vkn:'9876543210' },
     { id:'INV-2026-003', type:'Gider', cat:'Tedarikçi', customer:'Tekstil San.', amount:6500,  date:'2026-03-13', status:'ödendi', vkn:'5554443333' },
-    { id:'INV-2026-004', type:'Satış', cat:'SPA',       customer:'Bireysel',     amount:2800,  date:'2026-03-14', status:'bekliyor', vkn:'—' },
+    { id:'INV-2026-004', type:'Satış', cat:'SPA',       customer:'Individual',   amount:2800,  date:'2026-03-14', status:'bekliyor', vkn:'—' },
   ]);
 
   const [showForm, setShowForm] = useState(false);
-  const [typeFilter, setTypeFilter] = useState('Tümü');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [form, setForm] = useState({ type:'Satış', cat:'Konaklama', customer:'', amount:'', date:'2026-03-14', vkn:'' });
-  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const set = (k, v) => setForm(p => ({...p, [k]: v}));
+
+  const allTypes = ['all', ...INVOICE_TYPES];
 
   const submit = (e) => {
     e.preventDefault();
-    const id = `INV-2026-${String(invoices.length+1).padStart(3,'0')}`;
-    setInvoices(p=>[...p,{ ...form, id, amount:Number(form.amount), status:'bekliyor' }]);
-    addNotification({ type:'info', msg:`Fatura oluşturuldu: ${id} (₺${form.amount})` });
+    const id = `INV-2026-${String(invoices.length + 1).padStart(3,'0')}`;
+    setInvoices(p => [...p, { ...form, id, amount: Number(form.amount), status:'bekliyor' }]);
+    addNotification({ type:'info', msg: `${language === 'tr' ? 'Fatura oluşturuldu' : 'Invoice created'}: ${id} (₺${form.amount})` });
     setForm({ type:'Satış', cat:'Konaklama', customer:'', amount:'', date:'2026-03-14', vkn:'' });
     setShowForm(false);
   };
 
   const markPaid = (id) => {
-    setInvoices(p=>p.map(i=>i.id===id?{...i,status:'ödendi'}:i));
-    addNotification({ type:'success', msg:`Fatura ödendi: ${id}` });
+    setInvoices(p => p.map(i => i.id === id ? {...i, status:'ödendi'} : i));
+    addNotification({ type:'success', msg: `${language === 'tr' ? 'Fatura ödendi' : 'Invoice paid'}: ${id}` });
   };
 
   const filtered = invoices.filter(inv => {
     const q = search.toLowerCase();
-    return (typeFilter==='Tümü'||inv.type===typeFilter) && (!q||inv.customer.toLowerCase().includes(q)||inv.id.toLowerCase().includes(q));
+    const typeMatch = typeFilter === 'all' || inv.type === typeFilter;
+    return typeMatch && (!q || inv.customer.toLowerCase().includes(q) || inv.id.toLowerCase().includes(q));
   });
 
   const totals = {
-    satis:    invoices.filter(i=>i.type==='Satış').reduce((s,i)=>s+i.amount,0),
-    gider:    invoices.filter(i=>i.type==='Gider').reduce((s,i)=>s+i.amount,0),
-    bekleyen: invoices.filter(i=>i.status==='bekliyor').reduce((s,i)=>s+i.amount,0),
+    satis:    invoices.filter(i => i.type === 'Satış').reduce((s,i) => s + i.amount, 0),
+    gider:    invoices.filter(i => i.type === 'Gider').reduce((s,i) => s + i.amount, 0),
+    bekleyen: invoices.filter(i => i.status === 'bekliyor').reduce((s,i) => s + i.amount, 0),
   };
+
+  const statusLabel = (s) => s === 'ödendi'
+    ? (language === 'tr' ? 'Ödendi' : 'Paid')
+    : (language === 'tr' ? 'Bekliyor' : 'Pending');
 
   return (
     <div className="fin-page">
       <div className="fin-head">
-        <div><h2><Receipt size={20}/> E-Fatura & Finans</h2><span>Satış/gider faturaları, ödeme takibi ve muhasebe entegrasyonu</span></div>
-        <button className="btn-primary" onClick={()=>setShowForm(!showForm)}><Plus size={15}/> Yeni Fatura</button>
+        <div>
+          <h2><Receipt size={20}/> {_t('title')}</h2>
+          <span>{_t('subtitle')}</span>
+        </div>
+        <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
+          <Plus size={15}/> {language === 'tr' ? 'Yeni Fatura' : 'New Invoice'}
+        </button>
       </div>
 
       <div className="fin-kpi">
         {[
-          { label:'Toplam Satış', val:`₺${totals.satis.toLocaleString()}`, color:'#10b981' },
-          { label:'Toplam Gider', val:`₺${totals.gider.toLocaleString()}`, color:'#ef4444' },
-          { label:'Net Kâr', val:`₺${(totals.satis-totals.gider).toLocaleString()}`, color:'#3b82f6' },
-          { label:'Tahsil Bekleyen', val:`₺${totals.bekleyen.toLocaleString()}`, color:'#f59e0b' },
-        ].map((k,i)=>(
+          { label: language === 'tr' ? 'Toplam Satış' : 'Total Sales',   val:`₺${totals.satis.toLocaleString()}`, color:'#10b981' },
+          { label: language === 'tr' ? 'Toplam Gider' : 'Total Expense', val:`₺${totals.gider.toLocaleString()}`, color:'#ef4444' },
+          { label: language === 'tr' ? 'Net Kâr'      : 'Net Profit',    val:`₺${(totals.satis-totals.gider).toLocaleString()}`, color:'#3b82f6' },
+          { label: language === 'tr' ? 'Tahsil Bekleyen' : 'Outstanding', val:`₺${totals.bekleyen.toLocaleString()}`, color:'#f59e0b' },
+        ].map((k, i) => (
           <div key={i} className="fk"><strong style={{color:k.color}}>{k.val}</strong><span>{k.label}</span></div>
         ))}
       </div>
 
-      {/* Gelir/Gider Grafiği */}
       {cashTransactions.length > 0 && (
         <div className="fin-chart">
-          <h4>Kasa Hareketleri (Son \u0130\u015flemler)</h4>
+          <h4>{language === 'tr' ? 'Kasa Hareketleri' : 'Cash Movements'}</h4>
           <ResponsiveContainer width="100%" height={120}>
-            <BarChart data={cashTransactions.slice(-10).map(t => ({name:t.date?.slice(5)||'',gelir:t.type==='gelir'?t.amount:0,gider:t.type==='gider'?t.amount:0}))}>
+            <BarChart data={cashTransactions.slice(-10).map(t => ({
+              name: t.date?.slice(5) || '',
+              gelir: t.type === 'gelir' ? t.amount : 0,
+              gider: t.type === 'gider' ? t.amount : 0
+            }))}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:10}}/>
               <YAxis hide/>
-              <Tooltip formatter={(v,n) => [`\u20ba${v.toLocaleString()}`, n==='gelir'?'Gelir':'Gider']}/>
+              <Tooltip formatter={(v, n) => [`₺${v.toLocaleString()}`, n === 'gelir' ? (language === 'tr' ? 'Gelir' : 'Income') : (language === 'tr' ? 'Gider' : 'Expense')]}/>
               <Bar dataKey="gelir" fill="#10b981" radius={[4,4,0,0]} stackId="a"/>
               <Bar dataKey="gider" fill="#ef4444" radius={[4,4,0,0]} stackId="b"/>
             </BarChart>
@@ -87,53 +107,65 @@ const Finance = () => {
 
       {showForm && (
         <motion.form className="form-card" onSubmit={submit} initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}}>
-          <h3>Yeni Fatura Oluştur</h3>
+          <h3>{language === 'tr' ? 'Yeni Fatura Oluştur' : 'Create New Invoice'}</h3>
           <div className="fg-grid">
-            <div className="fg"><label>Fatura Tipi</label><select value={form.type} onChange={e=>set('type',e.target.value)}>{INVOICE_TYPES.map(t=><option key={t}>{t}</option>)}</select></div>
-            <div className="fg"><label>Kategori</label><select value={form.cat} onChange={e=>set('cat',e.target.value)}>{CATS.map(c=><option key={c}>{c}</option>)}</select></div>
-            <div className="fg full"><label>Alıcı / Tedarikçi *</label><input value={form.customer} onChange={e=>set('customer',e.target.value)} placeholder="Firma veya kişi adı" required/></div>
-            <div className="fg"><label>VKN / TCKN</label><input value={form.vkn} onChange={e=>set('vkn',e.target.value)} placeholder="Vergi kimlik no"/></div>
-            <div className="fg"><label>Tarih</label><input type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></div>
-            <div className="fg"><label>Tutar (₺) *</label><input type="number" value={form.amount} onChange={e=>set('amount',e.target.value)} placeholder="0" required/></div>
+            <div className="fg"><label>{isEn ? 'Invoice Type' : 'Fatura Tipi'}</label><select value={form.type} onChange={e => set('type',e.target.value)}>{INVOICE_TYPES.map(t => <option key={t} value={t}>{TYPE_DISPLAY[t]}</option>)}</select></div>
+            <div className="fg"><label>{_c('category')}</label><select value={form.cat} onChange={e => set('cat',e.target.value)}>{CATS.map(c => <option key={c} value={c}>{CAT_DISPLAY[c]}</option>)}</select></div>
+            <div className="fg full"><label>{language === 'tr' ? 'Alıcı / Tedarikçi *' : 'Customer / Supplier *'}</label><input value={form.customer} onChange={e => set('customer',e.target.value)} placeholder={language === 'tr' ? 'Firma veya kişi adı' : 'Company or person name'} required/></div>
+            <div className="fg"><label>VKN / TCKN</label><input value={form.vkn} onChange={e => set('vkn',e.target.value)} placeholder={language === 'tr' ? 'Vergi kimlik no' : 'Tax ID'}/></div>
+            <div className="fg"><label>{_c('date')}</label><input type="date" value={form.date} onChange={e => set('date',e.target.value)}/></div>
+            <div className="fg"><label>{language === 'tr' ? 'Tutar (₺) *' : 'Amount (₺) *'}</label><input type="number" value={form.amount} onChange={e => set('amount',e.target.value)} placeholder="0" required/></div>
           </div>
           <div className="form-foot">
-            <button type="button" className="btn-cancel" onClick={()=>setShowForm(false)}>İptal</button>
-            <button type="submit" className="btn-primary">Fatura Oluştur</button>
+            <button type="button" className="btn-cancel" onClick={() => setShowForm(false)}>{_c('cancel')}</button>
+            <button type="submit" className="btn-primary">{language === 'tr' ? 'Fatura Oluştur' : 'Create Invoice'}</button>
           </div>
         </motion.form>
       )}
 
       <div className="fin-controls">
-        <div className="search-box"><Search size={14}/><input placeholder="Fatura no, müşteri..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+        <div className="search-box"><Search size={14}/><input placeholder={language === 'tr' ? 'Fatura no, müşteri...' : 'Invoice no, customer...'} value={search} onChange={e => setSearch(e.target.value)}/></div>
         <div className="type-tabs">
-          {['Tümü','Satış','Gider','İade'].map(t=>(
-            <button key={t} className={`tt ${typeFilter===t?'active':''}`} onClick={()=>setTypeFilter(t)}>{t}</button>
+          {allTypes.map(t => (
+            <button key={t} className={`tt ${typeFilter === t ? 'active' : ''}`} onClick={() => setTypeFilter(t)}>
+              {t === 'all' ? _c('all') : TYPE_DISPLAY[t]}
+            </button>
           ))}
         </div>
       </div>
 
       <div className="fin-table-wrap">
         <table className="fin-table">
-          <thead><tr><th>Fatura No</th><th>Tip</th><th>Kategori</th><th>Alıcı</th><th>VKN</th><th>Tarih</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead>
+          <thead><tr>
+            <th>{language === 'tr' ? 'Fatura No' : 'Invoice No'}</th>
+            <th>{language === 'tr' ? 'Tip' : 'Type'}</th>
+            <th>{_c('category')}</th>
+            <th>{language === 'tr' ? 'Alıcı' : 'Customer'}</th>
+            <th>VKN</th>
+            <th>{_c('date')}</th>
+            <th>{language === 'tr' ? 'Tutar' : 'Amount'}</th>
+            <th>{language === 'tr' ? 'Durum' : 'Status'}</th>
+            <th>{_c('actions')}</th>
+          </tr></thead>
           <tbody>
-            {filtered.map((inv,i)=>(
+            {filtered.map((inv, i) => (
               <motion.tr key={inv.id} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.04}}>
                 <td><span className="inv-id">{inv.id}</span></td>
-                <td><span className={`type-tag ${inv.type==='Satış'?'green':inv.type==='Gider'?'red':'blue'}`}>{inv.type}</span></td>
-                <td>{inv.cat}</td>
+                <td><span className={`type-tag ${inv.type === 'Satış' ? 'green' : inv.type === 'Gider' ? 'red' : 'blue'}`}>{TYPE_DISPLAY[inv.type] || inv.type}</span></td>
+                <td>{CAT_DISPLAY[inv.cat] || inv.cat}</td>
                 <td><strong>{inv.customer}</strong></td>
                 <td><span className="vkn">{inv.vkn}</span></td>
                 <td>{inv.date}</td>
-                <td><strong style={{color:inv.type==='Gider'?'#ef4444':'#1e293b'}}>₺{inv.amount.toLocaleString()}</strong></td>
+                <td><strong style={{color: inv.type === 'Gider' ? '#ef4444' : '#1e293b'}}>₺{inv.amount.toLocaleString()}</strong></td>
                 <td>
-                  {inv.status==='ödendi'
-                    ? <span className="st-tag green"><CheckCircle size={12}/> Ödendi</span>
-                    : <span className="st-tag yellow"><Clock size={12}/> Bekliyor</span>
+                  {inv.status === 'ödendi'
+                    ? <span className="st-tag green"><CheckCircle size={12}/> {statusLabel('ödendi')}</span>
+                    : <span className="st-tag yellow"><Clock size={12}/> {statusLabel('bekliyor')}</span>
                   }
                 </td>
                 <td>
                   <div className="act-btns">
-                    {inv.status==='bekliyor' && <button className="mb blue" onClick={()=>markPaid(inv.id)}>Ödendi İşaretle</button>}
+                    {inv.status === 'bekliyor' && <button className="mb blue" onClick={() => markPaid(inv.id)}>{language === 'tr' ? 'Ödendi İşaretle' : 'Mark Paid'}</button>}
                     <button className="mb grey"><Download size={12}/> PDF</button>
                   </div>
                 </td>
@@ -153,6 +185,8 @@ const Finance = () => {
         .fk{background:white;border-radius:14px;border:1px solid #e2e8f0;padding:18px;text-align:center;}
         .fk strong{display:block;font-size:22px;font-weight:900;margin-bottom:4px;}
         .fk span{font-size:12px;color:#94a3b8;font-weight:700;}
+        .fin-chart{background:white;border-radius:14px;border:1px solid #e2e8f0;padding:16px 20px;}
+        .fin-chart h4{font-size:13px;font-weight:800;color:#64748b;margin-bottom:10px;}
         .form-card{background:white;border-radius:16px;border:1px solid #e2e8f0;padding:22px;}
         .form-card h3{font-size:15px;font-weight:800;color:#1e293b;margin-bottom:16px;}
         .fg-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}

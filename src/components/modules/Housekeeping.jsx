@@ -1,30 +1,43 @@
 import React, { useState } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion } from 'framer-motion';
-import { Search, Plus, CheckCircle, AlertCircle, Clock, Wrench, Bed, ChevronRight } from 'lucide-react';
-
-const PRIORITY_MAP = {
-  high:   { label: 'Acil',   color: '#ef4444', bg: '#fef2f2' },
-  normal: { label: 'Normal', color: '#f59e0b', bg: '#fffbeb' },
-  low:    { label: 'Düşük',  color: '#64748b', bg: '#f8fafc' },
-};
-
-const STATUS_MAP = {
-  bekliyor: { label: 'Bekliyor', color: '#f59e0b', icon: <Clock size={14}/> },
-  devam:    { label: 'Devam',    color: '#3b82f6', icon: <AlertCircle size={14}/> },
-  bitti:    { label: 'Tamamlandı', color: '#10b981', icon: <CheckCircle size={14}/> },
-};
+import { Plus, CheckCircle, AlertCircle, Clock, Wrench, Bed } from 'lucide-react';
 
 const Housekeeping = () => {
+  const { mt, language } = useModuleTranslation();
+  const _t = (k) => mt('housekeeping.' + k);
+  const _c = (k) => mt('common.' + k);
   const { tasks, updateTask, addTask, rooms, stats } = useHotel();
-  const [filter, setFilter] = useState('tümü');
+  const [filter, setFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ room: '', desc: '', priority: 'normal', type: 'housekeeping', assignee: '' , status: 'bekliyor' });
+  const [form, setForm] = useState({ room: '', desc: '', priority: 'normal', type: 'housekeeping', assignee: '', status: 'bekliyor' });
+
+  const PRIORITY_MAP = {
+    high:   { label: _t('high'),   color: '#ef4444', bg: '#fef2f2' },
+    normal: { label: _t('medium'), color: '#f59e0b', bg: '#fffbeb' },
+    low:    { label: _t('low'),    color: '#64748b', bg: '#f8fafc' },
+  };
+
+  const STATUS_MAP = {
+    bekliyor: { label: _t('pending'),    color: '#f59e0b', icon: <Clock size={14}/> },
+    devam:    { label: _t('inProgress'), color: '#3b82f6', icon: <AlertCircle size={14}/> },
+    bitti:    { label: _t('completed'),  color: '#10b981', icon: <CheckCircle size={14}/> },
+  };
+
+  const FILTERS = [
+    { key: 'all',          label: _c('all') },
+    { key: 'housekeeping', label: language === 'tr' ? 'Kat Hizm.' : 'Housekp.' },
+    { key: 'technical',    label: language === 'tr' ? 'Teknik' : 'Technical' },
+    { key: 'bekliyor',     label: _t('pending') },
+    { key: 'devam',        label: _t('inProgress') },
+    { key: 'bitti',        label: _t('completed') },
+  ];
 
   const displayed = tasks.filter(t =>
-    filter === 'tümü' ? true :
+    filter === 'all'          ? true :
     filter === 'housekeeping' ? t.type === 'housekeeping' :
-    filter === 'technical' ? t.type === 'technical' :
+    filter === 'technical'    ? t.type === 'technical' :
     t.status === filter
   );
 
@@ -40,21 +53,21 @@ const Housekeeping = () => {
       {/* Header */}
       <div className="hk-header">
         <div>
-          <h2>Kat Hizmetleri & Teknik Servis</h2>
-          <span>Temizlik görevleri, iş emirleri ve oda durumu takibi</span>
+          <h2>{_t('title')}</h2>
+          <span>{_t('subtitle')}</span>
         </div>
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
-          <Plus size={16}/> Yeni Görev Ekle
+          <Plus size={16}/> {_t('assignTask')}
         </button>
       </div>
 
       {/* KPI row */}
       <div className="hk-kpi-row">
         {[
-          { label: 'Bekleyen',   count: tasks.filter(t => t.status === 'bekliyor').length,   color: '#f59e0b' },
-          { label: 'Devam Eden', count: tasks.filter(t => t.status === 'devam').length,       color: '#3b82f6' },
-          { label: 'Tamamlanan',count: tasks.filter(t => t.status === 'bitti').length,        color: '#10b981' },
-          { label: 'Kirli Oda', count: stats.dirty,                                           color: '#8b5cf6' },
+          { label: _t('pending'),    count: tasks.filter(t => t.status === 'bekliyor').length, color: '#f59e0b' },
+          { label: _t('inProgress'), count: tasks.filter(t => t.status === 'devam').length,    color: '#3b82f6' },
+          { label: _t('completed'),  count: tasks.filter(t => t.status === 'bitti').length,    color: '#10b981' },
+          { label: _t('statusDirty'), count: stats.dirty,                                       color: '#8b5cf6' },
         ].map((k, i) => (
           <div key={i} className="kpi-card">
             <div className="kpi-num" style={{ color: k.color }}>{k.count}</div>
@@ -71,44 +84,44 @@ const Housekeeping = () => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h3>Yeni Görev</h3>
+          <h3>{_t('assignTask')}</h3>
           <div className="form-row">
             <select value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
-              <option value="housekeeping">Kat Hizmetleri</option>
-              <option value="technical">Teknik Servis</option>
+              <option value="housekeeping">{_t('title')}</option>
+              <option value="technical">{language === 'tr' ? 'Teknik Servis' : 'Technical Service'}</option>
             </select>
             <select value={form.room} onChange={e => setForm({...form, room: e.target.value})} required>
-              <option value="">Oda Seçin</option>
+              <option value="">{_t('roomNumber')}</option>
               {rooms.map(r => <option key={r.id} value={r.id}>{r.id} — {r.type}</option>)}
             </select>
             <select value={form.priority} onChange={e => setForm({...form, priority: e.target.value})}>
-              <option value="high">Acil</option>
-              <option value="normal">Normal</option>
-              <option value="low">Düşük</option>
+              <option value="high">{_t('high')}</option>
+              <option value="normal">{_t('medium')}</option>
+              <option value="low">{_t('low')}</option>
             </select>
           </div>
           <div className="form-row">
             <input
-              type="text" placeholder="Görev açıklaması..."
+              type="text" placeholder={_c('description') + '...'}
               value={form.desc} onChange={e => setForm({...form, desc: e.target.value})} required
             />
             <input
-              type="text" placeholder="Sorumlu personel"
+              type="text" placeholder={_t('assignedTo')}
               value={form.assignee} onChange={e => setForm({...form, assignee: e.target.value})}
             />
           </div>
           <div className="form-actions">
-            <button type="button" className="btn-cancel" onClick={() => setShowForm(false)}>İptal</button>
-            <button type="submit" className="btn-primary">Görevi Oluştur</button>
+            <button type="button" className="btn-cancel" onClick={() => setShowForm(false)}>{_c('cancel')}</button>
+            <button type="submit" className="btn-primary">{_c('save')}</button>
           </div>
         </motion.form>
       )}
 
       {/* Filters */}
       <div className="filter-bar">
-        {['tümü', 'housekeeping', 'technical', 'bekliyor', 'devam', 'bitti'].map(f => (
-          <button key={f} className={`filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
-            {f === 'tümü' ? 'Tümü' : f === 'housekeeping' ? 'Kat Hizm.' : f === 'technical' ? 'Teknik' : f.charAt(0).toUpperCase() + f.slice(1)}
+        {FILTERS.map(f => (
+          <button key={f.key} className={`filter-btn ${filter === f.key ? 'active' : ''}`} onClick={() => setFilter(f.key)}>
+            {f.label}
           </button>
         ))}
       </div>
@@ -116,8 +129,8 @@ const Housekeeping = () => {
       {/* Task Cards */}
       <div className="task-grid">
         {displayed.map((task, i) => {
-          const pr = PRIORITY_MAP[task.priority];
-          const st = STATUS_MAP[task.status];
+          const pr = PRIORITY_MAP[task.priority] || PRIORITY_MAP.normal;
+          const st = STATUS_MAP[task.status] || STATUS_MAP.bekliyor;
           return (
             <motion.div
               key={task.id}
@@ -132,10 +145,10 @@ const Housekeeping = () => {
                 </div>
                 <span className="priority-pill" style={{ background: pr.bg, color: pr.color }}>{pr.label}</span>
               </div>
-              <div className="tc-room">Oda {task.room}</div>
+              <div className="tc-room">{_c('room')} {task.room}</div>
               <p className="tc-desc">{task.desc}</p>
               <div className="tc-meta">
-                <span>{task.assignee || 'Atanmadı'}</span>
+                <span>{task.assignee || _t('assignedTo')}</span>
                 <span>{task.created}</span>
               </div>
               <div className="tc-status-bar">
@@ -144,13 +157,17 @@ const Housekeeping = () => {
                 </div>
                 <div className="tc-actions">
                   {task.status === 'bekliyor' && (
-                    <button className="micro-btn blue" onClick={() => updateTask(task.id, { status: 'devam' })}>Başlat</button>
+                    <button className="micro-btn blue" onClick={() => updateTask(task.id, { status: 'devam' })}>
+                      {language === 'tr' ? 'Başlat' : 'Start'}
+                    </button>
                   )}
                   {task.status === 'devam' && (
-                    <button className="micro-btn green" onClick={() => updateTask(task.id, { status: 'bitti' })}>Tamamla</button>
+                    <button className="micro-btn green" onClick={() => updateTask(task.id, { status: 'bitti' })}>
+                      {_t('completed')}
+                    </button>
                   )}
                   {task.status === 'bitti' && (
-                    <span className="done-badge">✓ Tamamlandı</span>
+                    <span className="done-badge">✓ {_t('completed')}</span>
                   )}
                 </div>
               </div>
@@ -178,7 +195,7 @@ const Housekeeping = () => {
         .form-actions { display: flex; gap: 10px; justify-content: flex-end; }
         .btn-cancel { padding: 10px 20px; border: 1px solid #e2e8f0; background: white; border-radius: 10px; font-weight: 700; cursor: pointer; }
 
-        .filter-bar { display: flex; gap: 8px; }
+        .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; }
         .filter-btn { padding: 8px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white; font-size: 12px; font-weight: 700; color: #64748b; cursor: pointer; }
         .filter-btn.active { background: #1e293b; color: white; border-color: #1e293b; }
 

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -12,15 +13,26 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 
-const ACCOUNT_TYPES = [
-  { value: 'asset', label: 'Varlık', color: '#3b82f6' },
-  { value: 'liability', label: 'Borç', color: '#f59e0b' },
-  { value: 'revenue', label: 'Gelir', color: '#10b981' },
-  { value: 'expense', label: 'Gider', color: '#ef4444' },
-  { value: 'equity', label: 'Özkaynak', color: '#8b5cf6' },
+const ACCOUNT_TYPES_TR = [
+  { value: 'asset',     label: 'Varlık',    color: '#3b82f6' },
+  { value: 'liability', label: 'Borç',      color: '#f59e0b' },
+  { value: 'revenue',   label: 'Gelir',     color: '#10b981' },
+  { value: 'expense',   label: 'Gider',     color: '#ef4444' },
+  { value: 'equity',    label: 'Özkaynak',  color: '#8b5cf6' },
+];
+const ACCOUNT_TYPES_EN = [
+  { value: 'asset',     label: 'Asset',     color: '#3b82f6' },
+  { value: 'liability', label: 'Liability', color: '#f59e0b' },
+  { value: 'revenue',   label: 'Revenue',   color: '#10b981' },
+  { value: 'expense',   label: 'Expense',   color: '#ef4444' },
+  { value: 'equity',    label: 'Equity',    color: '#8b5cf6' },
 ];
 
 const Accounting = () => {
+  const { mt, language, isEn } = useModuleTranslation();
+  const _t = (k) => mt('accounting.' + k);
+  const _c = (k) => mt('common.' + k);
+  const ACCOUNT_TYPES = isEn ? ACCOUNT_TYPES_EN : ACCOUNT_TYPES_TR;
   const { cashTransactions, addNotification, TODAY } = useHotel();
   const [activeTab, setActiveTab] = useState('summary');
   const [search, setSearch] = useState('');
@@ -74,11 +86,11 @@ const Accounting = () => {
   }, [cashTransactions]);
 
   const profitRows = useMemo(() => [
-    { name: 'Oda Satış Gelirleri', budget: 2200000, actual: accounts.find(a => a.code === '600.01')?.balance || 0 },
-    { name: 'F&B Gelirleri', budget: 450000, actual: accounts.find(a => a.code === '600.02')?.balance || 0 },
-    { name: 'Personel Giderleri', budget: 550000, actual: accounts.find(a => a.code === '770.01')?.balance || 0 },
-    { name: 'Enerji & Genel Gider', budget: 120000, actual: accounts.find(a => a.code === '780.01')?.balance || 0 },
-  ].map(r => ({ ...r, diff: r.budget > 0 ? Math.round((r.actual - r.budget) / r.budget * 100 * 10) / 10 : 0 })), [accounts]);
+    { name: isEn ? 'Room Sales Revenue' : 'Oda Satış Gelirleri', budget: 2200000, actual: accounts.find(a => a.code === '600.01')?.balance || 0 },
+    { name: isEn ? 'F&B Revenue' : 'F&B Gelirleri', budget: 450000, actual: accounts.find(a => a.code === '600.02')?.balance || 0 },
+    { name: isEn ? 'Staff Expenses' : 'Personel Giderleri', budget: 550000, actual: accounts.find(a => a.code === '770.01')?.balance || 0 },
+    { name: isEn ? 'Energy & General Expenses' : 'Enerji & Genel Gider', budget: 120000, actual: accounts.find(a => a.code === '780.01')?.balance || 0 },
+  ].map(r => ({ ...r, diff: r.budget > 0 ? Math.round((r.actual - r.budget) / r.budget * 100 * 10) / 10 : 0 })), [accounts, isEn]);
 
   const filteredAccounts = accounts.filter(a => {
     const q = search.toLowerCase();
@@ -103,7 +115,7 @@ const Accounting = () => {
       }
       return a;
     }));
-    addNotification({ type: 'success', msg: `Yevmiye kaydı oluşturuldu: ${id}` });
+    addNotification({ type: 'success', msg: `${language === 'tr' ? 'Yevmiye kaydı oluşturuldu' : 'Journal entry created'}: ${id}` });
     setJForm({ date: TODAY, desc: '', account: '100.01', debit: '', credit: '' });
     setShowNewJournal(false);
   };
@@ -112,7 +124,7 @@ const Accounting = () => {
   const submitAccount = (e) => {
     e.preventDefault();
     setAccounts(p => [...p, { ...accForm, balance: Number(accForm.balance) || 0 }]);
-    addNotification({ type: 'success', msg: `Yeni hesap oluşturuldu: ${accForm.code} — ${accForm.name}` });
+    addNotification({ type: 'success', msg: `${language === 'tr' ? 'Yeni hesap oluşturuldu' : 'Account created'}: ${accForm.code} — ${accForm.name}` });
     setAccForm({ name: '', code: '', type: 'asset', balance: '' });
     setShowNewAccount(false);
   };
@@ -120,7 +132,7 @@ const Accounting = () => {
   // Hesap silme
   const deleteAccount = (code) => {
     setAccounts(p => p.filter(a => a.code !== code));
-    addNotification({ type: 'info', msg: `Hesap silindi: ${code}` });
+    addNotification({ type: 'info', msg: `${language === 'tr' ? 'Hesap silindi' : 'Account deleted'}: ${code}` });
     setSelectedAccount(null);
   };
 
@@ -131,7 +143,7 @@ const Accounting = () => {
       setAccounts(p => p.map(a => a.code === entry.account ? { ...a, balance: a.balance - (entry.debit - entry.credit) } : a));
     }
     setJournalEntries(p => p.filter(j => j.id !== id));
-    addNotification({ type: 'info', msg: `Yevmiye silindi: ${id}` });
+    addNotification({ type: 'info', msg: `${language === 'tr' ? 'Yevmiye silindi' : 'Journal entry deleted'}: ${id}` });
   };
 
   // Excel dışa aktarım simülasyonu
@@ -145,7 +157,7 @@ const Accounting = () => {
     a.download = `muhasebe_${activeTab}_${TODAY}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    addNotification({ type: 'success', msg: `${activeTab === 'journal' ? 'Yevmiye' : 'Hesap planı'} dışa aktarıldı` });
+    addNotification({ type: 'success', msg: language === 'tr' ? `${activeTab === 'journal' ? 'Yevmiye' : 'Hesap planı'} dışa aktarıldı` : `${activeTab === 'journal' ? 'Journal' : 'Chart of accounts'} exported` });
   };
 
   const typeInfo = ACCOUNT_TYPES.reduce((m, t) => { m[t.value] = t; return m; }, {});
@@ -154,12 +166,12 @@ const Accounting = () => {
     <div className="acc-page">
       <div className="acc-head">
         <div>
-          <h2><BookOpen size={20}/> Genel Muhasebe & Defter-i Kebir</h2>
-          <span>VUK ve IFRS standartlarında mali kayıt ve raporlama — Canlı Veri</span>
+          <h2><BookOpen size={20}/> {isEn ? "General Accounting & Ledger" : "Genel Muhasebe & Defter-i Kebir"}</h2>
+          <span>{isEn ? "Financial records & reporting to VUK and IFRS standards — Live Data" : "VUK ve IFRS standartlarında mali kayıt ve raporlama — Canlı Veri"}</span>
         </div>
         <div className="acc-head-r">
           <div className="tab-switcher">
-            {[{k:'summary',l:'Genel Durum'},{k:'ledger',l:'Hesap Planı'},{k:'journal',l:'Yevmiye Kayıtları'}].map(t=>(
+            {[{k:'summary',l:isEn?'Overview':'Genel Durum'},{k:'ledger',l:isEn?'Chart of Accounts':'Hesap Planı'},{k:'journal',l:isEn?'Journal Entries':'Yevmiye Kayıtları'}].map(t=>(
               <button key={t.k} className={activeTab===t.k?'active':''} onClick={()=>setActiveTab(t.k)}>{t.l}</button>
             ))}
           </div>
@@ -171,11 +183,11 @@ const Accounting = () => {
           <motion.div key="summary" className="acc-summary" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
             <div className="summary-cards">
               {[
-                { label: 'Toplam Varlıklar', val: totals.assets, icon: <ArrowUpCircle size={22}/>, cls: 'green' },
-                { label: 'Toplam Borçlar', val: totals.liabilities, icon: <ArrowDownCircle size={22}/>, cls: 'red' },
-                { label: 'Net Kâr/Zarar', val: totals.netProfit, icon: <TrendingUp size={22}/>, cls: totals.netProfit >= 0 ? 'green' : 'red' },
-                { label: 'Toplam Gelir', val: totals.revenue, icon: <DollarSign size={22}/>, cls: 'blue' },
-                { label: 'Toplam Gider', val: totals.expense, icon: <TrendingDown size={22}/>, cls: 'orange' },
+                { label: isEn?'Total Assets':'Toplam Varlıklar', val: totals.assets, icon: <ArrowUpCircle size={22}/>, cls: 'green' },
+                { label: isEn?'Total Liabilities':'Toplam Borçlar', val: totals.liabilities, icon: <ArrowDownCircle size={22}/>, cls: 'red' },
+                { label: isEn?'Net Profit/Loss':'Net Kâr/Zarar', val: totals.netProfit, icon: <TrendingUp size={22}/>, cls: totals.netProfit >= 0 ? 'green' : 'red' },
+                { label: isEn?'Total Revenue':'Toplam Gelir', val: totals.revenue, icon: <DollarSign size={22}/>, cls: 'blue' },
+                { label: isEn?'Total Expenses':'Toplam Gider', val: totals.expense, icon: <TrendingDown size={22}/>, cls: 'orange' },
               ].map((c,i)=>(
                 <motion.div key={i} className={`s-card ${c.cls}`} whileHover={{y:-3}}>
                   <div className="sc-icon">{c.icon}</div>
@@ -191,8 +203,8 @@ const Accounting = () => {
             {recentCash.length > 0 && (
               <div className="chart-box">
                 <div className="cb-head">
-                  <h3>Günlük Gelir vs Gider (Kasa Hareketleri)</h3>
-                  <button className="download-btn" onClick={exportExcel}><Download size={14}/> Dışa Aktar</button>
+                  <h3>{isEn ? "Daily Revenue vs Expenses (Cash)" : "Günlük Gelir vs Gider (Kasa Hareketleri)"}</h3>
+                  <button className="download-btn" onClick={exportExcel}><Download size={14}/> {isEn ? "Export" : "Dışa Aktar"}</button>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={recentCash}>
@@ -200,8 +212,8 @@ const Accounting = () => {
                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:10}} tickFormatter={v=>v?.slice(5)}/>
                     <YAxis axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:10}} tickFormatter={v=>`₺${(v/1000).toFixed(0)}K`}/>
                     <Tooltip formatter={v=>[`₺${v.toLocaleString()}`]}/>
-                    <Bar dataKey="gelir" fill="#10b981" radius={[4,4,0,0]} name="Gelir" barSize={18}/>
-                    <Bar dataKey="gider" fill="#ef4444" radius={[4,4,0,0]} name="Gider" barSize={18}/>
+                    <Bar dataKey="gelir" fill="#10b981" radius={[4,4,0,0]} name={isEn ? "Revenue" : "Gelir"} barSize={18}/>
+                    <Bar dataKey="gider" fill="#ef4444" radius={[4,4,0,0]} name={isEn ? "Expense" : "Gider"} barSize={18}/>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -210,12 +222,12 @@ const Accounting = () => {
             {/* Bütçe Karşılaştırma */}
             <div className="profit-table">
               <div className="pt-head">
-                <h3>Gelir / Gider Tablosu (Bütçe vs Gerçekleşen)</h3>
-                <button className="download-btn" onClick={exportExcel}><Download size={14}/> Excel İndir</button>
+                <h3>{isEn ? "Income/Expense Statement (Budget vs Actual)" : "Gelir / Gider Tablosu (Bütçe vs Gerçekleşen)"}</h3>
+                <button className="download-btn" onClick={exportExcel}><Download size={14}/> {isEn ? "Download Excel" : "Excel İndir"}</button>
               </div>
               <div className="p-table-wrap">
                 <table className="p-table">
-                  <thead><tr><th>Kalem Adı</th><th>Bütçe</th><th>Gerçekleşen</th><th>Fark (%)</th></tr></thead>
+                  <thead><tr><th>{isEn?"Item":"Kalem Adı"}</th><th>{isEn?"Budget":"Bütçe"}</th><th>{isEn?"Actual":"Gerçekleşen"}</th><th>{isEn?"Diff (%)":"Fark (%)"}</th></tr></thead>
                   <tbody>
                     {profitRows.map((row, i) => (
                       <tr key={i}>
@@ -226,7 +238,7 @@ const Accounting = () => {
                       </tr>
                     ))}
                     <tr className="total-row">
-                      <td><strong>NET KÂR</strong></td>
+                      <td><strong>{isEn ? "NET PROFIT" : "NET KÂR"}</strong></td>
                       <td>₺{(profitRows[0].budget + profitRows[1].budget - profitRows[2].budget - profitRows[3].budget).toLocaleString()}</td>
                       <td><strong style={{color:'#10b981'}}>₺{totals.netProfit.toLocaleString()}</strong></td>
                       <td></td>
@@ -240,8 +252,8 @@ const Accounting = () => {
         ) : activeTab === 'ledger' ? (
           <motion.div key="ledger" className="acc-ledger" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
             <div className="ledger-toolbar">
-              <div className="search-box"><Search size={14}/><input placeholder="Hesap ara..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
-              <button className="btn-primary" onClick={()=>setShowNewAccount(true)}><Plus size={14}/> Yeni Hesap</button>
+              <div className="search-box"><Search size={14}/><input placeholder={isEn ? "Search account..." : "Hesap ara..."} value={search} onChange={e=>setSearch(e.target.value)}/></div>
+              <button className="btn-primary" onClick={()=>setShowNewAccount(true)}><Plus size={14}/> {isEn ? "New Account" : "Yeni Hesap"}</button>
             </div>
             <div className="ledger-grid">
               {filteredAccounts.map((acc, i) => {
@@ -254,10 +266,10 @@ const Accounting = () => {
                     <div className={`acc-bal ${acc.balance >= 0 ? 'pos' : 'neg'}`}>
                       ₺{Math.abs(acc.balance).toLocaleString()}
                     </div>
-                    <button className="acc-action" title="Hesap Detayı" onClick={()=>setSelectedAccount(acc)}>
+                    <button className="acc-action" title={isEn ? "Account Detail" : "Hesap Detayı"} onClick={()=>setSelectedAccount(acc)}>
                       <ChevronRight size={16}/>
                     </button>
-                    <button className="del-btn-sm" title="Sil" onClick={()=>deleteAccount(acc.code)}>
+                    <button className="del-btn-sm" title={isEn ? "Delete" : "Sil"} onClick={()=>deleteAccount(acc.code)}>
                       <Trash2 size={13}/>
                     </button>
                   </motion.div>
@@ -267,7 +279,7 @@ const Accounting = () => {
 
             {/* Mizan Özeti */}
             <div className="mizan-box">
-              <h4>Mizan Özeti (Genel Toplam)</h4>
+              <h4>{isEn ? "Trial Balance Summary" : "Mizan Özeti (Genel Toplam)"}</h4>
               <div className="mizan-grid">
                 {ACCOUNT_TYPES.map(t => {
                   const total = accounts.filter(a=>a.type===t.value).reduce((s,a)=>s+Math.abs(a.balance),0);
@@ -286,15 +298,15 @@ const Accounting = () => {
         ) : (
           <motion.div key="journal" className="acc-journal" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
             <div className="ledger-toolbar">
-              <div className="search-box"><Search size={14}/><input placeholder="Fiş no, açıklama ara..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+              <div className="search-box"><Search size={14}/><input placeholder={isEn ? "Voucher no, description..." : "Fiş no, açıklama ara..."} value={search} onChange={e=>setSearch(e.target.value)}/></div>
               <div className="toolbar-r">
-                <button className="download-btn" onClick={exportExcel}><Download size={14}/> Dışa Aktar</button>
-                <button className="btn-primary" onClick={()=>setShowNewJournal(true)}><Plus size={14}/> Yeni Yevmiye</button>
+                <button className="download-btn" onClick={exportExcel}><Download size={14}/> {isEn ? "Export" : "Dışa Aktar"}</button>
+                <button className="btn-primary" onClick={()=>setShowNewJournal(true)}><Plus size={14}/> {isEn ? "New Entry" : "Yeni Yevmiye"}</button>
               </div>
             </div>
             <div className="journal-table-wrap">
               <table className="j-table">
-                <thead><tr><th>Tarih</th><th>Fiş No</th><th>Hesap Kodu</th><th>Açıklama</th><th>Borç (Debit)</th><th>Alacak (Credit)</th><th>İşlem</th></tr></thead>
+                <thead><tr><th>{isEn?"Date":"Tarih"}</th><th>{isEn?"Voucher":"Fiş No"}</th><th>{isEn?"Acc. Code":"Hesap Kodu"}</th><th>{isEn?"Description":"Açıklama"}</th><th>{isEn?"Debit":"Borç (Debit)"}</th><th>{isEn?"Credit":"Alacak (Credit)"}</th><th>{isEn?"Action":"İşlem"}</th></tr></thead>
                 <tbody>
                   {filteredJournal.map((j, i) => (
                     <motion.tr key={j.id} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.03}}>
@@ -310,7 +322,7 @@ const Accounting = () => {
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colSpan={4}><strong>TOPLAM</strong></td>
+                    <td colSpan={4}><strong>{isEn ? "TOTAL" : "TOPLAM"}</strong></td>
                     <td className="debit"><strong>₺{filteredJournal.reduce((s,j)=>s+j.debit,0).toLocaleString()}</strong></td>
                     <td className="credit"><strong>₺{filteredJournal.reduce((s,j)=>s+j.credit,0).toLocaleString()}</strong></td>
                     <td></td>
@@ -327,21 +339,21 @@ const Accounting = () => {
         {showNewJournal && (
           <motion.div className="modal-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={()=>setShowNewJournal(false)}>
             <motion.form className="modal-box" initial={{scale:0.9}} animate={{scale:1}} onClick={e=>e.stopPropagation()} onSubmit={submitJournal}>
-              <div className="mb-head"><h3>Yeni Yevmiye Kaydı</h3><button type="button" onClick={()=>setShowNewJournal(false)}><X size={18}/></button></div>
+              <div className="mb-head"><h3>{isEn ? "New Journal Entry" : "Yeni Yevmiye Kaydı"}</h3><button type="button" onClick={()=>setShowNewJournal(false)}><X size={18}/></button></div>
               <div className="mf-grid">
-                <div className="mf"><label>Tarih *</label><input type="date" value={jForm.date} onChange={e=>setJForm(p=>({...p,date:e.target.value}))} required/></div>
-                <div className="mf"><label>Hesap Kodu *</label>
+                <div className="mf"><label>{isEn ? "Date *" : "Tarih *"}</label><input type="date" value={jForm.date} onChange={e=>setJForm(p=>({...p,date:e.target.value}))} required/></div>
+                <div className="mf"><label>{isEn ? "Account Code *" : "Hesap Kodu *"}</label>
                   <select value={jForm.account} onChange={e=>setJForm(p=>({...p,account:e.target.value}))}>
                     {accounts.map(a=><option key={a.code} value={a.code}>{a.code} — {a.name}</option>)}
                   </select>
                 </div>
-                <div className="mf full"><label>Açıklama *</label><input value={jForm.desc} onChange={e=>setJForm(p=>({...p,desc:e.target.value}))} required placeholder="İşlem açıklaması"/></div>
-                <div className="mf"><label>Borç (Debit) ₺</label><input type="number" value={jForm.debit} onChange={e=>setJForm(p=>({...p,debit:e.target.value}))} placeholder="0"/></div>
-                <div className="mf"><label>Alacak (Credit) ₺</label><input type="number" value={jForm.credit} onChange={e=>setJForm(p=>({...p,credit:e.target.value}))} placeholder="0"/></div>
+                <div className="mf full"><label>{isEn ? "Description *" : "Açıklama *"}</label><input value={jForm.desc} onChange={e=>setJForm(p=>({...p,desc:e.target.value}))} required placeholder={isEn ? "Transaction description" : "İşlem açıklaması"}/></div>
+                <div className="mf"><label>{isEn ? "Debit ₺" : "Borç (Debit) ₺"}</label><input type="number" value={jForm.debit} onChange={e=>setJForm(p=>({...p,debit:e.target.value}))} placeholder="0"/></div>
+                <div className="mf"><label>{isEn ? "Credit ₺" : "Alacak (Credit) ₺"}</label><input type="number" value={jForm.credit} onChange={e=>setJForm(p=>({...p,credit:e.target.value}))} placeholder="0"/></div>
               </div>
               <div className="mf-foot">
-                <button type="button" className="btn-cancel" onClick={()=>setShowNewJournal(false)}>İptal</button>
-                <button type="submit" className="btn-primary"><Save size={14}/> Kaydet</button>
+                <button type="button" className="btn-cancel" onClick={()=>setShowNewJournal(false)}>{isEn ? "Cancel" : "İptal"}</button>
+                <button type="submit" className="btn-primary"><Save size={14}/> {isEn ? "Save" : "Kaydet"}</button>
               </div>
             </motion.form>
           </motion.div>
@@ -353,20 +365,20 @@ const Accounting = () => {
         {showNewAccount && (
           <motion.div className="modal-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={()=>setShowNewAccount(false)}>
             <motion.form className="modal-box" initial={{scale:0.9}} animate={{scale:1}} onClick={e=>e.stopPropagation()} onSubmit={submitAccount}>
-              <div className="mb-head"><h3>Yeni Hesap Oluştur</h3><button type="button" onClick={()=>setShowNewAccount(false)}><X size={18}/></button></div>
+              <div className="mb-head"><h3>{isEn ? "Create New Account" : "Yeni Hesap Oluştur"}</h3><button type="button" onClick={()=>setShowNewAccount(false)}><X size={18}/></button></div>
               <div className="mf-grid">
-                <div className="mf"><label>Hesap Kodu *</label><input value={accForm.code} onChange={e=>setAccForm(p=>({...p,code:e.target.value}))} required placeholder="Ör: 100.02"/></div>
-                <div className="mf"><label>Hesap Türü</label>
+                <div className="mf"><label>{isEn ? "Account Code *" : "Hesap Kodu *"}</label><input value={accForm.code} onChange={e=>setAccForm(p=>({...p,code:e.target.value}))} required placeholder="Ör: 100.02"/></div>
+                <div className="mf"><label>{isEn ? "Account Type" : "Hesap Türü"}</label>
                   <select value={accForm.type} onChange={e=>setAccForm(p=>({...p,type:e.target.value}))}>
                     {ACCOUNT_TYPES.map(t=><option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </div>
-                <div className="mf full"><label>Hesap Adı *</label><input value={accForm.name} onChange={e=>setAccForm(p=>({...p,name:e.target.value}))} required placeholder="Hesap adı"/></div>
-                <div className="mf"><label>Açılış Bakiyesi ₺</label><input type="number" value={accForm.balance} onChange={e=>setAccForm(p=>({...p,balance:e.target.value}))} placeholder="0"/></div>
+                <div className="mf full"><label>{isEn ? "Account Name *" : "Hesap Adı *"}</label><input value={accForm.name} onChange={e=>setAccForm(p=>({...p,name:e.target.value}))} required placeholder={isEn ? "Account name" : "Hesap adı"}/></div>
+                <div className="mf"><label>{isEn ? "Opening Balance ₺" : "Açılış Bakiyesi ₺"}</label><input type="number" value={accForm.balance} onChange={e=>setAccForm(p=>({...p,balance:e.target.value}))} placeholder="0"/></div>
               </div>
               <div className="mf-foot">
-                <button type="button" className="btn-cancel" onClick={()=>setShowNewAccount(false)}>İptal</button>
-                <button type="submit" className="btn-primary"><Plus size={14}/> Hesap Oluştur</button>
+                <button type="button" className="btn-cancel" onClick={()=>setShowNewAccount(false)}>{isEn ? "Cancel" : "İptal"}</button>
+                <button type="submit" className="btn-primary"><Plus size={14}/> {isEn ? "Create Account" : "Hesap Oluştur"}</button>
               </div>
             </motion.form>
           </motion.div>
@@ -380,11 +392,11 @@ const Accounting = () => {
             <motion.div className="modal-box" initial={{scale:0.9}} animate={{scale:1}} onClick={e=>e.stopPropagation()}>
               <div className="mb-head"><h3>#{selectedAccount.code} — {selectedAccount.name}</h3><button onClick={()=>setSelectedAccount(null)}><X size={18}/></button></div>
               <div className="detail-grid">
-                <div className="d-item"><span>Hesap Türü</span><strong style={{color:typeInfo[selectedAccount.type]?.color}}>{typeInfo[selectedAccount.type]?.label}</strong></div>
-                <div className="d-item"><span>Bakiye</span><strong>₺{Math.abs(selectedAccount.balance).toLocaleString()}</strong></div>
-                <div className="d-item"><span>İlgili Yevmiyeler</span><strong>{journalEntries.filter(j=>j.account===selectedAccount.code).length} kayıt</strong></div>
+                <div className="d-item"><span>{isEn ? "Account Type" : "Hesap Türü"}</span><strong style={{color:typeInfo[selectedAccount.type]?.color}}>{typeInfo[selectedAccount.type]?.label}</strong></div>
+                <div className="d-item"><span>{isEn ? "Balance" : "Bakiye"}</span><strong>₺{Math.abs(selectedAccount.balance).toLocaleString()}</strong></div>
+                <div className="d-item"><span>{isEn ? "Journal Entries" : "İlgili Yevmiyeler"}</span><strong>{journalEntries.filter(j=>j.account===selectedAccount.code).length} {isEn ? "records" : "kayıt"}</strong></div>
               </div>
-              <h4 style={{margin:'16px 0 10px',fontSize:13,fontWeight:800,color:'#64748b'}}>Son Hareketler</h4>
+              <h4 style={{margin:'16px 0 10px',fontSize:13,fontWeight:800,color:'#64748b'}}>{isEn ? "Recent Transactions" : "Son Hareketler"}</h4>
               <div className="detail-entries">
                 {journalEntries.filter(j=>j.account===selectedAccount.code).slice(0,5).map(j=>(
                   <div key={j.id} className="de-row">
@@ -395,11 +407,11 @@ const Accounting = () => {
                     </span>
                   </div>
                 ))}
-                {journalEntries.filter(j=>j.account===selectedAccount.code).length===0 && <p style={{color:'#94a3b8',fontSize:12}}>Hareket bulunamadı</p>}
+                {journalEntries.filter(j=>j.account===selectedAccount.code).length===0 && <p style={{color:'#94a3b8',fontSize:12}}>{isEn ? "No transactions found" : "Hareket bulunamadı"}</p>}
               </div>
               <div className="mf-foot">
-                <button className="btn-cancel" style={{color:'#ef4444',borderColor:'#fecaca'}} onClick={()=>deleteAccount(selectedAccount.code)}>Hesabı Sil</button>
-                <button className="btn-primary" onClick={()=>setSelectedAccount(null)}>Kapat</button>
+                <button className="btn-cancel" style={{color:'#ef4444',borderColor:'#fecaca'}} onClick={()=>deleteAccount(selectedAccount.code)}>{isEn ? "Delete Account" : "Hesabı Sil"}</button>
+                <button className="btn-primary" onClick={()=>setSelectedAccount(null)}>{_c("close")}</button>
               </div>
             </motion.div>
           </motion.div>
@@ -501,3 +513,6 @@ const Accounting = () => {
 };
 
 export default Accounting;
+
+
+

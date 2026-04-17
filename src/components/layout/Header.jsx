@@ -3,6 +3,7 @@ import { useHotel } from '../../context/HotelContext';
 import { Bell, LogOut, Search, X, CheckCircle, AlertCircle, Activity, LayoutGrid, Users } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { modulesConfig } from '../../data/moduleList';
+import { useLanguage } from '../../context/LanguageContext';
 
 // Levenshtein mesafesi (Yazım yanlışı toleransı için)
 const getLevenshteinDistance = (a, b) => {
@@ -41,8 +42,13 @@ const isFuzzyMatch = (str, query) => {
 
 const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) => {
   const { notifications, stats, guests, reservations } = useHotel();
+  const { t, language } = useLanguage();
   const [showNotifs, setShowNotifs] = useState(false);
   const [search, setSearch] = useState('');
+
+  const getTranslatedName = (mod) => {
+    return t(`landing.moduleNames.${mod.id.replace(/-./g, x => x[1].toUpperCase())}`) || mod.name;
+  };
 
   const unread = notifications.filter(n => n.type === 'warn').length;
 
@@ -55,9 +61,10 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
     const scoredModules = modulesConfig.map(m => {
       let score = 0;
       
-      // Doğrudan isim eşleşmesi
-      if (m.name.toLowerCase().includes(q)) score += 10;
-      else if (isFuzzyMatch(m.name, q)) score += 6;
+      const translatedName = getTranslatedName(m).toLowerCase();
+      // Direct name match on translated module names
+      if (translatedName.includes(q)) score += 10;
+      else if (isFuzzyMatch(translatedName, q)) score += 6;
       
       // Intent (Keywords) araması 
       // Örn: "yemek aç" yazıldıysa, "yemek" keyword'ü bunu yakalar.
@@ -105,21 +112,20 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
       <div className="header-left">
         {onBack && (
           <button className="back-btn" onClick={onBack}>
-            ← <span>Hub</span>
+            ← <span>{t('common.back')}</span>
           </button>
         )}
         <div className="app-branding">
-          <h2>{activeModuleName || 'Hoterfea — Operasyon Merkezi'}</h2>
-          {!activeModuleName && <span>Tüm modüller erişilebilir</span>}
+          <h2>{activeModuleName ? (modulesConfig.find(m=>m.name===activeModuleName) ? getTranslatedName(modulesConfig.find(m=>m.name===activeModuleName)) : activeModuleName) : 'HoterFea ERP'}</h2>
         </div>
       </div>
 
       <div className="header-right">
         {!activeModuleName && (
           <div className="quick-stats">
-            <div className="qs-pill blue">%{stats.occupancyRate} Doluluk</div>
-            <div className="qs-pill green">{stats.inHouse} İç Misafir</div>
-            {stats.totalBalance > 0 && <div className="qs-pill red">₺{(stats.totalBalance/1000).toFixed(1)}K Bakiye</div>}
+            <div className="qs-pill blue">%{stats.occupancyRate} {t('hub.stats.occupancy')}</div>
+            <div className="qs-pill green">{stats.inHouse} {t('hub.stats.pendingCO')}</div>
+            {stats.totalBalance > 0 && <div className="qs-pill red">₺{(stats.totalBalance/1000).toFixed(1)}K {t('hub.stats.openBalance')}</div>}
           </div>
         )}
 
@@ -129,7 +135,7 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
             <Search size={16} color={search ? '#3b82f6' : '#94a3b8'}/>
             <input
               type="text"
-              placeholder="Akıllı arama (Örn: restoran bölümünü aç)"
+              placeholder={t('common.search')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               autoComplete="off"
@@ -144,13 +150,13 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
                 {/* Modüller */}
                 {searchResults.modules.length > 0 && (
                   <div className="sd-section">
-                    <h4>Modüller / Özellikler <span className="ai-badge">AI UYUMLU</span></h4>
+                    <h4>{t('common.modules')} <span className="ai-badge">{language === 'tr' ? 'AI UYUMLU' : 'AI READY'}</span></h4>
                     {searchResults.modules.map(mod => (
                        <button key={mod.id} className="sd-item" onClick={() => handleSelectModule(mod.id)}>
                          <div className="sd-icon" style={{color: mod.color}}><LayoutGrid size={14}/></div>
                          <div>
-                           <span>{mod.name}</span>
-                           <small style={{color: '#94a3b8'}}>{mod.category || 'Modül'}</small>
+                           <span>{getTranslatedName(mod)}</span>
+                           <small style={{color: '#94a3b8'}}>{mod.category || (language === 'tr' ? 'Modül' : 'Module')}</small>
                          </div>
                        </button>
                     ))}
@@ -160,7 +166,7 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
                 {/* Misafirler */}
                 {searchResults.guests.length > 0 && (
                   <div className="sd-section">
-                    <h4>Misafirler (Fuzzy Match)</h4>
+                    <h4>{t('common.guests')} ({language === 'tr' ? 'Bulanık Eşleşme' : 'Fuzzy Match'})</h4>
                     {searchResults.guests.map(guest => (
                       <button key={guest.id} className="sd-item" onClick={() => handleSelectGuest(guest.id)}>
                         <div className="sd-icon" style={{color: '#8b5cf6'}}><Users size={14}/></div>
@@ -175,16 +181,15 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
               </motion.div>
             )}
             
-            {/* Sonuç Yok */}
-            {searchResults && searchResults.modules.length === 0 && searchResults.guests.length === 0 && (
-               <motion.div className="search-dropdown" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:10}}>
-                 <div className="sd-section" style={{textAlign:'center', padding:'20px 0'}}>
-                   <Search size={24} color="#cbd5e1" style={{marginBottom:'10px'}}/>
-                   <div style={{fontSize:'13px', color:'#64748b'}}>Aradığınız kriterlere uygun sonuç bulunamadı.</div>
-                   <div style={{fontSize:'11px', color:'#94a3b8', marginTop:'4px'}}>Eşanlamlı veya farklı kelimeler deneyin.</div>
-                 </div>
-               </motion.div>
-            )}
+             {searchResults && searchResults.modules.length === 0 && searchResults.guests.length === 0 && (
+                <motion.div className="search-dropdown" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:10}}>
+                  <div className="sd-section" style={{textAlign:'center', padding:'20px 0'}}>
+                    <Search size={24} color="#cbd5e1" style={{marginBottom:'10px'}}/>
+                    <div style={{fontSize:'13px', color:'#64748b'}}>{t('common.noResults')}</div>
+                    <div style={{fontSize:'11px', color:'#94a3b8', marginTop:'4px'}}>{t('common.trySynonyms')}</div>
+                  </div>
+                </motion.div>
+             )}
           </AnimatePresence>
         </div>
 
@@ -204,7 +209,7 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
               >
                 <div className="np-head">
-                  <strong>Bildirimler</strong>
+                  <strong>{t('common.notifications')}</strong>
                   <button onClick={() => setShowNotifs(false)}><X size={16}/></button>
                 </div>
                 <div className="np-list">
@@ -227,14 +232,13 @@ const Header = ({ user, activeModuleName, onLogout, onBack, onSelectModule }) =>
           </AnimatePresence>
         </div>
 
-        {/* User */}
         <div className="user-profile">
           <div className="user-info">
             <strong>{user?.username || 'Admin'}</strong>
-            <span>Süper Yönetici</span>
+            <span>{t('common.superAdmin')}</span>
           </div>
           <div className="avatar">{(user?.username || 'A')[0].toUpperCase()}</div>
-          <button className="logout-btn" onClick={onLogout} title="Çıkış Yap">
+          <button className="logout-btn" onClick={onLogout} title={t('common.logout')}>
             <LogOut size={16}/>
           </button>
         </div>

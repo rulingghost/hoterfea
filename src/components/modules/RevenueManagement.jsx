@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion } from 'framer-motion';
 import {
@@ -12,86 +13,107 @@ import {
 } from 'recharts';
 
 const RevenueManagement = () => {
+  const { mt, language } = useModuleTranslation();
+  const _t = (k) => mt('revenue.' + k);
+  const _c = (k) => mt('common.' + k);
   const { reservations, rooms, stats, cashTransactions, TODAY } = useHotel();
-  const [period, setPeriod] = useState('hafta');
+  const [period, setPeriod] = useState('week');
+
+  const DAY_LABELS_TR = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+  const DAY_LABELS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const DAY_LABELS = language === 'tr' ? DAY_LABELS_TR : DAY_LABELS_EN;
+
+  const MONTH_LABELS_TR = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  const MONTH_LABELS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MONTH_LABELS = language === 'tr' ? MONTH_LABELS_TR : MONTH_LABELS_EN;
 
   const weekData = useMemo(() => {
-    const gunler = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
-    return Array.from({length:7},(_,i)=>{
+    return Array.from({length:7}, (_, i) => {
       const d = new Date(TODAY);
       d.setDate(d.getDate() - (6-i));
       const ds = d.toISOString().split('T')[0];
-      const dayTx = cashTransactions.filter(t=>t.date===ds && t.type==='gelir');
-      const rev = dayTx.reduce((s,t)=>s+t.amount,0) || Math.round(30000 + Math.sin(i*1.2)*25000 + Math.random()*10000);
+      const dayTx = cashTransactions.filter(t => t.date === ds && t.type === 'gelir');
+      const rev = dayTx.reduce((s,t) => s + t.amount, 0) || Math.round(30000 + Math.sin(i*1.2)*25000 + Math.random()*10000);
       const occ = Math.min(100, Math.max(40, stats.occupancyRate + Math.round(Math.sin(i*0.9)*20)));
       const occupied = Math.round(rooms.length * occ / 100);
       const adr = occupied > 0 ? Math.round(rev / occupied) : 0;
       const revpar = rooms.length > 0 ? Math.round(rev / rooms.length) : 0;
-      return { gun: gunler[d.getDay()], rev, occ, adr, revpar, date: ds };
+      return { gun: DAY_LABELS[d.getDay()], rev, occ, adr, revpar, date: ds };
     });
-  }, [cashTransactions, rooms, stats, TODAY]);
+  }, [cashTransactions, rooms, stats, TODAY, language]);
 
   const monthData = useMemo(() => {
-    const aylar = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
     const currentMonth = new Date(TODAY).getMonth();
-    return aylar.slice(0,6).map((ay,i)=>{
+    return MONTH_LABELS.slice(0, 6).map((ay, i) => {
       const hedef = [750000,700000,900000,850000,980000,1100000][i];
       const rev = i <= currentMonth ? Math.round(hedef * (0.7 + Math.random()*0.5)) : 0;
       const occ = i <= currentMonth ? Math.round(50 + Math.random()*40) : 0;
       return { ay, rev, hedef, occ };
     });
-  }, [TODAY]);
+  }, [TODAY, language]);
+
+  const SEGMENT_LABELS = language === 'tr'
+    ? { individual:'Bireysel', group:'Grup/Tur', corporate:'Kurumsal', online:'Online' }
+    : { individual:'Individual', group:'Group/Tour', corporate:'Corporate', online:'Online' };
 
   const segmentData = useMemo(() => {
-    const channels = { 'Bireysel':0, 'Grup/Tur':0, 'Kurumsal':0, 'Online':0 };
+    const channels = {
+      [SEGMENT_LABELS.individual]: 0,
+      [SEGMENT_LABELS.group]: 0,
+      [SEGMENT_LABELS.corporate]: 0,
+      [SEGMENT_LABELS.online]: 0,
+    };
     reservations.forEach(r => {
-      if(r.channel==='Booking.com'||r.channel==='Expedia') channels['Online'] += r.totalPrice||0;
-      else if(r.channel==='TUI'||r.channel==='HotelRunner') channels['Grup/Tur'] += r.totalPrice||0;
-      else if(r.type==='corporate'||r.guests>2) channels['Kurumsal'] += r.totalPrice||0;
-      else channels['Bireysel'] += r.totalPrice||0;
+      if (r.channel === 'Booking.com' || r.channel === 'Expedia') channels[SEGMENT_LABELS.online] += r.totalPrice||0;
+      else if (r.channel === 'TUI' || r.channel === 'HotelRunner') channels[SEGMENT_LABELS.group] += r.totalPrice||0;
+      else if (r.type === 'corporate' || r.guests > 2) channels[SEGMENT_LABELS.corporate] += r.totalPrice||0;
+      else channels[SEGMENT_LABELS.individual] += r.totalPrice||0;
     });
-    const total = Object.values(channels).reduce((s,v)=>s+v,0)||1;
-    return Object.entries(channels).map(([seg,rev])=>({ seg, rev, pct: Math.round(rev/total*100) }));
-  }, [reservations]);
+    const total = Object.values(channels).reduce((s,v) => s+v, 0) || 1;
+    return Object.entries(channels).map(([seg, rev]) => ({ seg, rev, pct: Math.round(rev/total*100) }));
+  }, [reservations, language]);
 
-  const totalRev = weekData.reduce((s,d)=>s+d.rev,0);
-  const avgOcc = Math.round(weekData.reduce((s,d)=>s+d.occ,0)/7);
-  const avgADR = Math.round(weekData.reduce((s,d)=>s+d.adr,0)/7);
-  const avgRevPAR = Math.round(weekData.reduce((s,d)=>s+d.revpar,0)/7);
+  const totalRev = weekData.reduce((s,d) => s+d.rev, 0);
+  const avgOcc   = Math.round(weekData.reduce((s,d) => s+d.occ, 0)/7);
+  const avgADR   = Math.round(weekData.reduce((s,d) => s+d.adr, 0)/7);
+  const avgRevPAR = Math.round(weekData.reduce((s,d) => s+d.revpar, 0)/7);
 
-  const todayTx = cashTransactions.filter(t=>t.date===TODAY);
-  const todayRev = todayTx.filter(t=>t.type==='gelir').reduce((s,t)=>s+t.amount,0);
+  const todayRev = cashTransactions.filter(t => t.date === TODAY && t.type === 'gelir').reduce((s,t) => s+t.amount, 0);
   const yesterdayRev = totalRev / 7;
   const revDiff = yesterdayRev > 0 ? ((todayRev - yesterdayRev) / yesterdayRev * 100).toFixed(1) : 0;
 
   const COLORS = ['#3b82f6','#10b981','#8b5cf6','#f59e0b'];
 
   const metricCards = [
-    { label:'Bu Hafta Gelir', value:`₺${(totalRev/1000).toFixed(0)}K`, diff:`${revDiff>0?'+':''}${revDiff}%`, up:revDiff>=0, icon:<TrendingUp size={20}/>, color:'#10b981' },
-    { label:'Ortalama Doluluk', value:`%${avgOcc}`, diff:avgOcc>75?'+İyi':'Düşük', up:avgOcc>75, icon:<BarChart3 size={20}/>, color:'#3b82f6' },
-    { label:'ADR (Ort. Oda Fiyatı)', value:`₺${avgADR.toLocaleString()}`, diff:avgADR>2000?'Yüksek':'Normal', up:avgADR>2000, icon:<DollarSign size={20}/>, color:'#8b5cf6' },
-    { label:'RevPAR', value:`₺${avgRevPAR.toLocaleString()}`, diff:avgRevPAR>1500?'Hedefte':'Altında', up:avgRevPAR>1500, icon:<Target size={20}/>, color:'#f59e0b' },
+    { label: language === 'tr' ? 'Bu Hafta Gelir'        : 'Weekly Revenue',       value:`₺${(totalRev/1000).toFixed(0)}K`, diff:`${revDiff>=0?'+':''}${revDiff}%`, up:revDiff>=0, icon:<TrendingUp size={20}/>,  color:'#10b981' },
+    { label: language === 'tr' ? 'Ortalama Doluluk'      : 'Avg. Occupancy',        value:`%${avgOcc}`,        diff: avgOcc>75 ? (language==='tr'?'+İyi':'+Good') : (language==='tr'?'Düşük':'Low'), up:avgOcc>75, icon:<BarChart3 size={20}/>,  color:'#3b82f6' },
+    { label: language === 'tr' ? 'ADR (Ort. Oda Fiyatı)' : 'ADR (Avg. Daily Rate)', value:`₺${avgADR.toLocaleString()}`, diff: avgADR>2000 ? (language==='tr'?'Yüksek':'High') : (language==='tr'?'Normal':'Normal'), up:avgADR>2000, icon:<DollarSign size={20}/>, color:'#8b5cf6' },
+    { label: 'RevPAR',                                                                 value:`₺${avgRevPAR.toLocaleString()}`, diff: avgRevPAR>1500 ? (language==='tr'?'Hedefte':'On Target') : (language==='tr'?'Altında':'Below'), up:avgRevPAR>1500, icon:<Target size={20}/>, color:'#f59e0b' },
   ];
 
   return (
     <div className="rm-page">
       <div className="rm-head">
-        <div><h2>Gelir Yönetimi (Revenue Management)</h2><span>ADR, RevPAR, doluluk ve segment analizleri — Canlı Veri</span></div>
+        <div>
+          <h2>{language === 'tr' ? 'Gelir Yönetimi (Revenue Management)' : 'Revenue Management'}</h2>
+          <span>{language === 'tr' ? 'ADR, RevPAR, doluluk ve segment analizleri — Canlı Veri' : 'ADR, RevPAR, occupancy & segment analysis — Live Data'}</span>
+        </div>
         <div className="period-toggle">
-          {['hafta','ay'].map(p=>(
-            <button key={p} className={period===p?'active':''} onClick={()=>setPeriod(p)}>
-              {p==='hafta'?'Bu Hafta':'Bu Yıl'}
-            </button>
+          {[
+            { key:'week', label: language === 'tr' ? 'Bu Hafta' : 'This Week' },
+            { key:'month', label: language === 'tr' ? 'Bu Yıl' : 'This Year' },
+          ].map(p => (
+            <button key={p.key} className={period === p.key ? 'active' : ''} onClick={() => setPeriod(p.key)}>{p.label}</button>
           ))}
         </div>
       </div>
 
       <div className="metric-grid">
-        {metricCards.map((m,i)=>(
+        {metricCards.map((m, i) => (
           <motion.div key={i} className="metric-card" whileHover={{y:-4}}>
             <div className="mc-top">
-              <div className="mc-icon" style={{background:`${m.color}18`,color:m.color}}>{m.icon}</div>
-              <span className={`mc-diff ${m.up?'up':'down'}`}>{m.diff}</span>
+              <div className="mc-icon" style={{background:`${m.color}18`, color:m.color}}>{m.icon}</div>
+              <span className={`mc-diff ${m.up ? 'up' : 'down'}`}>{m.diff}</span>
             </div>
             <div className="mc-val">{m.value}</div>
             <div className="mc-lbl">{m.label}</div>
@@ -101,22 +123,22 @@ const RevenueManagement = () => {
 
       <div className="rm-charts">
         <div className="chart-card wide">
-          <h3>Gelir & Doluluk Trendi (Son 7 Gün)</h3>
+          <h3>{language === 'tr' ? 'Gelir & Doluluk Trendi (Son 7 Gün)' : 'Revenue & Occupancy Trend (Last 7 Days)'}</h3>
           <div style={{height:220}}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={weekData}>
                 <defs>
                   <linearGradient id="rg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                    <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.2}/>
                     <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
                 <XAxis dataKey="gun" axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:12}}/>
-                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:12}} tickFormatter={v=>`₺${v/1000}K`}/>
-                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:12}} tickFormatter={v=>`%${v}`}/>
-                <Tooltip formatter={(v,n)=>n==='rev'?[`₺${v.toLocaleString()}`,'Gelir']:[`%${v}`,'Doluluk']}/>
-                <Area yAxisId="left" type="monotone" dataKey="rev" stroke="#3b82f6" fill="url(#rg)" strokeWidth={3} name="rev"/>
+                <YAxis yAxisId="left"  axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:12}} tickFormatter={v => `₺${v/1000}K`}/>
+                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:12}} tickFormatter={v => `%${v}`}/>
+                <Tooltip formatter={(v,n) => n === 'rev' ? [`₺${v.toLocaleString()}`, language==='tr'?'Gelir':'Revenue'] : [`%${v}`, language==='tr'?'Doluluk':'Occupancy']}/>
+                <Area yAxisId="left"  type="monotone" dataKey="rev" stroke="#3b82f6" fill="url(#rg)" strokeWidth={3} name="rev"/>
                 <Line yAxisId="right" type="monotone" dataKey="occ" stroke="#10b981" strokeWidth={2} dot={false} name="occ"/>
               </AreaChart>
             </ResponsiveContainer>
@@ -124,14 +146,14 @@ const RevenueManagement = () => {
         </div>
 
         <div className="chart-card">
-          <h3>ADR Karşılaştırması</h3>
+          <h3>{language === 'tr' ? 'ADR Karşılaştırması' : 'ADR Comparison'}</h3>
           <div style={{height:220}}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weekData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
                 <XAxis dataKey="gun" axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:11}}/>
-                <YAxis axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:11}} tickFormatter={v=>`₺${v}`}/>
-                <Tooltip formatter={v=>[`₺${v.toLocaleString()}`,'ADR']}/>
+                <YAxis axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:11}} tickFormatter={v => `₺${v}`}/>
+                <Tooltip formatter={v => [`₺${v.toLocaleString()}`, 'ADR']}/>
                 <Bar dataKey="adr" fill="#8b5cf6" radius={[6,6,0,0]}/>
                 <ReferenceLine y={avgADR} stroke="#ef4444" strokeDasharray="4 4"/>
               </BarChart>
@@ -142,18 +164,18 @@ const RevenueManagement = () => {
 
       <div className="rm-bot">
         <div className="chart-card">
-          <h3>Segment Analizi (Gerçek Veri)</h3>
+          <h3>{language === 'tr' ? 'Segment Analizi (Gerçek Veri)' : 'Segment Analysis (Live Data)'}</h3>
           <div className="seg-chart-wrap">
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>
                 <Pie data={segmentData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={4} dataKey="pct" nameKey="seg">
-                  {segmentData.map((_,i) => <Cell key={i} fill={COLORS[i]}/>)}
+                  {segmentData.map((_, i) => <Cell key={i} fill={COLORS[i]}/>)}
                 </Pie>
-                <Tooltip formatter={v=>`%${v}`}/>
+                <Tooltip formatter={v => `%${v}`}/>
               </PieChart>
             </ResponsiveContainer>
             <div className="seg-list">
-              {segmentData.map((s,i)=>(
+              {segmentData.map((s, i) => (
                 <div key={i} className="seg-row">
                   <div className="seg-dot" style={{background:COLORS[i]}}/>
                   <span className="seg-name">{s.seg}</span>
@@ -164,17 +186,18 @@ const RevenueManagement = () => {
             </div>
           </div>
         </div>
+
         <div className="chart-card">
-          <h3>Aylık Gelir vs. Hedef</h3>
+          <h3>{language === 'tr' ? 'Aylık Gelir vs. Hedef' : 'Monthly Revenue vs. Target'}</h3>
           <div style={{height:220}}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
                 <XAxis dataKey="ay" axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:11}}/>
-                <YAxis axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:11}} tickFormatter={v=>`₺${v/1000}K`}/>
-                <Tooltip formatter={v=>[`₺${v.toLocaleString()}`,'']}/>
-                <Bar dataKey="hedef" fill="#e2e8f0" radius={[4,4,0,0]} name="Hedef"/>
-                <Bar dataKey="rev"   fill="#3b82f6" radius={[4,4,0,0]} name="Gerçekleşen"/>
+                <YAxis axisLine={false} tickLine={false} tick={{fill:'#94a3b8',fontSize:11}} tickFormatter={v => `₺${v/1000}K`}/>
+                <Tooltip formatter={v => [`₺${v.toLocaleString()}`, '']}/>
+                <Bar dataKey="hedef" fill="#e2e8f0" radius={[4,4,0,0]} name={language==='tr'?'Hedef':'Target'}/>
+                <Bar dataKey="rev"   fill="#3b82f6" radius={[4,4,0,0]} name={language==='tr'?'Gerçekleşen':'Actual'}/>
               </BarChart>
             </ResponsiveContainer>
           </div>

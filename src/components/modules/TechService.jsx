@@ -1,25 +1,38 @@
 import React, { useState } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Plus, Search, Trash2, Edit, CheckCircle, X,
-  Wrench, AlertCircle, Clock, DoorOpen, ThumbsUp
+  Plus, Trash2, CheckCircle, X,
+  Wrench, AlertCircle, Clock, ThumbsUp
 } from 'lucide-react';
 
-const PRIORITY = { high:'#ef4444', normal:'#f59e0b', low:'#94a3b8' };
-const PRIO_LABEL = { high:'Acil', normal:'Normal', low:'Düşük' };
-const STATUS_COLOR = { bekliyor:'#f59e0b', devam:'#3b82f6', bitti:'#10b981' };
-
 const TechService = () => {
+  const { mt, isEn } = useModuleTranslation();
+  const _c = (k) => mt('common.' + k);
   const { tasks, addTask, updateTask, rooms } = useHotel();
-  const [filter, setFilter] = useState('tümü');
+
+  const PRIO_COLOR = { high:'#ef4444', normal:'#f59e0b', low:'#94a3b8' };
+  const PRIO_LABEL = {
+    high:   isEn ? 'Urgent'      : 'Acil',
+    normal: isEn ? 'Normal'      : 'Normal',
+    low:    isEn ? 'Low'         : 'Düşük',
+  };
+  const STATUS_COLOR = { bekliyor:'#f59e0b', devam:'#3b82f6', bitti:'#10b981' };
+  const STATUS_LABEL = {
+    bekliyor: isEn ? 'Pending'     : 'Bekliyor',
+    devam:    isEn ? 'In Progress' : 'Devam Ediyor',
+    bitti:    isEn ? 'Completed'   : 'Tamamlandı',
+  };
+
+  const [filter, setFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
-  const [noteModal, setNoteModal] = useState(null);  // task id
+  const [noteModal, setNoteModal] = useState(null);
   const [noteText, setNoteText] = useState('');
   const [form, setForm] = useState({ room:'', desc:'', priority:'normal', assignee:'', status:'bekliyor', note:'' });
 
   const techTasks = tasks.filter(t => t.type === 'technical');
-  const filtered = filter === 'tümü' ? techTasks : techTasks.filter(t => t.status === filter);
+  const filtered = filter === 'all' ? techTasks : techTasks.filter(t => t.status === filter);
   const set = (k,v) => setForm(p=>({...p,[k]:v}));
 
   const submit = (e) => {
@@ -35,105 +48,125 @@ const TechService = () => {
   };
 
   const kpi = [
-    { label:'Toplam İş Emri', count: techTasks.length, color:'#3b82f6' },
-    { label:'Bekliyor', count: techTasks.filter(t=>t.status==='bekliyor').length, color:'#f59e0b' },
-    { label:'Devam Ediyor', count: techTasks.filter(t=>t.status==='devam').length, color:'#3b82f6' },
-    { label:'Tamamlanan', count: techTasks.filter(t=>t.status==='bitti').length, color:'#10b981' },
+    { label: isEn ? 'Total Work Orders' : 'Toplam İş Emri',    count: techTasks.length,                                      color:'#3b82f6' },
+    { label: isEn ? 'Pending'           : 'Bekliyor',           count: techTasks.filter(t=>t.status==='bekliyor').length,     color:'#f59e0b' },
+    { label: isEn ? 'In Progress'       : 'Devam Ediyor',       count: techTasks.filter(t=>t.status==='devam').length,        color:'#8b5cf6' },
+    { label: isEn ? 'Completed'         : 'Tamamlanan',         count: techTasks.filter(t=>t.status==='bitti').length,        color:'#10b981' },
+  ];
+
+  const FILTERS = [
+    { val:'all',       label: isEn ? 'All'         : 'Tümü'        },
+    { val:'bekliyor',  label: isEn ? 'Pending'     : 'Bekliyor'    },
+    { val:'devam',     label: isEn ? 'In Progress' : 'Devam Ediyor'},
+    { val:'bitti',     label: isEn ? 'Completed'   : 'Tamamlanan'  },
   ];
 
   return (
     <div className="ts-page">
       <div className="ts-head">
-        <div><h2>Teknik Servis & İş Emirleri</h2><span>Tüm teknik arıza, bakım ve müdahale kayıtları</span></div>
-        <button className="btn-primary" onClick={()=>setShowForm(!showForm)}><Plus size={15}/> Yeni İş Emri</button>
+        <div>
+          <h2><Wrench size={20}/> {isEn ? 'Technical Service & Work Orders' : 'Teknik Servis & İş Emirleri'}</h2>
+          <span>{isEn ? 'All technical faults, maintenance and work order records' : 'Tüm teknik arıza, bakım ve müdahale kayıtları'}</span>
+        </div>
+        <button className="btn-primary" onClick={()=>setShowForm(!showForm)}>
+          <Plus size={15}/> {isEn ? 'New Work Order' : 'Yeni İş Emri'}
+        </button>
       </div>
 
-      {/* KPI */}
       <div className="kpi-row">
         {kpi.map((k,i)=>(
-          <div key={i} className="kpi-card"><div className="kpi-num" style={{color:k.color}}>{k.count}</div><div className="kpi-lbl">{k.label}</div></div>
+          <div key={i} className="kpi-card">
+            <div className="kpi-num" style={{color:k.color}}>{k.count}</div>
+            <div className="kpi-lbl">{k.label}</div>
+          </div>
         ))}
       </div>
 
-      {/* Form */}
       <AnimatePresence>
         {showForm && (
           <motion.form className="form-card" onSubmit={submit} initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} exit={{opacity:0}}>
-            <h3>Yeni Teknik İş Emri</h3>
+            <h3>{isEn ? 'New Technical Work Order' : 'Yeni Teknik İş Emri'}</h3>
             <div className="fg-grid">
-              <div className="fg"><label>Oda *</label>
+              <div className="fg"><label>{isEn ? 'Room *' : 'Oda *'}</label>
                 <select value={form.room} onChange={e=>set('room',e.target.value)} required>
-                  <option value="">Oda seçin</option>
+                  <option value="">{isEn ? 'Select room' : 'Oda seçin'}</option>
                   {rooms.map(r=><option key={r.id} value={r.id}>{r.id} — {r.type} ({r.status})</option>)}
                 </select>
               </div>
-              <div className="fg"><label>Öncelik</label>
+              <div className="fg"><label>{isEn ? 'Priority' : 'Öncelik'}</label>
                 <select value={form.priority} onChange={e=>set('priority',e.target.value)}>
-                  <option value="high">Acil</option>
+                  <option value="high">{isEn ? 'Urgent' : 'Acil'}</option>
                   <option value="normal">Normal</option>
-                  <option value="low">Düşük</option>
+                  <option value="low">{isEn ? 'Low' : 'Düşük'}</option>
                 </select>
               </div>
-              <div className="fg"><label>Sorumlu Teknisyen</label>
-                <input value={form.assignee} onChange={e=>set('assignee',e.target.value)} placeholder="Teknisyen adı"/>
+              <div className="fg"><label>{isEn ? 'Assigned Technician' : 'Sorumlu Teknisyen'}</label>
+                <input value={form.assignee} onChange={e=>set('assignee',e.target.value)} placeholder={isEn ? 'Technician name' : 'Teknisyen adı'}/>
               </div>
-              <div className="fg full"><label>Arıza / Görev Açıklaması *</label>
-                <input value={form.desc} onChange={e=>set('desc',e.target.value)} placeholder="Detaylı açıklama..." required/>
+              <div className="fg full"><label>{isEn ? 'Fault / Task Description *' : 'Arıza / Görev Açıklaması *'}</label>
+                <input value={form.desc} onChange={e=>set('desc',e.target.value)} placeholder={isEn ? 'Detailed description...' : 'Detaylı açıklama...'} required/>
               </div>
             </div>
-            <div className="form-foot"><button type="button" className="btn-cancel" onClick={()=>setShowForm(false)}>İptal</button><button type="submit" className="btn-primary">İş Emri Oluştur</button></div>
+            <div className="form-foot">
+              <button type="button" className="btn-cancel" onClick={()=>setShowForm(false)}>{_c('cancel')}</button>
+              <button type="submit" className="btn-primary">{isEn ? 'Create Work Order' : 'İş Emri Oluştur'}</button>
+            </div>
           </motion.form>
         )}
       </AnimatePresence>
 
-      {/* Filters */}
       <div className="filter-row">
-        {['tümü','bekliyor','devam','bitti'].map(f=>(
-          <button key={f} className={`filter-btn ${filter===f?'active':''}`} onClick={()=>setFilter(f)}>
-            {f==='tümü'?'Tümü':f==='bekliyor'?'Bekliyor':f==='devam'?'Devam Ediyor':'Tamamlanan'}
+        {FILTERS.map(f=>(
+          <button key={f.val} className={`filter-btn ${filter===f.val?'active':''}`} onClick={()=>setFilter(f.val)}>
+            {f.label}
           </button>
         ))}
       </div>
 
-      {/* Cards */}
       <div className="task-grid">
         {filtered.map((task,i)=>(
           <motion.div key={task.id} className="task-card" initial={{opacity:0,y:15}} animate={{opacity:1,y:0}} transition={{delay:i*0.04}}>
             <div className="tc-top">
               <div className="tc-icon"><Wrench size={18} color="#e67e22"/></div>
-              <span className="prio-tag" style={{background:PRIORITY[task.priority]+'18',color:PRIORITY[task.priority]}}>{PRIO_LABEL[task.priority]}</span>
+              <span className="prio-tag" style={{background:PRIO_COLOR[task.priority]+'18',color:PRIO_COLOR[task.priority]}}>
+                {PRIO_LABEL[task.priority]}
+              </span>
             </div>
-            <div className="tc-room">Oda {task.room}</div>
+            <div className="tc-room">{isEn ? 'Room' : 'Oda'} {task.room}</div>
             <p className="tc-desc">{task.desc}</p>
-            {task.note && <div className="tc-note">📝 {task.note}</div>}
-            <div className="tc-meta"><Clock size={12}/> {task.created} · {task.assignee||'Atanmadı'}</div>
+            {task.note && <div className="tc-note">{task.note}</div>}
+            <div className="tc-meta"><Clock size={12}/> {task.created} · {task.assignee || (isEn ? 'Unassigned' : 'Atanmadı')}</div>
             <div className="tc-actions">
               <div className="status-dot" style={{color:STATUS_COLOR[task.status]}}>
                 {task.status==='bitti'?<CheckCircle size={14}/>:task.status==='devam'?<AlertCircle size={14}/>:<Clock size={14}/>}
-                {task.status==='bekliyor'?'Bekliyor':task.status==='devam'?'Devam':' Tamamlandı'}
+                {STATUS_LABEL[task.status]}
               </div>
               <div className="act-btns">
-                {task.status==='bekliyor' && <button className="micro blue" onClick={()=>updateTask(task.id,{status:'devam'})}>Başlat</button>}
-                {task.status==='devam' && <button className="micro green" onClick={()=>updateTask(task.id,{status:'bitti'})}>Tamamla</button>}
-                <button className="micro grey" onClick={()=>{setNoteModal(task.id);setNoteText(task.note||'');}}>Not Ekle</button>
+                {task.status==='bekliyor' && <button className="micro blue" onClick={()=>updateTask(task.id,{status:'devam'})}>{isEn ? 'Start' : 'Başlat'}</button>}
+                {task.status==='devam' && <button className="micro green" onClick={()=>updateTask(task.id,{status:'bitti'})}>{isEn ? 'Complete' : 'Tamamla'}</button>}
+                <button className="micro grey" onClick={()=>{setNoteModal(task.id);setNoteText(task.note||'');}}>{isEn ? 'Add Note' : 'Not Ekle'}</button>
               </div>
             </div>
           </motion.div>
         ))}
-        {filtered.length===0 && <div className="no-data">Bu durumda iş emri bulunmuyor.</div>}
+        {filtered.length===0 && <div className="no-data">{isEn ? 'No work orders in this status.' : 'Bu durumda iş emri bulunmuyor.'}</div>}
       </div>
 
-      {/* Note modal */}
       <AnimatePresence>
         {noteModal && (
           <motion.div className="modal-overlay" onClick={()=>setNoteModal(null)} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
             <motion.div className="note-modal" onClick={e=>e.stopPropagation()} initial={{scale:.9}} animate={{scale:1}}>
-              <div className="modal-head"><h3>Not Ekle / Güncelle</h3><button onClick={()=>setNoteModal(null)}><X size={18}/></button></div>
+              <div className="modal-head">
+                <h3>{isEn ? 'Add / Update Note' : 'Not Ekle / Güncelle'}</h3>
+                <button onClick={()=>setNoteModal(null)}><X size={18}/></button>
+              </div>
               <div style={{padding:'20px'}}>
-                <textarea value={noteText} onChange={e=>setNoteText(e.target.value)} rows={4} placeholder="Yapılanları, değiştirilen parçaları, açıklama..." style={{width:'100%',padding:'12px',border:'1.5px solid #e2e8f0',borderRadius:'12px',fontSize:'13px',outline:'none',resize:'none'}}/>
+                <textarea value={noteText} onChange={e=>setNoteText(e.target.value)} rows={4}
+                  placeholder={isEn ? 'Work done, parts replaced, description...' : 'Yapılanları, değiştirilen parçaları, açıklama...'}
+                  style={{width:'100%',padding:'12px',border:'1.5px solid #e2e8f0',borderRadius:'12px',fontSize:'13px',outline:'none',resize:'none'}}/>
                 <div className="modal-foot" style={{marginTop:'12px'}}>
-                  <button className="btn-cancel" onClick={()=>setNoteModal(null)}>İptal</button>
-                  <button className="btn-primary" onClick={saveNote}>Kaydet</button>
+                  <button className="btn-cancel" onClick={()=>setNoteModal(null)}>{_c('cancel')}</button>
+                  <button className="btn-primary" onClick={saveNote}>{_c('save')}</button>
                 </div>
               </div>
             </motion.div>
@@ -144,7 +177,7 @@ const TechService = () => {
       <style>{`
         .ts-page{padding:28px;display:flex;flex-direction:column;gap:20px;}
         .ts-head{display:flex;justify-content:space-between;align-items:flex-start;}
-        .ts-head h2{font-size:22px;font-weight:800;color:#1e293b;}
+        .ts-head h2{font-size:22px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:10px;}
         .ts-head span{font-size:13px;color:#94a3b8;}
         .btn-primary{padding:10px 18px;border-radius:12px;border:none;background:#3b82f6;color:white;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;}
         .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}

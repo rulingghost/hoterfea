@@ -1,24 +1,30 @@
 import React, { useState } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Waves, Plus, Calendar, Clock, User, CheckCircle, X, Star } from 'lucide-react';
-
-const SERVICES = [
-  { id:'SP-01', name:'Klasik Masaj (60dk)',    price:850,  duration:60, category:'Masaj' },
-  { id:'SP-02', name:'Aromaterapi (90dk)',      price:1200, duration:90, category:'Masaj' },
-  { id:'SP-03', name:'Hamam & Kese',           price:600,  duration:75, category:'Hamam' },
-  { id:'SP-04', name:'Yüz Bakımı',             price:950,  duration:60, category:'Bakım' },
-  { id:'SP-05', name:'Manikür & Pedikür',      price:550,  duration:90, category:'Güzellik' },
-  { id:'SP-06', name:'VIP Paket (180dk)',       price:2800, duration:180,category:'Paket' },
-  { id:'SP-07', name:'Çift Masajı (60dk)',      price:1600, duration:60, category:'Masaj' },
-  { id:'SP-08', name:'Saç Bakımı & Stil',      price:700,  duration:60, category:'Güzellik' },
-];
-
-const SLOTS = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
+import { Waves, Plus, Clock, User, CheckCircle, X, Star } from 'lucide-react';
 
 const SpaManagement = () => {
+  const { mt, isEn } = useModuleTranslation();
+  const _c = (k) => mt('common.' + k);
   const { reservations, spaAppointments, addSpaAppointment, updateSpaAppointment, addFolioLine, addCashTransaction, addNotification, TODAY } = useHotel();
   const inHouse = reservations.filter(r=>r.status==='check-in');
+
+  const SERVICES = [
+    { id:'SP-01', nameTr:'Klasik Masaj (60dk)',   nameEn:'Classic Massage (60min)',   price:850,  duration:60,  catTr:'Masaj',    catEn:'Massage'    },
+    { id:'SP-02', nameTr:'Aromaterapi (90dk)',     nameEn:'Aromatherapy (90min)',      price:1200, duration:90,  catTr:'Masaj',    catEn:'Massage'    },
+    { id:'SP-03', nameTr:'Hamam & Kese',           nameEn:'Turkish Bath & Scrub',      price:600,  duration:75,  catTr:'Hamam',    catEn:'Bath'       },
+    { id:'SP-04', nameTr:'Yüz Bakımı',            nameEn:'Facial Treatment',          price:950,  duration:60,  catTr:'Bakım',    catEn:'Treatment'  },
+    { id:'SP-05', nameTr:'Manikür & Pedikür',     nameEn:'Manicure & Pedicure',       price:550,  duration:90,  catTr:'Güzellik', catEn:'Beauty'     },
+    { id:'SP-06', nameTr:'VIP Paket (180dk)',      nameEn:'VIP Package (180min)',      price:2800, duration:180, catTr:'Paket',    catEn:'Package'    },
+    { id:'SP-07', nameTr:'Çift Masajı (60dk)',    nameEn:'Couples Massage (60min)',   price:1600, duration:60,  catTr:'Masaj',    catEn:'Massage'    },
+    { id:'SP-08', nameTr:'Saç Bakımı & Stil',     nameEn:'Hair Care & Styling',       price:700,  duration:60,  catTr:'Güzellik', catEn:'Beauty'     },
+  ];
+
+  const svcName = (s) => isEn ? s.nameEn : s.nameTr;
+  const svcCat  = (s) => isEn ? s.catEn  : s.catTr;
+
+  const SLOTS = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ service:'SP-01', guestRes:'', date:TODAY, time:'10:00' });
@@ -33,7 +39,7 @@ const SpaManagement = () => {
       guest: selRes?.guest || 'Walk-in',
       room: selRes?.room || '—',
       resId: selRes?.id || null,
-      service: selService.name,
+      service: svcName(selService),
       price: selService.price,
       therapist: 'Elena K.',
       time: form.time,
@@ -44,7 +50,6 @@ const SpaManagement = () => {
   };
 
   const complete = (appt) => {
-    // Folio or cash
     if (appt.resId) {
       addFolioLine(appt.resId, { desc:`SPA — ${appt.service}`, amount:appt.price, type:'extra' });
     } else {
@@ -52,42 +57,53 @@ const SpaManagement = () => {
       if (res) {
         addFolioLine(res.id, { desc:`SPA — ${appt.service}`, amount:appt.price, type:'extra' });
       } else {
-        addCashTransaction({ type:'gelir', desc:`SPA — ${appt.service} (${appt.guest})`, amount:appt.price, method:'Nakit' });
+        addCashTransaction({ type:'gelir', desc:`SPA — ${appt.service} (${appt.guest})`, amount:appt.price, method: isEn?'Cash':'Nakit' });
       }
     }
     updateSpaAppointment(appt.id, { status:'tamamlandı' });
   };
 
-  const cats = ['Tümü',...new Set(SERVICES.map(s=>s.category))];
-  const [cat, setCat] = useState('Tümü');
-  const filteredSvc = cat==='Tümü' ? SERVICES : SERVICES.filter(s=>s.category===cat);
+  const uniqueCats  = [...new Set(SERVICES.map(s => svcCat(s)))];
+  const ALL_CAT     = isEn ? 'All' : 'Tümü';
+  const cats        = [ALL_CAT, ...uniqueCats];
+  const [cat, setCat] = useState(ALL_CAT);
+  const filteredSvc = cat===ALL_CAT ? SERVICES : SERVICES.filter(s=>svcCat(s)===cat);
 
   const todayAppts = spaAppointments.filter(a=>a.date===TODAY);
   const todayTotal = spaAppointments.filter(a=>a.status==='tamamlandı').reduce((s,a)=>s+a.price,0);
 
+  const kpi = [
+    { labelTr:'Bugün Randevu', labelEn:"Today's Appts", val:todayAppts.length,                                              color:'#8b5cf6' },
+    { labelTr:'Bekliyor',      labelEn:'Pending',        val:spaAppointments.filter(a=>a.status==='bekliyor').length,       color:'#f59e0b' },
+    { labelTr:'Tamamlanan',    labelEn:'Completed',      val:spaAppointments.filter(a=>a.status==='tamamlandı').length,     color:'#10b981' },
+    { labelTr:'Günlük Gelir',  labelEn:'Daily Revenue',  val:`₺${todayTotal.toLocaleString()}`,                             color:'#3b82f6' },
+  ];
+
   return (
     <div className="spa-page">
       <div className="spa-head">
-        <div><h2><Waves size={20}/> SPA & Wellness Merkezi</h2><span>Randevu, hizmet ve gelir yönetimi</span></div>
-        <button className="btn-primary" onClick={()=>setShowForm(!showForm)}><Plus size={15}/> Randevu Al</button>
+        <div>
+          <h2><Waves size={20}/> {isEn ? 'SPA & Wellness Center' : 'SPA & Wellness Merkezi'}</h2>
+          <span>{isEn ? 'Appointments, services and revenue management' : 'Randevu, hizmet ve gelir yönetimi'}</span>
+        </div>
+        <button className="btn-primary" onClick={()=>setShowForm(!showForm)}>
+          <Plus size={15}/> {isEn ? 'Book Appointment' : 'Randevu Al'}
+        </button>
       </div>
 
       <div className="spa-kpi">
-        {[
-          { label:'Bugün Randevu', val:todayAppts.length, color:'#8b5cf6' },
-          { label:'Bekliyor', val:spaAppointments.filter(a=>a.status==='bekliyor').length, color:'#f59e0b' },
-          { label:'Tamamlanan', val:spaAppointments.filter(a=>a.status==='tamamlandı').length, color:'#10b981' },
-          { label:'Günlük Gelir', val:`₺${todayTotal.toLocaleString()}`, color:'#3b82f6' },
-        ].map((k,i)=>(
-          <div key={i} className="spk"><strong style={{color:k.color}}>{k.val}</strong><span>{k.label}</span></div>
+        {kpi.map((k,i)=>(
+          <div key={i} className="spk">
+            <strong style={{color:k.color}}>{k.val}</strong>
+            <span>{isEn ? k.labelEn : k.labelTr}</span>
+          </div>
         ))}
       </div>
 
       <div className="spa-layout">
-        {/* Services Panel */}
         <div className="svc-panel">
           <div className="sp-head">
-            <h3>Hizmetler & Fiyatlar</h3>
+            <h3>{isEn ? 'Services & Pricing' : 'Hizmetler & Fiyatlar'}</h3>
             <div className="cat-tabs">
               {cats.map(c=><button key={c} className={`ct ${cat===c?'active':''}`} onClick={()=>setCat(c)}>{c}</button>)}
             </div>
@@ -96,8 +112,8 @@ const SpaManagement = () => {
             {filteredSvc.map(svc=>(
               <div key={svc.id} className="svc-card">
                 <div className="sc-left">
-                  <strong>{svc.name}</strong>
-                  <span><Clock size={11}/> {svc.duration} dk · <Star size={11}/> {svc.category}</span>
+                  <strong>{svcName(svc)}</strong>
+                  <span><Clock size={11}/> {svc.duration} {isEn?'min':'dk'} · <Star size={11}/> {svcCat(svc)}</span>
                 </div>
                 <div className="sc-price">₺{svc.price.toLocaleString()}</div>
               </div>
@@ -105,25 +121,24 @@ const SpaManagement = () => {
           </div>
         </div>
 
-        {/* Appointments */}
         <div className="appt-panel">
-          <h3>Bugünkü Randevular ({todayAppts.length})</h3>
+          <h3>{isEn ? `Today's Appointments (${todayAppts.length})` : `Bugünkü Randevular (${todayAppts.length})`}</h3>
           <div className="appt-list">
             {spaAppointments.map((a,i)=>(
               <motion.div key={a.id} className={`appt-card ${a.status}`} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.05}}>
                 <div className="ac-time"><Clock size={14}/>{a.time}</div>
                 <div className="ac-info">
                   <strong>{a.service}</strong>
-                  <span><User size={11}/> {a.guest} · Oda {a.room}</span>
+                  <span><User size={11}/> {a.guest} · {isEn?'Room':'Oda'} {a.room}</span>
                 </div>
                 <div className="ac-right">
                   <div className="ac-price">₺{a.price.toLocaleString()}</div>
                   {a.status==='bekliyor' ? (
                     <button className="complete-btn" onClick={()=>complete(a)}>
-                      <CheckCircle size={14}/> Tamamla
+                      <CheckCircle size={14}/> {isEn?'Complete':'Tamamla'}
                     </button>
                   ) : (
-                    <span className="done-tag"><CheckCircle size={13} color="#10b981"/> Tamamlandı</span>
+                    <span className="done-tag"><CheckCircle size={13} color="#10b981"/> {isEn?'Done':'Tamamlandı'}</span>
                   )}
                 </div>
               </motion.div>
@@ -132,27 +147,29 @@ const SpaManagement = () => {
         </div>
       </div>
 
-      {/* Appointment Form */}
       <AnimatePresence>
         {showForm && (
           <motion.div className="modal-overlay" onClick={()=>setShowForm(false)} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
             <motion.form className="spa-modal" onClick={e=>e.stopPropagation()} onSubmit={submit} initial={{scale:.9}} animate={{scale:1}}>
-              <div className="modal-head"><h3>Yeni SPA Randevusu</h3><button type="button" onClick={()=>setShowForm(false)}><X size={18}/></button></div>
+              <div className="modal-head">
+                <h3>{isEn ? 'New SPA Appointment' : 'Yeni SPA Randevusu'}</h3>
+                <button type="button" onClick={()=>setShowForm(false)}><X size={18}/></button>
+              </div>
               <div style={{padding:'22px',display:'flex',flexDirection:'column',gap:'14px'}}>
-                <div className="fg"><label>Hizmet *</label>
+                <div className="fg"><label>{isEn ? 'Service *' : 'Hizmet *'}</label>
                   <select value={form.service} onChange={e=>set('service',e.target.value)}>
-                    {SERVICES.map(s=><option key={s.id} value={s.id}>{s.name} — ₺{s.price} ({s.duration}dk)</option>)}
+                    {SERVICES.map(s=><option key={s.id} value={s.id}>{svcName(s)} — ₺{s.price} ({s.duration}{isEn?'min':'dk'})</option>)}
                   </select>
                 </div>
-                <div className="fg"><label>Misafir (Oda Faturalama)</label>
+                <div className="fg"><label>{isEn ? 'Guest (Room Charge)' : 'Misafir (Oda Faturalama)'}</label>
                   <select value={form.guestRes} onChange={e=>set('guestRes',e.target.value)}>
-                    <option value="">Walk-in (Nakit)</option>
-                    {inHouse.map(r=><option key={r.id} value={r.id}>Oda {r.room} — {r.guest}</option>)}
+                    <option value="">{isEn ? 'Walk-in (Cash)' : 'Walk-in (Nakit)'}</option>
+                    {inHouse.map(r=><option key={r.id} value={r.id}>{isEn?'Room':'Oda'} {r.room} — {r.guest}</option>)}
                   </select>
                 </div>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
-                  <div className="fg"><label>Tarih</label><input type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></div>
-                  <div className="fg"><label>Saat</label>
+                  <div className="fg"><label>{isEn?'Date':'Tarih'}</label><input type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></div>
+                  <div className="fg"><label>{isEn?'Time':'Saat'}</label>
                     <select value={form.time} onChange={e=>set('time',e.target.value)}>
                       {SLOTS.map(s=><option key={s}>{s}</option>)}
                     </select>
@@ -160,14 +177,14 @@ const SpaManagement = () => {
                 </div>
                 {selService && (
                   <div className="price-box">
-                    <span>Seçilen: {selService.name}</span>
+                    <span>{isEn?'Selected':'Seçilen'}: {svcName(selService)}</span>
                     <strong>₺{selService.price.toLocaleString()}</strong>
                   </div>
                 )}
               </div>
               <div className="modal-foot">
-                <button type="button" className="btn-cancel" onClick={()=>setShowForm(false)}>İptal</button>
-                <button type="submit" className="btn-primary">Randevu Oluştur</button>
+                <button type="button" className="btn-cancel" onClick={()=>setShowForm(false)}>{_c('cancel')}</button>
+                <button type="submit" className="btn-primary">{isEn ? 'Create Appointment' : 'Randevu Oluştur'}</button>
               </div>
             </motion.form>
           </motion.div>

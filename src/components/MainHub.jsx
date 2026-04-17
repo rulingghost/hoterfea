@@ -1,42 +1,47 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState } from 'react';
 import { modulesConfig } from '../data/moduleList';
 import Sidebar from './layout/Sidebar';
 import Header from './layout/Header';
 import ModuleGrid from './layout/ModuleGrid';
+import { Suspense } from 'react';
 
-const MainHub = ({ user, onLogout }) => {
-  const [activeModuleId, setActiveModuleId] = useState(null);
+import { useLanguage } from '../context/LanguageContext';
 
+const MainHub = ({ user, onLogout, activeModuleId, onSelectModule }) => {
+  const { t } = useLanguage();
   const activeModule = modulesConfig.find(m => m.id === activeModuleId);
 
   return (
     <div className="app-layout">
-      <Sidebar 
-        activeModule={activeModuleId} 
-        onSelectModule={setActiveModuleId} 
-        modules={modulesConfig} 
+      <Sidebar
+        activeModule={activeModuleId}
+        onSelectModule={onSelectModule}
+        modules={modulesConfig}
       />
-      
+
       <main className="main-viewport">
-        <Header 
-          user={user} 
-          activeModuleName={activeModule?.name} 
+        <Header
+          user={user}
+          activeModuleName={activeModule?.name}
           onLogout={onLogout}
-          onBack={activeModuleId ? () => setActiveModuleId(null) : null}
-          onSelectModule={setActiveModuleId}
+          onBack={activeModuleId ? () => onSelectModule(null) : null}
+          onSelectModule={onSelectModule}
         />
-        
+
         <div className="content-area">
           {activeModuleId ? (
-            <Suspense fallback={<div className="loading-screen">Modül Yükleniyor...</div>}>
+            <Suspense fallback={<div className="loading-screen">{t('common.loading')}</div>}>
               <div className="module-render-container">
-                {activeModule?.component ? React.createElement(activeModule.component) : <div className="loading-screen">Modül içeriği bulunamadı.</div>}
+                {activeModule?.component
+                  ? React.createElement(activeModule.component)
+                  : <div className="loading-screen">{t('common.noResults')}</div>
+                }
               </div>
             </Suspense>
           ) : (
-            <ModuleGrid 
-              modules={modulesConfig} 
-              onSelectModule={setActiveModuleId} 
+            <ModuleGrid
+              modules={modulesConfig}
+              onSelectModule={onSelectModule}
             />
           )}
         </div>
@@ -62,7 +67,7 @@ const MainHub = ({ user, onLogout }) => {
         .content-area {
           flex: 1;
           overflow-y: auto;
-          background-image: 
+          background-image:
             radial-gradient(#e2e8f0 1px, transparent 1px);
           background-size: 30px 30px;
         }

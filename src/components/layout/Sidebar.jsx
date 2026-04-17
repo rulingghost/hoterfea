@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useHotel } from '../../context/HotelContext';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   Settings, Search, X, ChevronDown, ChevronRight
 } from 'lucide-react';
+import LanguageSwitcher from '../ui/LanguageSwitcher';
 
 const Sidebar = ({ activeModule, onSelectModule, modules }) => {
   const { stats, reservations, tasks } = useHotel();
+  const { t, language } = useLanguage();
   const [search, setSearch] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [expandedCats, setExpandedCats] = useState({});
@@ -23,15 +26,36 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
     'kbs':            2, // static demo
   };
 
+  const getTranslatedName = (mod) => {
+    // If modules.js has it, use it. Otherwise use m.name
+    // This is a bridge until moduleList is fully key-based
+    return t(`landing.moduleNames.${mod.id.replace(/-./g, x => x[1].toUpperCase())}`) || mod.name;
+  };
+
   const filteredModules = search
-    ? modules.filter(m => 
-        m.name.toLowerCase().includes(search.toLowerCase()) || 
-        (m.keywords && m.keywords.some(k => k.toLowerCase().includes(search.toLowerCase())))
+    ? modules.filter((m) =>
+        getTranslatedName(m).toLowerCase().includes(search.toLowerCase()) ||
+        (m.keywords && m.keywords.some((k) => k.toLowerCase().includes(search.toLowerCase())))
       )
     : modules;
 
+  const CATEGORY_TR = {
+    'Dashboard & Analitik': language === 'tr' ? 'Dashboard & Analitik' : 'Dashboard & Analytics',
+    'Ön Büro & Rez.': language === 'tr' ? 'Ön Büro & Rez.' : 'Front Desk & Res.',
+    'Operasyon': language === 'tr' ? 'Operasyon' : 'Operations',
+    'Yiyecek & İçecek': language === 'tr' ? 'Yiyecek & İçecek' : 'Food & Beverage',
+    'Satış & Pazarlama': language === 'tr' ? 'Satış & Pazarlama' : 'Sales & Marketing',
+    'Finans': language === 'tr' ? 'Finans' : 'Finance',
+    'Malzeme & İK': language === 'tr' ? 'Malzeme & İK' : 'Materials & HR',
+    'Sistem': language === 'tr' ? 'Sistem' : 'System',
+    'Yapay Zeka (AI)': language === 'tr' ? 'Yapay Zeka (AI)' : 'Artificial Intelligence (AI)'
+  };
+
   const groupedModules = filteredModules.reduce((acc, mod) => {
-    const cat = mod.category || 'Diğer';
+    let cat = mod.category || 'Diğer';
+    cat = CATEGORY_TR[cat] || cat; 
+    if (cat === 'Diğer') cat = language === 'tr' ? 'Diğer' : 'Other';
+
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(mod);
     return acc;
@@ -60,17 +84,17 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
       {/* Live Stats strip */}
       <div className="live-strip">
         <div className="ls-item">
-          <span>Doluluk</span>
+          <span>{t('sidebar.stats.occupancy')}</span>
           <strong style={{color:'#3b82f6'}}>%{stats.occupancyRate}</strong>
         </div>
         <div className="ls-div"/>
         <div className="ls-item">
-          <span>İçeride</span>
+          <span>{t('sidebar.stats.inHouse')}</span>
           <strong style={{color:'#10b981'}}>{stats.inHouse}</strong>
         </div>
         <div className="ls-div"/>
         <div className="ls-item">
-          <span>Görev</span>
+          <span>{t('sidebar.stats.tasks')}</span>
           <strong style={{color: openTasks > 0 ? '#f59e0b' : '#10b981'}}>{openTasks}</strong>
         </div>
       </div>
@@ -79,7 +103,7 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
         {/* All modules under headers */}
         <div className="nav-group mt-16">
           <div className="all-mod-head">
-            <label>MODÜLLER</label>
+            <label>{t('sidebar.modules')}</label>
             <button className="search-toggle" onClick={()=>{ setSearchOpen(!searchOpen); setSearch(''); }}>
               {searchOpen ? <X size={13}/> : <Search size={13}/>}
             </button>
@@ -87,7 +111,7 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
           {searchOpen && (
             <input
               className="mod-search"
-              placeholder="Modül veya özellik ara..."
+              placeholder={t('sidebar.searchPlaceholder')}
               value={search}
               onChange={e=>setSearch(e.target.value)}
               autoFocus
@@ -112,7 +136,7 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
                         <div className="mini-icon" style={{ color: activeModule === module.id ? 'white' : module.color }}>
                           {React.cloneElement(module.icon, { size: 14 })}
                         </div>
-                        <span>{module.name}</span>
+                        <span>{getTranslatedName(module)}</span>
                         {BADGES[module.id] && (
                           <span className="nav-badge red">{BADGES[module.id]}</span>
                         )}
@@ -123,14 +147,17 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
               </div>
             ))}
             {filteredModules.length === 0 && (
-              <div className="no-mod">Hiçbir sonuç bulunamadı.</div>
+              <div className="no-mod">{t('sidebar.noResult')}</div>
             )}
           </div>
         </div>
       </nav>
 
       <div className="sidebar-footer">
-        <button className="nav-item" onClick={()=>onSelectModule('system-admin')}><Settings size={16}/><span>Sistem Ayarları</span></button>
+        <button className="nav-item" onClick={()=>onSelectModule('system-admin')}><Settings size={16}/><span>{t('sidebar.systemSettings')}</span></button>
+        <div className="sidebar-lang-wrap">
+          <LanguageSwitcher dark />
+        </div>
       </div>
 
       <style>{`
@@ -207,7 +234,9 @@ const Sidebar = ({ activeModule, onSelectModule, modules }) => {
 
         .mt-16 { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-        .sidebar-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
+        .sidebar-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 10px; }
+        .sidebar-lang-wrap { display: flex; justify-content: center; }
+        .sidebar-lang-wrap .lang-switcher { width: 100%; justify-content: center; }
       `}</style>
     </aside>
   );

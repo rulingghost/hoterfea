@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, CheckCircle, AlertCircle, FileText, Download, Eye, Lock, User, X, Clock } from 'lucide-react';
+import { Shield, CheckCircle, AlertCircle, Eye, X } from 'lucide-react';
 
 const KBS = () => {
+  const { mt, language } = useModuleTranslation();
+  const _t = (k) => mt('kbs.' + k);
+  const _c = (k) => mt('common.' + k);
   const { reservations, guests, kbsSent, sendKBS: ctxSendKBS, addNotification } = useHotel();
   const [selected, setSelected] = useState(null);
   const [sending, setSending] = useState(null);
@@ -13,27 +17,38 @@ const KBS = () => {
 
   const sendToKBS = async (resId) => {
     setSending(resId);
-    await new Promise(r=>setTimeout(r,1500));
+    await new Promise(r => setTimeout(r, 1500));
     ctxSendKBS(resId);
     setSending(null);
+    addNotification({ type: 'success', msg: language === 'tr' ? 'KBS bildirimi gönderildi.' : 'State report submitted.' });
   };
 
   const sendAll = async () => {
     for (const r of pending) { await sendToKBS(r.id); }
   };
 
+  const detailRows = selected ? [
+    [_t('reportTitle').split(' ')[0] + ' No', selected.id],
+    [_c('name'), selected.guest],
+    [_c('room'), selected.room],
+    [_t('reportedAt').replace('Tarihi','Giriş'), selected.checkIn],
+    [_c('checkOut'), selected.checkOut],
+    [_c('persons'), selected.pax],
+    [_t('status'), kbsSent.find(k => k.resId === selected.id) ? `✓ ${_t('reported')}` : `⏳ ${_t('pending')}`],
+  ] : [];
+
   return (
     <div className="kbs-page">
       <div className="kbs-head">
         <div>
-          <h2><Shield size={20}/> KBS — Kimlik Bildirim Sistemi</h2>
-          <span>Polis/Jandarma Kimlik Bildirim Sistemi entegrasyonu</span>
+          <h2><Shield size={20}/> {_t('title')}</h2>
+          <span>{_t('subtitle')}</span>
         </div>
         <div className="kbs-actions">
-          <div className="kbs-status"><div className="status-dot"/><span>Bağlantı: Aktif</span></div>
-          {pending.length>0 && (
+          <div className="kbs-status"><div className="status-dot"/><span>{language === 'tr' ? 'Bağlantı: Aktif' : 'Connection: Active'}</span></div>
+          {pending.length > 0 && (
             <button className="btn-primary" onClick={sendAll}>
-              <Shield size={15}/> Tümünü Gönder ({pending.length})
+              <Shield size={15}/> {_t('sendReport')} ({pending.length})
             </button>
           )}
         </div>
@@ -41,46 +56,55 @@ const KBS = () => {
 
       {/* Stats */}
       <div className="kbs-stats">
-        <div className="ks"><CheckCircle size={20} color="#10b981"/><div><strong>{kbsSent.length}</strong><span>Gönderildi</span></div></div>
-        <div className="ks"><AlertCircle size={20} color="#f59e0b"/><div><strong style={{color:pending.length>0?'#ef4444':'#10b981'}}>{pending.length}</strong><span>Bekliyor</span></div></div>
-        <div className="ks"><User size={20} color="#3b82f6"/><div><strong>{arrivals.length}</strong><span>İç Misafir</span></div></div>
+        <div className="ks"><CheckCircle size={20} color="#10b981"/><div><strong>{kbsSent.length}</strong><span>{_t('reported')}</span></div></div>
+        <div className="ks"><AlertCircle size={20} color="#f59e0b"/><div><strong style={{ color: pending.length > 0 ? '#ef4444' : '#10b981' }}>{pending.length}</strong><span>{_t('pending')}</span></div></div>
+        <div className="ks"><Shield size={20} color="#3b82f6"/><div><strong>{arrivals.length}</strong><span>{_t('dailyReport')}</span></div></div>
       </div>
 
       {pending.length > 0 && (
-        <div className="warn-band"><AlertCircle size={16}/><span>{pending.length} misafir için KBS bildirimi gönderilmemiş!</span></div>
+        <div className="warn-band"><AlertCircle size={16}/><span>{pending.length} {language === 'tr' ? 'misafir için KBS bildirimi gönderilmemiş!' : 'guest(s) pending state report submission!'}</span></div>
       )}
 
       <div className="kbs-table-wrap">
         <table className="kbs-table">
-          <thead><tr><th>Rezervasyon</th><th>Misafir</th><th>Oda</th><th>Giriş</th><th>Uyruk</th><th>Belge No</th><th>KBS Durumu</th><th>İşlem</th></tr></thead>
+          <thead><tr>
+            <th>{language === 'tr' ? 'Rezervasyon' : 'Booking'}</th>
+            <th>{_c('guest')}</th>
+            <th>{_c('room')}</th>
+            <th>{_c('checkIn')}</th>
+            <th>{_c('nationality')}</th>
+            <th>{_t('guestId')}</th>
+            <th>{_t('status')}</th>
+            <th>{_c('actions')}</th>
+          </tr></thead>
           <tbody>
-            {arrivals.map((r,i)=>{
-              const g = guests.find(g=>g.name===r.guest)||{};
+            {arrivals.map((r, i) => {
+              const g = guests.find(g => g.name === r.guest) || {};
               const sent = !!kbsSent.find(k => k.resId === r.id);
-              const isSending = sending===r.id;
+              const isSending = sending === r.id;
               return (
-                <motion.tr key={r.id} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.05}}>
+                <motion.tr key={r.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}>
                   <td><span className="rid">{r.id}</span></td>
                   <td><div className="g-cell"><div className="g-av">{r.guest[0]}</div><strong>{r.guest}</strong></div></td>
                   <td><span className="room-tag">{r.room}</span></td>
                   <td>{r.checkIn}</td>
-                  <td><span className="nat-tag">{g.nationality||'TR'}</span></td>
-                  <td><span className="doc">{g.tcNo||g.passport||'—'}</span></td>
+                  <td><span className="nat-tag">{g.nationality || 'TR'}</span></td>
+                  <td><span className="doc">{g.tcNo || g.passport || '—'}</span></td>
                   <td>
                     {isSending
-                      ? <span className="kbs-pending">⏳ Gönderiliyor...</span>
+                      ? <span className="kbs-pending">⏳ {language === 'tr' ? 'Gönderiliyor...' : 'Sending...'}</span>
                       : sent
-                      ? <span className="kbs-sent"><CheckCircle size={14}/> Gönderildi</span>
-                      : <span className="kbs-wait"><AlertCircle size={14}/> Bekliyor</span>}
+                      ? <span className="kbs-sent"><CheckCircle size={14}/> {_t('reported')}</span>
+                      : <span className="kbs-wait"><AlertCircle size={14}/> {_t('pending')}</span>}
                   </td>
                   <td>
                     <div className="act-row">
                       {!sent && !isSending && (
-                        <button className="act-btn blue" onClick={()=>sendToKBS(r.id)}>
-                          <Shield size={13}/> KBS Gönder
+                        <button className="act-btn blue" onClick={() => sendToKBS(r.id)}>
+                          <Shield size={13}/> {_t('sendReport').split(' ')[0]}
                         </button>
                       )}
-                      <button className="act-btn grey" onClick={()=>setSelected(r)}><Eye size={13}/> Görüntüle</button>
+                      <button className="act-btn grey" onClick={() => setSelected(r)}><Eye size={13}/> {_c('details')}</button>
                     </div>
                   </td>
                 </motion.tr>
@@ -93,27 +117,19 @@ const KBS = () => {
       {/* Detail modal */}
       <AnimatePresence>
         {selected && (
-          <motion.div className="modal-overlay" onClick={()=>setSelected(null)} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-            <motion.div className="kbs-modal" onClick={e=>e.stopPropagation()} initial={{scale:.9}} animate={{scale:1}}>
-              <div className="modal-head"><h3>KBS Kayıt Detayı — {selected.guest}</h3><button onClick={()=>setSelected(null)}><X size={18}/></button></div>
+          <motion.div className="modal-overlay" onClick={() => setSelected(null)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="kbs-modal" onClick={e => e.stopPropagation()} initial={{ scale: .9 }} animate={{ scale: 1 }}>
+              <div className="modal-head"><h3>{_t('reportTitle')} — {selected.guest}</h3><button onClick={() => setSelected(null)}><X size={18}/></button></div>
               <div className="kbs-detail">
-                {[
-                  ['Rezervasyon No', selected.id],
-                  ['Ad Soyad', selected.guest],
-                  ['Oda', selected.room],
-                  ['Giriş Tarihi', selected.checkIn],
-                  ['Çıkış Tarihi', selected.checkOut],
-                  ['Kişi Sayısı', selected.pax],
-                  ['KBS Durumu', kbsSent.find(k=>k.resId===selected.id) ? '✓ Gönderildi' : '⏳ Bekliyor'],
-                ].map(([k,v])=>(
+                {detailRows.map(([k, v]) => (
                   <div key={k} className="kd-row"><span>{k}</span><strong>{v}</strong></div>
                 ))}
               </div>
               <div className="modal-foot">
-                <button className="btn-cancel" onClick={()=>setSelected(null)}>Kapat</button>
+                <button className="btn-cancel" onClick={() => setSelected(null)}>{_c('close')}</button>
                 {!kbsSent.find(k => k.resId === selected.id) && (
-                  <button className="btn-primary" onClick={()=>{ctxSendKBS(selected.id);setSelected(null);}}>
-                    <Shield size={15}/> KBS'ye Gönder
+                  <button className="btn-primary" onClick={() => { ctxSendKBS(selected.id); setSelected(null); }}>
+                    <Shield size={15}/> {_t('sendReport')}
                   </button>
                 )}
               </div>

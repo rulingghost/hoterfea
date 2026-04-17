@@ -1,23 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  LayoutGrid, List, Search, Filter,
-  Bed, User, Calendar, Clock, Home
-} from 'lucide-react';
-
-const STATUS_STYLE = {
-  dolu:    { bg:'#3b82f6', label:'Dolu' },
-  boş:     { bg:'#10b981', label:'Boş'  },
-  arızalı: { bg:'#ef4444', label:'Arızalı' },
-};
-const CLEAN_STYLE = { temiz: '#10b981', kirli: '#f59e0b' };
+import { motion } from 'framer-motion';
 
 const TapeChart = () => {
+  const { mt, isEn } = useModuleTranslation();
   const { reservations, rooms, TODAY } = useHotel();
   const today = TODAY;
 
-  // Build 14-day date range starting 2 days before today
   const days = Array.from({length:14},(_,i)=>{
     const d = new Date(today);
     d.setDate(d.getDate()-2+i);
@@ -26,10 +16,13 @@ const TapeChart = () => {
 
   const dayLabels = days.map(d => {
     const dt = new Date(d+'T12:00:00');
-    return { date: d, label: dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'short'}), isToday: d===today };
+    return {
+      date: d,
+      label: dt.toLocaleDateString(isEn ? 'en-GB' : 'tr-TR', {day:'2-digit', month:'short'}),
+      isToday: d===today
+    };
   });
 
-  // For each room, show which days are occupied
   const roomRows = rooms.map(room => {
     const roomRes = reservations.filter(r => r.room === room.id && r.status !== 'iptal');
     return { room, reservations: roomRes };
@@ -40,37 +33,40 @@ const TapeChart = () => {
   return (
     <div className="tc-container">
       <div className="tc-header">
-        <h2>Rezervasyon Takvimi (Tape Chart)</h2>
-        <span>14 günlük görünüm — {dayLabels[0].label} / {dayLabels[dayLabels.length-1].label}</span>
+        <h2>{isEn ? 'Reservation Tape Chart' : 'Rezervasyon Takvimi (Tape Chart)'}</h2>
+        <span>
+          {isEn ? '14-day view — ' : '14 günlük görünüm — '}
+          {dayLabels[0].label} / {dayLabels[dayLabels.length-1].label}
+        </span>
       </div>
 
       <div className="tc-legend">
-        <div className="leg"><div className="leg-dot" style={{background:'#3b82f6'}}/> Dolu</div>
-        <div className="leg"><div className="leg-dot" style={{background:'#10b981'}}/> Müsait</div>
+        <div className="leg"><div className="leg-dot" style={{background:'#3b82f6'}}/> {isEn ? 'Occupied' : 'Dolu'}</div>
+        <div className="leg"><div className="leg-dot" style={{background:'#10b981'}}/> {isEn ? 'Available' : 'Müsait'}</div>
         <div className="leg"><div className="leg-dot" style={{background:'#ef4444'}}/> OOO</div>
-        <div className="leg"><div className="leg-dot today-dot"/><span>Bugün</span></div>
+        <div className="leg"><div className="leg-dot today-dot"/><span>{isEn ? 'Today' : 'Bugün'}</span></div>
       </div>
 
-      {/* Özet */}
       <div className="tc-summary">
-        <div className="tcs-item"><strong>{rooms.length}</strong><span>Toplam Oda</span></div>
-        <div className="tcs-item"><strong>{rooms.filter(r=>r.status==='dolu').length}</strong><span>Dolu</span></div>
-        <div className="tcs-item"><strong>{rooms.filter(r=>r.status==='boş').length}</strong><span>Boş</span></div>
+        <div className="tcs-item"><strong>{rooms.length}</strong><span>{isEn ? 'Total Rooms' : 'Toplam Oda'}</span></div>
+        <div className="tcs-item"><strong>{rooms.filter(r=>r.status==='dolu').length}</strong><span>{isEn ? 'Occupied' : 'Dolu'}</span></div>
+        <div className="tcs-item"><strong>{rooms.filter(r=>r.status==='boş').length}</strong><span>{isEn ? 'Vacant' : 'Boş'}</span></div>
         <div className="tcs-item"><strong>{rooms.filter(r=>r.status==='arızalı').length}</strong><span>OOO</span></div>
-        <div className="tcs-item"><strong>%{Math.round(rooms.filter(r=>r.status==='dolu').length/rooms.length*100)}</strong><span>Doluluk</span></div>
+        <div className="tcs-item">
+          <strong>%{Math.round(rooms.filter(r=>r.status==='dolu').length/rooms.length*100)}</strong>
+          <span>{isEn ? 'Occupancy' : 'Doluluk'}</span>
+        </div>
       </div>
 
       <div className="tape-wrap">
         <div className="tape-grid" style={{gridTemplateColumns:`120px repeat(${days.length}, 1fr)`}}>
-          {/* Header row */}
-          <div className="hcell room-label-head">Oda</div>
+          <div className="hcell room-label-head">{isEn ? 'Room' : 'Oda'}</div>
           {dayLabels.map(d=>(
             <div key={d.date} className={`hcell day-head ${d.isToday?'today':''}`}>
               <span>{d.label}</span>
             </div>
           ))}
 
-          {/* Room rows */}
           {roomRows.map(({room, reservations: res}) => (
             <React.Fragment key={room.id}>
               <div className="dcell room-label">
@@ -108,21 +104,16 @@ const TapeChart = () => {
         .leg { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#64748b; }
         .leg-dot { width:14px; height:14px; border-radius:4px; }
         .today-dot { width:14px; height:14px; border-radius:4px; background:#fef08a; border:2px solid #eab308; }
-
         .tape-wrap { background:white; border-radius:20px; border:1px solid #e2e8f0; overflow:auto; }
         .tape-grid { display:grid; min-width:max-content; }
-
         .hcell { padding:12px 10px; background:#f8fafc; border-bottom:2px solid #e2e8f0; font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; text-align:center; }
         .hcell.room-label-head { text-align:left; padding-left:16px; }
-        .hcell.day-head { }
         .hcell.today { background:#fffbeb; color:#b45309; }
         .hcell.today span { font-weight:900; }
-
         .dcell { padding:6px 4px; border-bottom:1px solid #f1f5f9; border-right:1px solid #f8fafc; min-height:48px; position:relative; }
         .dcell.room-label { display:flex; flex-direction:column; justify-content:center; padding:6px 14px; border-right:2px solid #e2e8f0; background:white; }
         .rl-num { font-size:15px; font-weight:900; color:#1e293b; }
         .rl-type { font-size:10px; color:#94a3b8; font-weight:700; }
-        .dcell.day-cell { }
         .dcell.today-col { background:#fffde7; }
         .occ-bar { position:absolute; inset:4px 2px; border-radius:6px; display:flex; align-items:center; overflow:hidden; }
         .occ-name { font-size:10px; color:white; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 6px; }

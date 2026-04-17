@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -8,24 +9,27 @@ import {
 } from 'lucide-react';
 
 const Integrations = () => {
+  const { mt, isEn } = useModuleTranslation();
+  const _t = (k) => mt('integrations.' + k);
+  const _c = (k) => mt('common.' + k);
   const { addNotification } = useHotel();
   const [showForm, setShowForm] = useState(false);
   const [testing, setTesting] = useState(null);
 
   const [integrations, setIntegrations] = useState([
-    { id:'INT-001', name: 'Stripe Global', type: 'Ödeme Sistemi', status: 'connected', icon: 'CreditCard', apiKey:'sk_live_...abc', lastSync:'5 dk önce' },
-    { id:'INT-002', name: 'DoorLock System (Assa Abloy)', type: 'Kapı Kilit', status: 'connected', icon: 'Key', apiKey:'dlk_...xyz', lastSync:'2 dk önce' },
-    { id:'INT-003', name: 'IPTV Connect', type: 'Eğlence', status: 'connected', icon: 'Smartphone', apiKey:'iptv_...def', lastSync:'8 dk önce' },
-    { id:'INT-004', name: 'WhatsApp Business API', type: 'İletişim', status: 'error', icon: 'Globe', apiKey:'wa_...err', lastSync:'1 saat önce' },
-    { id:'INT-005', name: 'Police KBS Service', type: 'Resmi Bildirim', status: 'connected', icon: 'Shield', apiKey:'kbs_...gov', lastSync:'10 dk önce' },
-    { id:'INT-006', name: 'HotelRunner CM', type: 'Kanal Yöneticisi', status: 'connected', icon: 'Link2', apiKey:'hr_...cm', lastSync:'Anlık' },
+    { id:'INT-001', name: 'Stripe Global', typeTr: 'Ödeme Sistemi', typeEn: 'Payment System', status: 'connected', icon: 'CreditCard', apiKey:'sk_live_...abc', lastSyncTr:'5 dk önce', lastSyncEn:'5 min ago' },
+    { id:'INT-002', name: 'DoorLock System (Assa Abloy)', typeTr: 'Kapı Kilit', typeEn: 'Door Lock', status: 'connected', icon: 'Key', apiKey:'dlk_...xyz', lastSyncTr:'2 dk önce', lastSyncEn:'2 min ago' },
+    { id:'INT-003', name: 'IPTV Connect', typeTr: 'Eğlence', typeEn: 'Entertainment', status: 'connected', icon: 'Smartphone', apiKey:'iptv_...def', lastSyncTr:'8 dk önce', lastSyncEn:'8 min ago' },
+    { id:'INT-004', name: 'WhatsApp Business API', typeTr: 'İletişim', typeEn: 'Messaging', status: 'error', icon: 'Globe', apiKey:'wa_...err', lastSyncTr:'1 saat önce', lastSyncEn:'1 hour ago' },
+    { id:'INT-005', name: 'Police KBS Service', typeTr: 'Resmi Bildirim', typeEn: 'Official Report', status: 'connected', icon: 'Shield', apiKey:'kbs_...gov', lastSyncTr:'10 dk önce', lastSyncEn:'10 min ago' },
+    { id:'INT-006', name: 'HotelRunner CM', typeTr: 'Kanal Yöneticisi', typeEn: 'Channel Manager', status: 'connected', icon: 'Link2', apiKey:'hr_...cm', lastSyncTr:'Anlık', lastSyncEn:'Live' },
   ]);
 
   const [logs, setLogs] = useState([
-    { id:1, time: '14:45:12', service: 'DoorLock', event: 'Key Card Created', status: 'Success', meta: 'Room 205' },
-    { id:2, time: '14:40:05', service: 'Stripe', event: 'Payment Received', status: 'Success', meta: '₺450.00' },
-    { id:3, time: '14:38:22', service: 'WhatsApp', event: 'Message Delivery', status: 'Failed', meta: 'API Error 403' },
-    { id:4, time: '14:35:10', service: 'KBS', event: 'Guest Record Sent', status: 'Success', meta: 'Room 101' },
+    { id:1, time: '14:45:12', service: 'DoorLock', event: 'Key Card Created', eventTr: 'Anahtar Kart Oluşturuldu', status: 'Success', meta: 'Room 205', metaTr: 'Oda 205' },
+    { id:2, time: '14:40:05', service: 'Stripe', event: 'Payment Received', eventTr: 'Ödeme Alındı', status: 'Success', meta: '₺450.00', metaTr: '₺450.00' },
+    { id:3, time: '14:38:22', service: 'WhatsApp', event: 'Message Delivery', eventTr: 'Mesaj Teslimi', status: 'Failed', meta: 'API Error 403', metaTr: 'API Hatası 403' },
+    { id:4, time: '14:35:10', service: 'KBS', event: 'Guest Record Sent', eventTr: 'Misafir Kaydı Gönderildi', status: 'Success', meta: 'Room 101', metaTr: 'Oda 101' },
   ]);
 
   const [form, setForm] = useState({ name:'', type:'API Servisi', apiKey:'' });
@@ -37,8 +41,8 @@ const Integrations = () => {
     e.preventDefault();
     idCounter.current++;
     const id = `INT-${String(idCounter.current).padStart(3,'0')}`;
-    setIntegrations(p => [...p, { ...form, id, status:'connected', icon:'Puzzle', lastSync:'Şimdi' }]);
-    addNotification({ type:'success', msg:`Yeni entegrasyon eklendi: ${form.name}` });
+    setIntegrations(p => [...p, { ...form, id, status:'connected', icon:'Puzzle', lastSync:'Åimdi' }]);
+    addNotification({ type:'success', msg: isEn ? `New integration added: ${form.name}` : `Yeni entegrasyon eklendi: ${form.name}` });
     setForm({ name:'', type:'API Servisi', apiKey:'' });
     setShowForm(false);
   };
@@ -46,7 +50,7 @@ const Integrations = () => {
   const toggleStatus = (id) => {
     setIntegrations(p => p.map(i => i.id === id ? { ...i, status: i.status === 'connected' ? 'error' : 'connected' } : i));
     const int = integrations.find(i => i.id === id);
-    addNotification({ type: int?.status === 'connected' ? 'warn' : 'success', msg: `${int?.name} ${int?.status === 'connected' ? 'durduruldu' : 'yeniden bağlandı'}` });
+    addNotification({ type: int?.status === 'connected' ? 'warn' : 'success', msg: `${int?.name} ${int?.status === 'connected' ? (isEn?'disconnected':'durduruldu') : (isEn?'reconnected':'yeniden bağlandı')}` });
   };
 
   const testConnection = (id) => {
@@ -54,25 +58,25 @@ const Integrations = () => {
     setTimeout(() => {
       setTesting(null);
       const int = integrations.find(i => i.id === id);
-      addNotification({ type:'success', msg:`${int?.name} — Bağlantı testi başarılı!` });
-      setLogs(p => [{ id: p.length+1, time: new Date().toLocaleTimeString('tr-TR'), service: int?.name, event: 'Connection Test', status: 'Success', meta: 'OK' }, ...p]);
+      addNotification({ type:'success', msg: isEn ? `${int?.name} — Connection test successful!` : `${int?.name} — Bağlantı testi başarılı!` });
+      setLogs(p => [{ id: p.length+1, time: new Date().toLocaleTimeString('tr-TR'), service: int?.name, event: 'Connection Test', eventTr: 'Bağlantı Testi', status: 'Success', meta: 'OK', metaTr: 'Tamam' }, ...p]);
     }, 1500);
   };
 
   const deleteIntegration = (id) => {
-    if(!confirm('Bu entegrasyonu kaldırmak istediğinize emin misiniz?')) return;
+    if(!confirm(isEn ? 'Are you sure you want to remove this integration?' : 'Bu entegrasyonu kaldırmak istediğinize emin misiniz?')) return;
     setIntegrations(p => p.filter(i => i.id !== id));
-    addNotification({ type:'info', msg:'Entegrasyon kaldırıldı' });
+    addNotification({ type:'info', msg: isEn ? 'Integration removed' : 'Entegrasyon kaldırıldı' });
   };
 
   return (
     <div className="int-page">
       <div className="int-head">
         <div>
-          <h2><Puzzle size={20}/> Entegrasyon Merkezi</h2>
-          <span>Dış servisler, API bağlantıları ve IoT ekosistemi yönetimi</span>
+          <h2><Puzzle size={20}/> {isEn ? 'Integration Hub' : 'Entegrasyon Merkezi'}</h2>
+          <span>{isEn ? 'External services, API connections and IoT ecosystem management' : 'Dış servisler, API bağlantıları ve IoT ekosistemi yönetimi'}</span>
         </div>
-        <button className="btn-primary" onClick={()=>setShowForm(true)}><Plus size={14}/> Yeni Entegrasyon Ekle</button>
+        <button className="btn-primary" onClick={()=>setShowForm(true)}><Plus size={14}/> {isEn ? 'Add Integration' : 'Yeni Entegrasyon Ekle'}</button>
       </div>
 
       {/* Form */}
@@ -80,13 +84,13 @@ const Integrations = () => {
         {showForm && (
           <motion.div className="modal-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={()=>setShowForm(false)}>
             <motion.form className="modal-box" initial={{scale:0.9}} animate={{scale:1}} onClick={e=>e.stopPropagation()} onSubmit={addIntegration}>
-              <div className="mb-head"><h3>Yeni Entegrasyon</h3><button type="button" onClick={()=>setShowForm(false)}><X size={18}/></button></div>
+              <div className="mb-head"><h3>{isEn ? 'New Integration' : 'Yeni Entegrasyon'}</h3><button type="button" onClick={()=>setShowForm(false)}><X size={18}/></button></div>
               <div className="mf-grid">
-                <div className="mf"><label>Servis Adı *</label><input value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="Ör: Google Analytics" required/></div>
-                <div className="mf"><label>Tür</label><select value={form.type} onChange={e=>setForm(p=>({...p,type:e.target.value}))}><option>API Servisi</option><option>Ödeme Sistemi</option><option>İletişim</option><option>IoT</option><option>Kanal Yöneticisi</option></select></div>
-                <div className="mf full"><label>API Key</label><input value={form.apiKey} onChange={e=>setForm(p=>({...p,apiKey:e.target.value}))} placeholder="API anahtarı (opsiyonel)"/></div>
+                <div className="mf"><label>{isEn ? 'Service Name *' : 'Servis Adı *'}</label><input value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="Ör: Google Analytics" required/></div>
+                <div className="mf"><label>{isEn ? 'Type' : 'Tür'}</label><select value={form.type} onChange={e=>setForm(p=>({...p,type:e.target.value}))}><option>{isEn ? 'API Service' : 'API Servisi'}</option><option>{isEn ? 'Payment System' : 'Ödeme Sistemi'}</option><option>{isEn ? 'Messaging' : 'İletişim'}</option><option>IoT</option><option>{isEn ? 'Channel Manager' : 'Kanal Yöneticisi'}</option></select></div>
+                <div className="mf full"><label>API Key</label><input value={form.apiKey} onChange={e=>setForm(p=>({...p,apiKey:e.target.value}))} placeholder={isEn ? "API key (optional)" : "API anahtarı (opsiyonel)"}/></div>
               </div>
-              <div className="mf-foot"><button type="submit" className="btn-primary">Entegrasyon Ekle</button></div>
+              <div className="mf-foot"><button type="submit" className="btn-primary">{isEn ? 'Add Integration' : 'Entegrasyon Ekle'}</button></div>
             </motion.form>
           </motion.div>
         )}
@@ -105,34 +109,34 @@ const Integrations = () => {
               <div className="int-icon">{ICONS[int.icon] || <Puzzle/>}</div>
               <div className={`status-pill ${int.status}`}>
                 {int.status === 'connected' ? <CheckCircle size={10}/> : <XCircle size={10}/>}
-                {int.status === 'connected' ? 'Bağlı' : 'Hata'}
+                {int.status === 'connected' ? (isEn ? 'Connected' : 'Bağlı') : (isEn ? 'Error' : 'Hata')}
               </div>
             </div>
             <div className="int-main">
               <strong>{int.name}</strong>
-              <span>{int.type}</span>
-              <div className="int-sync">Son: {int.lastSync}</div>
+              <span>{isEn ? int.typeEn : int.typeTr}</span>
+              <div className="int-sync">{isEn ? 'Last:' : 'Son:'} {isEn ? int.lastSyncEn : int.lastSyncTr}</div>
             </div>
             <div className="int-actions">
-              <button className={`btn-icon ${testing===int.id?'spin':''}`} onClick={()=>testConnection(int.id)} title="Test Et"><RefreshCw size={14}/></button>
-              <button className="btn-icon" onClick={()=>toggleStatus(int.id)} title={int.status==='connected'?'Durdur':'Bağlan'}>{int.status==='connected'?<XCircle size={14}/> : <CheckCircle size={14}/>}</button>
-              <button className="btn-text" onClick={()=>testConnection(int.id)}>API Yapılandır</button>
-              <button className="btn-icon del" onClick={()=>deleteIntegration(int.id)} title="Kaldır"><Trash2 size={14}/></button>
+              <button className={`btn-icon ${testing===int.id?'spin':''}`} onClick={()=>testConnection(int.id)} title={isEn ? "Test" : "Test Et"}><RefreshCw size={14}/></button>
+              <button className="btn-icon" onClick={()=>toggleStatus(int.id)} title={int.status==='connected' ? (isEn?'Disconnect':'Durdur') : (isEn?'Connect':'Bağlan')}>{int.status==='connected'?<XCircle size={14}/> : <CheckCircle size={14}/>}</button>
+              <button className="btn-text" onClick={()=>testConnection(int.id)}>{isEn ? 'Configure API' : 'API Yapılandır'}</button>
+              <button className="btn-icon del" onClick={()=>deleteIntegration(int.id)} title={isEn ? "Remove" : "Kaldır"}><Trash2 size={14}/></button>
             </div>
           </motion.div>
         ))}
       </div>
 
       <div className="log-section">
-        <h3>Entegrasyon Günlükleri (Webhooks)</h3>
+        <h3>{isEn ? 'Integration Logs (Webhooks)' : 'Entegrasyon Günlükleri (Webhooks)'}</h3>
         <div className="log-table">
           {logs.map(log => (
             <div key={log.id} className="log-row">
               <span className="log-time">{log.time}</span>
               <span className="log-svc">{log.service}</span>
-              <span className="log-evt">{log.event}</span>
-              <span className={`log-st ${log.status.toLowerCase()}`}>{log.status}</span>
-              <span className="log-meta">{log.meta}</span>
+              <span className="log-evt">{isEn ? log.event : (log.eventTr || log.event)}</span>
+              <span className={`log-st ${log.status.toLowerCase()}`}>{log.status === 'Success' ? (isEn ? 'Success' : 'Başarılı') : (isEn ? 'Failed' : 'Başarısız')}</span>
+              <span className="log-meta">{isEn ? log.meta : (log.metaTr || log.meta)}</span>
             </div>
           ))}
         </div>
@@ -191,3 +195,5 @@ const Integrations = () => {
 };
 
 export default Integrations;
+
+

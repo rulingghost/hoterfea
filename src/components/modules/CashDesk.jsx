@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DollarSign, TrendingUp, TrendingDown, Plus,
-  CreditCard, Banknote, Building2, X, CheckCircle,
+  CreditCard, X, CheckCircle,
   ArrowUpRight, ArrowDownRight, Printer, FileText
 } from 'lucide-react';
 
-const METHODS = ['Nakit','Kredi Kartı','EFT/Havale','Çek/Senet'];
-
-const AddTxModal = ({ onClose, onAdd }) => {
+const AddTxModal = ({ onClose, onAdd, language }) => {
   const [type, setType]     = useState('gelir');
   const [desc, setDesc]     = useState('');
   const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState('Nakit');
+  const [method, setMethod] = useState(language === 'tr' ? 'Nakit' : 'Cash');
+
+  const METHODS = language === 'tr'
+    ? ['Nakit','Kredi Kartı','EFT/Havale','Çek/Senet']
+    : ['Cash','Credit Card','Bank Transfer','Cheque'];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -24,30 +27,33 @@ const AddTxModal = ({ onClose, onAdd }) => {
 
   return (
     <motion.div className="modal-overlay" onClick={onClose} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-      <motion.div className="tx-modal" onClick={e=>e.stopPropagation()} initial={{scale:.9,y:20}} animate={{scale:1,y:0}}>
-        <div className="modal-head"><h3>Yeni İşlem Ekle</h3><button onClick={onClose}><X size={20}/></button></div>
+      <motion.div className="tx-modal" onClick={e => e.stopPropagation()} initial={{scale:.9,y:20}} animate={{scale:1,y:0}}>
+        <div className="modal-head">
+          <h3>{language === 'tr' ? 'Yeni İşlem Ekle' : 'Add Transaction'}</h3>
+          <button onClick={onClose}><X size={20}/></button>
+        </div>
         <form className="tx-form" onSubmit={handleSubmit}>
           <div className="type-toggle">
-            <button type="button" className={type==='gelir'?'active gelir':''} onClick={()=>setType('gelir')}>
-              <ArrowUpRight size={16}/> Gelir / Tahsilat
+            <button type="button" className={type === 'gelir' ? 'active gelir' : ''} onClick={() => setType('gelir')}>
+              <ArrowUpRight size={16}/> {language === 'tr' ? 'Gelir / Tahsilat' : 'Income / Receipt'}
             </button>
-            <button type="button" className={type==='gider'?'active gider':''} onClick={()=>setType('gider')}>
-              <ArrowDownRight size={16}/> Gider / Ödeme
+            <button type="button" className={type === 'gider' ? 'active gider' : ''} onClick={() => setType('gider')}>
+              <ArrowDownRight size={16}/> {language === 'tr' ? 'Gider / Ödeme' : 'Expense / Payment'}
             </button>
           </div>
-          <label>Açıklama</label>
-          <input placeholder="Açıklama giriniz..." value={desc} onChange={e=>setDesc(e.target.value)} required/>
-          <label>Tutar (₺)</label>
-          <input type="number" placeholder="0" value={amount} onChange={e=>setAmount(e.target.value)} min={1} required/>
-          <label>Ödeme Yöntemi</label>
+          <label>{language === 'tr' ? 'Açıklama' : 'Description'}</label>
+          <input placeholder={language === 'tr' ? 'Açıklama giriniz...' : 'Enter description...'} value={desc} onChange={e => setDesc(e.target.value)} required/>
+          <label>{language === 'tr' ? 'Tutar (₺)' : 'Amount (₺)'}</label>
+          <input type="number" placeholder="0" value={amount} onChange={e => setAmount(e.target.value)} min={1} required/>
+          <label>{language === 'tr' ? 'Ödeme Yöntemi' : 'Payment Method'}</label>
           <div className="method-pills">
-            {METHODS.map(m=>(
-              <button type="button" key={m} className={`mpill ${method===m?'active':''}`} onClick={()=>setMethod(m)}>{m}</button>
+            {METHODS.map(m => (
+              <button type="button" key={m} className={`mpill ${method === m ? 'active' : ''}`} onClick={() => setMethod(m)}>{m}</button>
             ))}
           </div>
           <div className="modal-foot">
-            <button type="button" className="btn-cancel" onClick={onClose}>İptal</button>
-            <button type="submit" className="btn-save">İşlemi Kaydet</button>
+            <button type="button" className="btn-cancel" onClick={onClose}>{language === 'tr' ? 'İptal' : 'Cancel'}</button>
+            <button type="submit" className="btn-save">{language === 'tr' ? 'İşlemi Kaydet' : 'Save'}</button>
           </div>
         </form>
       </motion.div>
@@ -56,31 +62,33 @@ const AddTxModal = ({ onClose, onAdd }) => {
 };
 
 const CashDesk = () => {
+  const { mt, language } = useModuleTranslation();
+  const _t = (k) => mt('cashDesk.' + k);
+  const _c = (k) => mt('common.' + k);
   const { cashTransactions, addCashTransaction, reservations, makePayment } = useHotel();
   const [showModal, setShowModal] = useState(false);
-  const [dateFilter, setDateFilter] = useState('bugün');
+  const [dateFilter, setDateFilter] = useState('today');
 
   const today = '2026-03-14';
   const todayTx = cashTransactions.filter(t => t.date === today);
-  const filtered = dateFilter === 'bugün' ? todayTx : cashTransactions;
+  const filtered = dateFilter === 'today' ? todayTx : cashTransactions;
 
-  const totalGelir = filtered.filter(t=>t.type==='gelir').reduce((s,t)=>s+t.amount,0);
-  const totalGider = filtered.filter(t=>t.type==='gider').reduce((s,t)=>s+t.amount,0);
-  const kasaBakiye = totalGelir - totalGider;
-
-  const pendingBalance = reservations.filter(r=>r.status==='check-in'&&r.balance>0);
+  const totalGelir  = filtered.filter(t => t.type === 'gelir').reduce((s,t) => s + t.amount, 0);
+  const totalGider  = filtered.filter(t => t.type === 'gider').reduce((s,t) => s + t.amount, 0);
+  const kasaBakiye  = totalGelir - totalGider;
+  const pendingBalance = reservations.filter(r => r.status === 'check-in' && r.balance > 0);
 
   return (
     <div className="cash-container">
       {/* Header */}
       <div className="cash-header">
         <div>
-          <h2>Kasa & Ödeme İşlemleri</h2>
-          <span>Günlük tahsilat, gider ve kasa bakiyesi takibi</span>
+          <h2>{_t('title')}</h2>
+          <span>{_t('subtitle')}</span>
         </div>
         <div className="header-actions">
-          <button className="btn-outline"><Printer size={16}/> Günlük Rapor</button>
-          <button className="btn-primary" onClick={()=>setShowModal(true)}><Plus size={16}/> Yeni İşlem</button>
+          <button className="btn-outline"><Printer size={16}/> {language === 'tr' ? 'Günlük Rapor' : 'Daily Report'}</button>
+          <button className="btn-primary" onClick={() => setShowModal(true)}><Plus size={16}/> {language === 'tr' ? 'Yeni İşlem' : 'New Transaction'}</button>
         </div>
       </div>
 
@@ -89,29 +97,29 @@ const CashDesk = () => {
         <div className="kpi-card green">
           <div className="kpi-icon"><TrendingUp size={24}/></div>
           <div>
-            <div className="kpi-label">Bugün Gelir</div>
+            <div className="kpi-label">{language === 'tr' ? 'Bugün Gelir' : 'Today Income'}</div>
             <div className="kpi-value">₺{totalGelir.toLocaleString()}</div>
           </div>
         </div>
         <div className="kpi-card red">
           <div className="kpi-icon"><TrendingDown size={24}/></div>
           <div>
-            <div className="kpi-label">Bugün Gider</div>
+            <div className="kpi-label">{language === 'tr' ? 'Bugün Gider' : 'Today Expense'}</div>
             <div className="kpi-value">₺{totalGider.toLocaleString()}</div>
           </div>
         </div>
         <div className="kpi-card blue">
           <div className="kpi-icon"><DollarSign size={24}/></div>
           <div>
-            <div className="kpi-label">Kasa Bakiyesi</div>
+            <div className="kpi-label">{language === 'tr' ? 'Kasa Bakiyesi' : 'Cash Balance'}</div>
             <div className="kpi-value">₺{kasaBakiye.toLocaleString()}</div>
           </div>
         </div>
         <div className="kpi-card orange">
           <div className="kpi-icon"><FileText size={24}/></div>
           <div>
-            <div className="kpi-label">Tahsil Bekleyen</div>
-            <div className="kpi-value">₺{pendingBalance.reduce((s,r)=>s+r.balance,0).toLocaleString()}</div>
+            <div className="kpi-label">{language === 'tr' ? 'Tahsil Bekleyen' : 'Outstanding'}</div>
+            <div className="kpi-value">₺{pendingBalance.reduce((s,r) => s + r.balance, 0).toLocaleString()}</div>
           </div>
         </div>
       </div>
@@ -120,36 +128,40 @@ const CashDesk = () => {
         {/* Transaction list */}
         <div className="tx-section">
           <div className="section-head">
-            <h3>İşlem Geçmişi</h3>
+            <h3>{language === 'tr' ? 'İşlem Geçmişi' : 'Transaction History'}</h3>
             <div className="date-toggle">
-              <button className={dateFilter==='bugün'?'active':''} onClick={()=>setDateFilter('bugün')}>Bugün</button>
-              <button className={dateFilter==='tümü'?'active':''} onClick={()=>setDateFilter('tümü')}>Tümü</button>
+              <button className={dateFilter === 'today' ? 'active' : ''} onClick={() => setDateFilter('today')}>
+                {language === 'tr' ? 'Bugün' : 'Today'}
+              </button>
+              <button className={dateFilter === 'all' ? 'active' : ''} onClick={() => setDateFilter('all')}>
+                {_c('all')}
+              </button>
             </div>
           </div>
           <div className="tx-list">
             {filtered.map((tx, i) => (
               <motion.div key={tx.id} className={`tx-item ${tx.type}`} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}} transition={{delay:i*0.04}}>
                 <div className="tx-icon">
-                  {tx.type==='gelir' ? <ArrowUpRight size={20}/> : <ArrowDownRight size={20}/>}
+                  {tx.type === 'gelir' ? <ArrowUpRight size={20}/> : <ArrowDownRight size={20}/>}
                 </div>
                 <div className="tx-info">
                   <strong>{tx.desc}</strong>
                   <span>{tx.method} · {tx.time}</span>
                 </div>
                 <div className={`tx-amount ${tx.type}`}>
-                  {tx.type==='gelir' ? '+' : '-'}₺{tx.amount.toLocaleString()}
+                  {tx.type === 'gelir' ? '+' : '-'}₺{tx.amount.toLocaleString()}
                 </div>
               </motion.div>
             ))}
             {filtered.length === 0 && (
-              <div className="empty-tx">Bugün henüz işlem bulunmuyor.</div>
+              <div className="empty-tx">{language === 'tr' ? 'Bugün henüz işlem bulunmuyor.' : 'No transactions today.'}</div>
             )}
           </div>
         </div>
 
         {/* Pending payments */}
         <div className="pending-section">
-          <h3>Tahsil Bekleyen Misafirler</h3>
+          <h3>{language === 'tr' ? 'Tahsil Bekleyen Misafirler' : 'Outstanding Balances'}</h3>
           <div className="pending-list">
             {pendingBalance.map(r => (
               <div key={r.id} className="pending-card">
@@ -157,16 +169,16 @@ const CashDesk = () => {
                   <div className="pc-room">{r.room}</div>
                   <div className="pc-info">
                     <strong>{r.guest}</strong>
-                    <span>Çıkış: {r.checkOut}</span>
+                    <span>{_c('checkOut')}: {r.checkOut}</span>
                   </div>
                 </div>
                 <div className="pc-bottom">
                   <div className="pc-bal">
-                    <span>Kalan Borç</span>
+                    <span>{language === 'tr' ? 'Kalan Borç' : 'Outstanding'}</span>
                     <strong>₺{r.balance.toLocaleString()}</strong>
                   </div>
-                  <button className="quick-pay-btn" onClick={()=>makePayment(r.id, r.balance, 'Kredi Kartı')}>
-                    <CreditCard size={14}/> Tahsil Et
+                  <button className="quick-pay-btn" onClick={() => makePayment(r.id, r.balance, language === 'tr' ? 'Kredi Kartı' : 'Credit Card')}>
+                    <CreditCard size={14}/> {language === 'tr' ? 'Tahsil Et' : 'Collect'}
                   </button>
                 </div>
               </div>
@@ -174,7 +186,7 @@ const CashDesk = () => {
             {pendingBalance.length === 0 && (
               <div className="all-clear">
                 <CheckCircle size={32} color="#10b981"/>
-                <p>Tüm hesaplar kapalı!</p>
+                <p>{language === 'tr' ? 'Tüm hesaplar kapalı!' : 'All accounts settled!'}</p>
               </div>
             )}
           </div>
@@ -182,7 +194,7 @@ const CashDesk = () => {
       </div>
 
       <AnimatePresence>
-        {showModal && <AddTxModal onClose={()=>setShowModal(false)} onAdd={addCashTransaction}/>}
+        {showModal && <AddTxModal onClose={() => setShowModal(false)} onAdd={addCashTransaction} language={language}/>}
       </AnimatePresence>
 
       <style>{`
@@ -193,7 +205,6 @@ const CashDesk = () => {
         .header-actions { display:flex; gap:12px; }
         .btn-outline { padding:10px 18px; border-radius:12px; border:1.5px solid #e2e8f0; background:white; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px; color:#475569; }
         .btn-primary { padding:10px 18px; border-radius:12px; border:none; background:#3b82f6; color:white; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px; }
-
         .cash-kpi { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
         .kpi-card { background:white; border-radius:18px; border:1px solid #e2e8f0; padding:22px; display:flex; align-items:center; gap:16px; }
         .kpi-icon { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; }
@@ -203,16 +214,13 @@ const CashDesk = () => {
         .kpi-card.orange .kpi-icon { background:#fff7ed; color:#f59e0b; }
         .kpi-label { font-size:12px; color:#94a3b8; font-weight:700; }
         .kpi-value { font-size:22px; font-weight:900; color:#1e293b; }
-
         .cash-body { display:grid; grid-template-columns:1fr 340px; gap:20px; }
         .tx-section, .pending-section { background:white; border-radius:20px; border:1px solid #e2e8f0; padding:24px; }
-
         .section-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
         .section-head h3, .pending-section h3 { font-size:16px; font-weight:800; color:#1e293b; margin-bottom:16px; }
         .date-toggle { display:flex; border:1.5px solid #e2e8f0; border-radius:10px; overflow:hidden; }
         .date-toggle button { padding:7px 14px; border:none; background:white; font-size:12px; font-weight:700; color:#64748b; cursor:pointer; }
         .date-toggle button.active { background:#1e293b; color:white; }
-
         .tx-list { display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto; }
         .tx-item { display:flex; align-items:center; gap:14px; padding:14px; border-radius:12px; }
         .tx-item.gelir { background:#f0fdf4; }
@@ -227,7 +235,6 @@ const CashDesk = () => {
         .tx-amount.gelir { color:#10b981; }
         .tx-amount.gider { color:#ef4444; }
         .empty-tx { padding:30px; text-align:center; color:#94a3b8; font-size:13px; }
-
         .pending-list { display:flex; flex-direction:column; gap:12px; max-height:420px; overflow-y:auto; }
         .pending-card { background:#f8fafc; border-radius:14px; padding:16px; }
         .pc-top { display:flex; gap:10px; margin-bottom:12px; }
@@ -240,8 +247,6 @@ const CashDesk = () => {
         .quick-pay-btn { padding:8px 14px; border-radius:10px; border:none; background:#3b82f6; color:white; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; }
         .all-clear { padding:40px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; }
         .all-clear p { color:#10b981; font-weight:700; }
-
-        /* Modal */
         .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.75); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; z-index:1000; }
         .tx-modal { background:white; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px rgba(0,0,0,0.4); width:440px; }
         .modal-head { padding:22px 28px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; }

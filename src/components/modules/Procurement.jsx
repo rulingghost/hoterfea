@@ -1,101 +1,126 @@
 import React, { useState } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Plus, Search, X, CheckCircle, Package, Truck, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-const SUPPLIERS = ['Temizlik A.Ş.', 'Gıda Ltd.', 'Tekstil San.', 'Teknoloji A.Ş.', 'Ofis Malz. Ltd.'];
-const CATS = ['Gıda & İçecek', 'Temizlik', 'Tekstil', 'Teknoloji', 'Ofis', 'Bakım & Onarım'];
-
-const INITIAL = [
-  { id:'PO-001', item:'Havlu (100 adet)', supplier:'Tekstil San.',  cat:'Tekstil',    amount:6500,  status:'teslim',  date:'2026-03-10' },
-  { id:'PO-002', item:'Temizlik Seti',     supplier:'Temizlik A.Ş.',cat:'Temizlik', amount:2800,  status:'yolda',   date:'2026-03-13' },
-  { id:'PO-003', item:'Minibar Malzemeleri',supplier:'Gıda Ltd.',   cat:'Gıda & İçecek', amount:4200, status:'bekliyor',date:'2026-03-14' },
-  { id:'PO-004', item:'Laptop (2 adet)',   supplier:'Teknoloji A.Ş.',cat:'Teknoloji', amount:38000, status:'onay',    date:'2026-03-14' },
-];
-
-const STATUS_STYLE = {
-  bekliyor: { label:'Sipariş Verildi', color:'#f59e0b', bg:'#fffbeb' },
-  onay:     { label:'Onay Bekliyor',  color:'#3b82f6', bg:'#eff6ff' },
-  yolda:    { label:'Yolda',          color:'#8b5cf6', bg:'#f5f3ff' },
-  teslim:   { label:'Teslim Edildi',  color:'#10b981', bg:'#f0fdf4' },
-  iptal:    { label:'İptal',          color:'#ef4444', bg:'#fef2f2' },
-};
-
 const Procurement = () => {
+  const { mt, language } = useModuleTranslation();
+  const _t = (k) => mt('procurement.' + k);
+  const _c = (k) => mt('common.' + k);
   const { addNotification } = useHotel();
-  const [orders, setOrders] = useState(INITIAL);
+
+  const SUPPLIERS = language === 'tr'
+    ? ['Temizlik A.Ş.', 'Gıda Ltd.', 'Tekstil San.', 'Teknoloji A.Ş.', 'Ofis Malz. Ltd.']
+    : ['CleanCo Ltd.', 'FoodSupply Ltd.', 'Textile Corp.', 'TechSupply A.Ş.', 'Office Supplies Ltd.'];
+
+  const CATS = language === 'tr'
+    ? ['Gıda & İçecek', 'Temizlik', 'Tekstil', 'Teknoloji', 'Ofis', 'Bakım & Onarım']
+    : ['Food & Beverage', 'Cleaning', 'Textile', 'Technology', 'Office', 'Maintenance & Repair'];
+
+  const STATUS_STYLE = {
+    bekliyor: { label: language === 'tr' ? 'Sipariş Verildi' : 'Ordered',   color: '#f59e0b', bg: '#fffbeb' },
+    onay:     { label: language === 'tr' ? 'Onay Bekliyor'  : 'Pending Approval', color: '#3b82f6', bg: '#eff6ff' },
+    yolda:    { label: language === 'tr' ? 'Yolda'          : 'In Transit', color: '#8b5cf6', bg: '#f5f3ff' },
+    teslim:   { label: language === 'tr' ? 'Teslim Edildi'  : 'Delivered',  color: '#10b981', bg: '#f0fdf4' },
+    iptal:    { label: language === 'tr' ? 'İptal'          : 'Cancelled',  color: '#ef4444', bg: '#fef2f2' },
+  };
+
+  const [orders, setOrders] = useState([
+    { id:'PO-001', item: language === 'tr' ? 'Havlu (100 adet)' : 'Towels (100 pcs)',  supplier: language === 'tr' ? 'Tekstil San.' : 'Textile Corp.',      cat: language === 'tr' ? 'Tekstil' : 'Textile',          amount:6500,  status:'teslim',  date:'2026-03-10' },
+    { id:'PO-002', item: language === 'tr' ? 'Temizlik Seti'    : 'Cleaning Set',      supplier: language === 'tr' ? 'Temizlik A.Ş.' : 'CleanCo Ltd.',      cat: language === 'tr' ? 'Temizlik' : 'Cleaning',        amount:2800,  status:'yolda',   date:'2026-03-13' },
+    { id:'PO-003', item: language === 'tr' ? 'Minibar Malzemeleri' : 'Minibar Supplies', supplier: language === 'tr' ? 'Gıda Ltd.' : 'FoodSupply Ltd.',     cat: language === 'tr' ? 'Gıda & İçecek' : 'Food & Beverage', amount:4200, status:'bekliyor', date:'2026-03-14' },
+    { id:'PO-004', item: language === 'tr' ? 'Laptop (2 adet)'  : 'Laptop (2 units)', supplier: language === 'tr' ? 'Teknoloji A.Ş.' : 'TechSupply A.Ş.',  cat: language === 'tr' ? 'Teknoloji' : 'Technology',     amount:38000, status:'onay',    date:'2026-03-14' },
+  ]);
+
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ item:'', supplier: SUPPLIERS[0], cat: CATS[0], amount:'', date:'2026-03-14' });
-  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('tümü');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const submit = (e) => {
     e.preventDefault();
-    const id = `PO-${String(orders.length+1).padStart(3,'0')}`;
-    setOrders(p=>[{...form, id, status:'bekliyor', amount:Number(form.amount)}, ...p]);
-    addNotification({ type:'info', msg:`Satın alma emri oluşturuldu: ${form.item}` });
+    const id = `PO-${String(orders.length + 1).padStart(3, '0')}`;
+    setOrders(p => [{ ...form, id, status:'bekliyor', amount:Number(form.amount) }, ...p]);
+    addNotification({ type:'info', msg:`${language === 'tr' ? 'Satın alma emri oluşturuldu' : 'Purchase order created'}: ${form.item}` });
     setForm({ item:'', supplier:SUPPLIERS[0], cat:CATS[0], amount:'', date:'2026-03-14' });
     setShowForm(false);
   };
 
   const updateStatus = (id, status) => {
-    setOrders(p=>p.map(o=>o.id===id?{...o,status}:o));
-    addNotification({ type:'success', msg:`Sipariş durumu güncellendi: ${id}` });
+    setOrders(p => p.map(o => o.id === id ? { ...o, status } : o));
+    addNotification({ type:'success', msg:`${language === 'tr' ? 'Sipariş durumu güncellendi' : 'Order status updated'}: ${id}` });
   };
 
-  const total = orders.reduce((s,o)=>s+o.amount,0);
-  const delivered = orders.filter(o=>o.status==='teslim').length;
+  const total = orders.reduce((s, o) => s + o.amount, 0);
+  const delivered = orders.filter(o => o.status === 'teslim').length;
 
   const filteredOrders = orders.filter(o => {
     const matchSearch = !search || o.item.toLowerCase().includes(search.toLowerCase()) || o.supplier.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'tümü' || o.status === statusFilter;
+    const matchStatus = statusFilter === 'all' || o.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
   const supplierData = SUPPLIERS.map(s => ({
     name: s.split(' ')[0],
-    tutar: orders.filter(o => o.supplier === s).reduce((sum, o) => sum + o.amount, 0)
-  })).filter(s => s.tutar > 0);
+    amount: orders.filter(o => o.supplier === s).reduce((sum, o) => sum + o.amount, 0)
+  })).filter(s => s.amount > 0);
+
+  const STATUS_PILL_FILTERS = [
+    { key:'all',      label: _c('all') },
+    { key:'bekliyor', label: STATUS_STYLE.bekliyor.label },
+    { key:'onay',     label: STATUS_STYLE.onay.label },
+    { key:'yolda',    label: STATUS_STYLE.yolda.label },
+    { key:'teslim',   label: STATUS_STYLE.teslim.label },
+    { key:'iptal',    label: STATUS_STYLE.iptal.label },
+  ];
 
   return (
     <div className="proc-page">
       <div className="proc-head">
-        <div><h2><ShoppingBag size={20}/> Satın Alma (Procurement)</h2><span>Sipariş, tedarikçi ve teslimat yönetimi</span></div>
-        <button className="btn-primary" onClick={()=>setShowForm(!showForm)}><Plus size={15}/> Yeni Sipariş</button>
+        <div>
+          <h2><ShoppingBag size={20}/> {language === 'tr' ? 'Satın Alma (Procurement)' : 'Procurement'}</h2>
+          <span>{language === 'tr' ? 'Sipariş, tedarikçi ve teslimat yönetimi' : 'Order, supplier and delivery management'}</span>
+        </div>
+        <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
+          <Plus size={15}/> {language === 'tr' ? 'Yeni Sipariş' : 'New Order'}
+        </button>
       </div>
 
       <div className="proc-kpi">
         {[
-          { label:'Toplam Sipariş', val:orders.length, color:'#3b82f6' },
-          { label:'Bekleyen', val:orders.filter(o=>o.status!=='teslim'&&o.status!=='iptal').length, color:'#f59e0b' },
-          { label:'Teslim Edildi', val:delivered, color:'#10b981' },
-          { label:'Toplam Tutar', val:`₺${total.toLocaleString()}`, color:'#8b5cf6' },
-        ].map((k,i)=>(
+          { label: language === 'tr' ? 'Toplam Sipariş' : 'Total Orders',  val: orders.length,                                                                   color: '#3b82f6' },
+          { label: language === 'tr' ? 'Bekleyen'       : 'Pending',       val: orders.filter(o => o.status !== 'teslim' && o.status !== 'iptal').length,        color: '#f59e0b' },
+          { label: language === 'tr' ? 'Teslim Edildi'  : 'Delivered',     val: delivered,                                                                        color: '#10b981' },
+          { label: language === 'tr' ? 'Toplam Tutar'   : 'Total Amount',  val: `₺${total.toLocaleString()}`,                                                    color: '#8b5cf6' },
+        ].map((k, i) => (
           <div key={i} className="pk"><strong style={{color:k.color}}>{k.val}</strong><span>{k.label}</span></div>
         ))}
       </div>
 
-      {/* Search & Filter */}
       <div className="proc-filters">
-        <div className="proc-search"><Search size={14}/><input placeholder="Sipariş veya tedarikçi ara..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+        <div className="proc-search">
+          <Search size={14}/>
+          <input placeholder={language === 'tr' ? 'Sipariş veya tedarikçi ara...' : 'Search order or supplier...'} value={search} onChange={e => setSearch(e.target.value)}/>
+        </div>
         <div className="status-pills">
-          {['tümü','bekliyor','onay','yolda','teslim','iptal'].map(s=>(
-            <button key={s} className={`sp ${statusFilter===s?'active':''}`} onClick={()=>setStatusFilter(s)}>{s==='tümü'?'Tümü':STATUS_STYLE[s]?.label||s}</button>
+          {STATUS_PILL_FILTERS.map(s => (
+            <button key={s.key} className={`sp ${statusFilter === s.key ? 'active' : ''}`} onClick={() => setStatusFilter(s.key)}>{s.label}</button>
           ))}
         </div>
       </div>
 
       {supplierData.length > 0 && (
         <div className="supplier-chart">
-          <h4>Tedarikçi Bazlı Harcama</h4>
+          <h4>{language === 'tr' ? 'Tedarikçi Bazlı Harcama' : 'Spending by Supplier'}</h4>
           <ResponsiveContainer width="100%" height={80}>
             <BarChart data={supplierData} layout="vertical" barSize={12}>
               <XAxis type="number" hide/>
               <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{fill:'#64748b',fontSize:11}} width={65}/>
-              <Tooltip formatter={v=>[`₺${v.toLocaleString()}`,'Tutar']}/>
-              <Bar dataKey="tutar" fill="#3b82f6" radius={[0,6,6,0]}/>
+              <Tooltip formatter={v => [`₺${v.toLocaleString()}`, language === 'tr' ? 'Tutar' : 'Amount']}/>
+              <Bar dataKey="amount" fill="#3b82f6" radius={[0,6,6,0]}/>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -104,24 +129,35 @@ const Procurement = () => {
       <AnimatePresence>
         {showForm && (
           <motion.form className="form-card" onSubmit={submit} initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} exit={{opacity:0}}>
-            <h3>Yeni Satın Alma Emri</h3>
+            <h3>{language === 'tr' ? 'Yeni Satın Alma Emri' : 'New Purchase Order'}</h3>
             <div className="fg-grid">
-              <div className="fg full"><label>Ürün / Hizmet Adı *</label><input value={form.item} onChange={e=>set('item',e.target.value)} placeholder="Ürün adı" required/></div>
-              <div className="fg"><label>Tedarikçi</label><select value={form.supplier} onChange={e=>set('supplier',e.target.value)}>{SUPPLIERS.map(s=><option key={s}>{s}</option>)}</select></div>
-              <div className="fg"><label>Kategori</label><select value={form.cat} onChange={e=>set('cat',e.target.value)}>{CATS.map(c=><option key={c}>{c}</option>)}</select></div>
-              <div className="fg"><label>Tutar (₺)</label><input type="number" value={form.amount} onChange={e=>set('amount',e.target.value)} placeholder="0" required/></div>
-              <div className="fg"><label>Tarih</label><input type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></div>
+              <div className="fg full"><label>{language === 'tr' ? 'Ürün / Hizmet Adı *' : 'Item / Service Name *'}</label><input value={form.item} onChange={e => set('item', e.target.value)} placeholder={language === 'tr' ? 'Ürün adı' : 'Item name'} required/></div>
+              <div className="fg"><label>{language === 'tr' ? 'Tedarikçi' : 'Supplier'}</label><select value={form.supplier} onChange={e => set('supplier', e.target.value)}>{SUPPLIERS.map(s => <option key={s}>{s}</option>)}</select></div>
+              <div className="fg"><label>{language === 'tr' ? 'Kategori' : 'Category'}</label><select value={form.cat} onChange={e => set('cat', e.target.value)}>{CATS.map(c => <option key={c}>{c}</option>)}</select></div>
+              <div className="fg"><label>{language === 'tr' ? 'Tutar (₺)' : 'Amount (₺)'}</label><input type="number" value={form.amount} onChange={e => set('amount', e.target.value)} placeholder="0" required/></div>
+              <div className="fg"><label>{_c('date')}</label><input type="date" value={form.date} onChange={e => set('date', e.target.value)}/></div>
             </div>
-            <div className="form-foot"><button type="button" className="btn-cancel" onClick={()=>setShowForm(false)}>İptal</button><button type="submit" className="btn-primary">Sipariş Oluştur</button></div>
+            <div className="form-foot">
+              <button type="button" className="btn-cancel" onClick={() => setShowForm(false)}>{_c('cancel')}</button>
+              <button type="submit" className="btn-primary">{language === 'tr' ? 'Sipariş Oluştur' : 'Create Order'}</button>
+            </div>
           </motion.form>
         )}
       </AnimatePresence>
 
       <div className="proc-table-wrap">
         <table className="proc-table">
-          <thead><tr><th>Sipariş No</th><th>Ürün</th><th>Tedarikçi</th><th>Kategori</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead>
+          <thead><tr>
+            <th>{language === 'tr' ? 'Sipariş No' : 'Order No'}</th>
+            <th>{language === 'tr' ? 'Ürün' : 'Item'}</th>
+            <th>{language === 'tr' ? 'Tedarikçi' : 'Supplier'}</th>
+            <th>{language === 'tr' ? 'Kategori' : 'Category'}</th>
+            <th>{language === 'tr' ? 'Tutar' : 'Amount'}</th>
+            <th>{language === 'tr' ? 'Durum' : 'Status'}</th>
+            <th>{_c('actions')}</th>
+          </tr></thead>
           <tbody>
-            {filteredOrders.map((o,i)=>{
+            {filteredOrders.map((o, i) => {
               const st = STATUS_STYLE[o.status];
               return (
                 <motion.tr key={o.id} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.04}}>
@@ -133,10 +169,10 @@ const Procurement = () => {
                   <td><span className="status-tag" style={{background:st.bg,color:st.color}}>{st.label}</span></td>
                   <td>
                     <div className="act-btns">
-                      {o.status==='bekliyor' && <button className="mb blue" onClick={()=>updateStatus(o.id,'onay')}>Onayla</button>}
-                      {o.status==='onay'     && <button className="mb purple" onClick={()=>updateStatus(o.id,'yolda')}>Yolda İşaretle</button>}
-                      {o.status==='yolda'    && <button className="mb green" onClick={()=>updateStatus(o.id,'teslim')}><Truck size={12}/> Teslim Alındı</button>}
-                      {o.status!=='teslim'&&o.status!=='iptal' && <button className="mb red" onClick={()=>updateStatus(o.id,'iptal')}>İptal</button>}
+                      {o.status === 'bekliyor' && <button className="mb blue"   onClick={() => updateStatus(o.id,'onay')}>{_c('confirm')}</button>}
+                      {o.status === 'onay'     && <button className="mb purple" onClick={() => updateStatus(o.id,'yolda')}>{language === 'tr' ? 'Yolda İşaretle' : 'Mark Shipped'}</button>}
+                      {o.status === 'yolda'    && <button className="mb green"  onClick={() => updateStatus(o.id,'teslim')}><Truck size={12}/> {language === 'tr' ? 'Teslim Alındı' : 'Received'}</button>}
+                      {o.status !== 'teslim' && o.status !== 'iptal' && <button className="mb red" onClick={() => updateStatus(o.id,'iptal')}>{language === 'tr' ? 'İptal' : 'Cancel'}</button>}
                     </div>
                   </td>
                 </motion.tr>

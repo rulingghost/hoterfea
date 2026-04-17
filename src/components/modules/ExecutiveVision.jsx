@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import {
   BarChart3, TrendingUp, DollarSign,
@@ -16,6 +17,9 @@ import {
 import { motion } from 'framer-motion';
 
 const ExecutiveVision = () => {
+  const { mt, isEn } = useModuleTranslation();
+  const _t = (k) => mt('executiveVision.' + k);
+  const _c = (k) => mt('common.' + k);
   const { rooms, reservations, cashTransactions, stats, TODAY } = useHotel();
 
   const totalRevenue = useMemo(() => cashTransactions.filter(t=>t.type==='gelir').reduce((s,t)=>s+t.amount,0), [cashTransactions]);
@@ -27,31 +31,40 @@ const ExecutiveVision = () => {
   const revpar = rooms.length > 0 ? Math.round(totalRevenue / rooms.length) : 0;
 
   const macroData = useMemo(() => {
-    const aylar = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+    const monthsTr = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+    const monthsEn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const labels = isEn ? monthsEn : monthsTr;
     const currentMonth = new Date(TODAY).getMonth();
-    return aylar.map((ay, i) => ({
-      month: ay,
+    return labels.map((m, i) => ({
+      month: m,
       current: i <= currentMonth ? Math.round(totalRevenue * (0.06 + i * 0.02) + Math.random()*10000) : 0,
       last: Math.round(totalRevenue * (0.05 + i * 0.015))
     }));
-  }, [totalRevenue, TODAY]);
+  }, [totalRevenue, TODAY, isEn]);
 
+  const expenseCats = [
+    { key: 'staff',     labelTr: 'Personel',  labelEn: 'Staff',      keywords: ['Maaş','personel'] },
+    { key: 'food',      labelTr: 'Gıda',      labelEn: 'Food',       keywords: ['yiyecek','gıda','mutfak'] },
+    { key: 'energy',    labelTr: 'Enerji',    labelEn: 'Energy',     keywords: ['enerji','elektrik'] },
+    { key: 'marketing', labelTr: 'Pazarlama', labelEn: 'Marketing',  keywords: ['pazarlama','reklam'] },
+    { key: 'other',     labelTr: 'Diğer',     labelEn: 'Other',      keywords: [] },
+  ];
   const expenseData = useMemo(() => {
-    const cats = { 'Personel': 0, 'Gıda': 0, 'Enerji': 0, 'Pazarlama': 0, 'Diğer': 0 };
+    const vals = { staff:0, food:0, energy:0, marketing:0, other:0 };
     cashTransactions.filter(t=>t.type==='gider').forEach(t => {
-      if(t.desc?.includes('Maaş') || t.desc?.includes('personel')) cats['Personel'] += t.amount;
-      else if(t.desc?.includes('yiyecek') || t.desc?.includes('gıda') || t.desc?.includes('mutfak')) cats['Gıda'] += t.amount;
-      else if(t.desc?.includes('enerji') || t.desc?.includes('elektrik')) cats['Enerji'] += t.amount;
-      else if(t.desc?.includes('pazarlama') || t.desc?.includes('reklam')) cats['Pazarlama'] += t.amount;
-      else cats['Diğer'] += t.amount;
+      if(expenseCats[0].keywords.some(k=>t.desc?.includes(k))) vals.staff += t.amount;
+      else if(expenseCats[1].keywords.some(k=>t.desc?.includes(k))) vals.food += t.amount;
+      else if(expenseCats[2].keywords.some(k=>t.desc?.includes(k))) vals.energy += t.amount;
+      else if(expenseCats[3].keywords.some(k=>t.desc?.includes(k))) vals.marketing += t.amount;
+      else vals.other += t.amount;
     });
-    const total = Object.values(cats).reduce((s,v)=>s+v,0) || 1;
     const colors = ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ef4444'];
-    return Object.entries(cats).map(([name,value],i) => ({
-      name, value: Math.round(value/1000) || Math.round(totalExpense * [0.45,0.2,0.15,0.1,0.1][i] / 1000),
+    return expenseCats.map((cat,i) => ({
+      name: isEn ? cat.labelEn : cat.labelTr,
+      value: Math.round(vals[cat.key]/1000) || Math.round(totalExpense * [0.45,0.2,0.15,0.1,0.1][i] / 1000),
       color: colors[i]
     }));
-  }, [cashTransactions, totalExpense]);
+  }, [cashTransactions, totalExpense, isEn]);
 
   const totalExp = expenseData.reduce((s,e) => s + e.value, 0);
 
@@ -69,7 +82,7 @@ const ExecutiveVision = () => {
             <Landmark size={32} className="icon-blue"/>
             <div>
                <h2>Global Executive Vision Dashboard</h2>
-               <span>Zincir bazlı finansal veriler ve operasyonel görünüm — Canlı Veri</span>
+               <span>{isEn ? 'Chain-wide financial data and operational overview — Live Data' : 'Zincir bazlı finansal veriler ve operasyonel görünüm — Canlı Veri'}</span>
             </div>
          </div>
       </header>
@@ -77,11 +90,11 @@ const ExecutiveVision = () => {
       <div className="vision-grid">
          <section className="kpi-row">
             {[
-              { label:'REVENUE', val:`₺${totalRevenue.toLocaleString()}`, badge: 'Canlı' },
+              { label:'REVENUE', val:`₺${totalRevenue.toLocaleString()}`, badge: isEn?'Live':'Canlı' },
               { label:'EBITDA', val:`₺${ebitda.toLocaleString()}`, badge: `%${totalRevenue>0?Math.round(ebitda/totalRevenue*100):0}` },
               { label:'OCCUPANCY', val:`%${occRate}`, badge: `${occupied}/${rooms.length}` },
-              { label:'ADR', val:`₺${adr.toLocaleString()}`, badge: 'Canlı' },
-              { label:'REVPAR', val:`₺${revpar.toLocaleString()}`, badge: 'Canlı' },
+              { label:'ADR', val:`₺${adr.toLocaleString()}`, badge: isEn?'Live':'Canlı' },
+              { label:'REVPAR', val:`₺${revpar.toLocaleString()}`, badge: isEn?'Live':'Canlı' },
             ].map((k,i) => (
               <motion.div key={i} className="card kpi-card" whileHover={{y:-3}}>
                 <span className="label">{k.label}</span>
@@ -96,10 +109,10 @@ const ExecutiveVision = () => {
          <div className="center-grid mt-20">
             <section className="card chart-card">
                <div className="c-head">
-                  <h3>AYLIK GELİR TRENDİ</h3>
+                  <h3>{isEn ? 'MONTHLY REVENUE TREND' : 'AYLIK GELİR TRENDİ'}</h3>
                   <div className="legend">
-                     <div className="l-item"><div className="dot blue"></div> Bu Yıl</div>
-                     <div className="l-item"><div className="dot gray"></div> Geçen Yıl</div>
+                     <div className="l-item"><div className="dot blue"></div> {isEn ? 'This Year' : 'Bu Yıl'}</div>
+                     <div className="l-item"><div className="dot gray"></div> {isEn ? 'Last Year' : 'Geçen Yıl'}</div>
                   </div>
                </div>
                <div style={{ height: 320 }}>
@@ -124,7 +137,7 @@ const ExecutiveVision = () => {
 
             <aside className="side-panel">
                <section className="card expense-card">
-                  <h3>GİDER DAĞILIMI</h3>
+                  <h3>{isEn ? 'EXPENSE BREAKDOWN' : 'GİDER DAĞILIMI'}</h3>
                   <div className="donut-box">
                      <ResponsiveContainer width="100%" height={200}>
                         <PieChart>
@@ -138,7 +151,7 @@ const ExecutiveVision = () => {
                      </ResponsiveContainer>
                      <div className="d-text">
                         <strong>₺{totalExp}K</strong>
-                        <span>TOPLAM</span>
+                        <span>{isEn ? 'TOTAL' : 'TOPLAM'}</span>
                      </div>
                   </div>
                   <div className="exp-list">
@@ -158,7 +171,7 @@ const ExecutiveVision = () => {
 
          <div className="bottom-grid mt-20">
             <section className="card details-card">
-               <h3>TESİS PERFORMANSI</h3>
+               <h3>{isEn ? 'PROPERTY PERFORMANCE' : 'TESİS PERFORMANSI'}</h3>
                <div className="p-perf-list">
                   {properties.map((p, i) => (
                     <div key={i} className="p-perf-item">
@@ -226,3 +239,5 @@ const ExecutiveVision = () => {
 };
 
 export default ExecutiveVision;
+
+

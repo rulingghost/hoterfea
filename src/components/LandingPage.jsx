@@ -7,6 +7,8 @@ import {
   TrendingUp, Layers, Database, Shield, Cpu, Eye,
   MousePointer, Command, Rocket, Target, Activity
 } from 'lucide-react';
+import LanguageSwitcher from './ui/LanguageSwitcher';
+import { useLanguage } from '../context/LanguageContext';
 
 /* ═══════════════════════════════════════════
    Animated Counter Hook
@@ -39,53 +41,52 @@ const useCounter = (end, duration = 2000, startOnView = false) => {
 };
 
 /* ═══════════════════════════════════════════
-   Data
-   ═══════════════════════════════════════════ */
-const CORE_FEATURES = [
-  { icon: <Eye size={28} />, title: 'Gerçek Zamanlı Gösterge Paneli', desc: 'Doluluk, gelir, bekleyen check-in/out ve personel görevlerini canlı olarak izleyin. Tek bakışta tüm oteli kavrayın.', gradient: 'linear-gradient(135deg, #3b82f6, #6366f1)' },
-  { icon: <Bot size={28} />, title: 'Yapay Zeka Strateji Merkezi', desc: 'AI destekli dinamik fiyatlandırma, talep tahmini, anomali tespiti ve duygu analizi ile gelirinizi maksimize edin.', gradient: 'linear-gradient(135deg, #8b5cf6, #ec4899)' },
-  { icon: <Search size={28} />, title: 'Akıllı Fuzzy Arama', desc: 'Yazım hatalarını tolere eden NLP tabanlı arama motoru. "yemek" yazın, Restoran POS açılsın. "hens" yazın, Hans Müller bulansın.', gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)' },
-  { icon: <Layers size={28} />, title: 'Modüler Mimari', desc: '45+ bağımsız modül, ihtiyacınıza göre aktif edin. Ön büro, restoran, SPA, muhasebe — hepsi entegre çalışır.', gradient: 'linear-gradient(135deg, #06b6d4, #10b981)' },
-  { icon: <Shield size={28} />, title: 'Güvenlik & KBS Uyumu', desc: 'Otomatik polis bildirimi, KVKK veri koruma, rol bazlı yetkilendirme ve SSL şifreli veri transferi.', gradient: 'linear-gradient(135deg, #ef4444, #f97316)' },
-  { icon: <TrendingUp size={28} />, title: 'Gelişmiş Analitik & Raporlar', desc: 'RevPAR, ADR, GOP analizleri, departman bazlı performans, bütçe karşılaştırma ve trend tahminleri.', gradient: 'linear-gradient(135deg, #10b981, #3b82f6)' },
-];
-
-const ALL_MODULES = [
-  { icon: <LayoutDashboard size={18} />, name: 'Dashboard', color: '#3b82f6' },
-  { icon: <Bed size={18} />, name: 'Ön Büro', color: '#10b981' },
-  { icon: <Calendar size={18} />, name: 'Rezervasyon', color: '#f59e0b' },
-  { icon: <Utensils size={18} />, name: 'Restoran POS', color: '#ef4444' },
-  { icon: <Users size={18} />, name: 'CRM', color: '#8b5cf6' },
-  { icon: <CreditCard size={18} />, name: 'Kasa', color: '#06b6d4' },
-  { icon: <Waves size={18} />, name: 'SPA & Wellness', color: '#ec4899' },
-  { icon: <FileText size={18} />, name: 'Folio / Hesap', color: '#6366f1' },
-  { icon: <Building2 size={18} />, name: 'Housekeeping', color: '#14b8a6' },
-  { icon: <ShieldCheck size={18} />, name: 'KBS Bildirimi', color: '#e11d48' },
-  { icon: <Globe size={18} />, name: 'Kanal Yönetimi', color: '#0ea5e9' },
-  { icon: <Bot size={18} />, name: 'AI Strateji', color: '#a855f7' },
-  { icon: <BarChart3 size={18} />, name: 'Raporlama', color: '#f97316' },
-  { icon: <Database size={18} />, name: 'Muhasebe', color: '#64748b' },
-  { icon: <Bell size={18} />, name: 'Bildirimler', color: '#eab308' },
-  { icon: <Activity size={18} />, name: 'Gelir Yönetimi', color: '#22c55e' },
-];
-
-const WORKFLOW_STEPS = [
-  { num: '01', title: 'Misafir Geliyor', desc: 'Rezervasyon sistemi otomatik olarak oda atar, ön büroya bildirim gönderir, oda kartı hazırlanır.', icon: <Calendar size={24} /> },
-  { num: '02', title: 'Check-in Yapılıyor', desc: 'Kimlik taraması, KBS bildirimi, oda durumu güncelleme ve hoş geldin mesajı — tek tıkla tamamlanır.', icon: <MousePointer size={24} /> },
-  { num: '03', title: 'Konaklama Süresince', desc: 'Restoran, SPA, minibar harcamaları otomatik folio\'ya eklenir. Housekeeping görevleri AI ile planlanır.', icon: <Activity size={24} /> },
-  { num: '04', title: 'Check-out & Analiz', desc: 'Tek tuşla hesap kapama, e-fatura, memnuniyet anketi gönderimi ve detaylı gelir raporu oluşturulur.', icon: <Target size={24} /> },
-];
-
-/* ═══════════════════════════════════════════
    Component
    ═══════════════════════════════════════════ */
 const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
+  const { t, language } = useLanguage();
   const [scrollY, setScrollY] = useState(0);
   const [visibleSections, setVisibleSections] = useState(new Set());
   const [activeModuleIdx, setActiveModuleIdx] = useState(0);
   const [typedText, setTypedText] = useState('');
-  const searchExamples = ['restoran bölümünü aç...', 'Hans Müller misafir ara...', 'bugünkü doluluk oranı...', 'yemek siparişi ekle...'];
+  const searchExamples = t('landing.searchExamples') || [];
   const [exampleIdx, setExampleIdx] = useState(0);
+
+  const ALL_MODULES = [
+    { icon: <LayoutDashboard size={18} />, name: t('landing.moduleNames.dashboard'), color: '#3b82f6' },
+    { icon: <Bed size={18} />, name: t('landing.moduleNames.frontDesk'), color: '#10b981' },
+    { icon: <Calendar size={18} />, name: t('landing.moduleNames.reservation'), color: '#f59e0b' },
+    { icon: <Utensils size={18} />, name: t('landing.moduleNames.pos'), color: '#ef4444' },
+    { icon: <Users size={18} />, name: t('landing.moduleNames.crm'), color: '#8b5cf6' },
+    { icon: <CreditCard size={18} />, name: t('landing.moduleNames.cashDesk'), color: '#06b6d4' },
+    { icon: <Waves size={18} />, name: t('landing.moduleNames.spa'), color: '#ec4899' },
+    { icon: <FileText size={18} />, name: t('landing.moduleNames.folio'), color: '#6366f1' },
+    { icon: <Building2 size={18} />, name: t('landing.moduleNames.housekeeping'), color: '#14b8a6' },
+    { icon: <ShieldCheck size={18} />, name: t('landing.moduleNames.kbs'), color: '#e11d48' },
+    { icon: <Globe size={18} />, name: t('landing.moduleNames.channel'), color: '#0ea5e9' },
+    { icon: <Bot size={18} />, name: t('landing.moduleNames.aiStrategy'), color: '#a855f7' },
+    { icon: <BarChart3 size={18} />, name: t('landing.moduleNames.reports'), color: '#f97316' },
+    { icon: <Database size={18} />, name: t('landing.moduleNames.accounting'), color: '#64748b' },
+    { icon: <Bell size={18} />, name: t('landing.moduleNames.notifications'), color: '#eab308' },
+    { icon: <Activity size={18} />, name: t('landing.moduleNames.revenue'), color: '#22c55e' },
+  ];
+
+  // Translate arrays dynamically
+  const CORE_FEATURES = [
+    { icon: <Eye size={28} />, title: t('landing.feat1Title'), desc: t('landing.feat1Desc'), gradient: 'linear-gradient(135deg, #3b82f6, #6366f1)' },
+    { icon: <Bot size={28} />, title: t('landing.feat2Title'), desc: t('landing.feat2Desc'), gradient: 'linear-gradient(135deg, #8b5cf6, #ec4899)' },
+    { icon: <Search size={28} />, title: t('landing.feat3Title'), desc: t('landing.feat3Desc'), gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)' },
+    { icon: <Layers size={28} />, title: t('landing.feat4Title'), desc: t('landing.feat4Desc'), gradient: 'linear-gradient(135deg, #06b6d4, #10b981)' },
+    { icon: <Shield size={28} />, title: t('landing.feat5Title'), desc: t('landing.feat5Desc'), gradient: 'linear-gradient(135deg, #ef4444, #f97316)' },
+    { icon: <TrendingUp size={28} />, title: t('landing.feat6Title'), desc: t('landing.feat6Desc'), gradient: 'linear-gradient(135deg, #10b981, #3b82f6)' },
+  ];
+
+  const WORKFLOW_STEPS = [
+    { num: '01', title: t('landing.wfStep1Title'), desc: t('landing.wfStep1Desc'), icon: <Calendar size={24} /> },
+    { num: '02', title: t('landing.wfStep2Title'), desc: t('landing.wfStep2Desc'), icon: <MousePointer size={24} /> },
+    { num: '03', title: t('landing.wfStep3Title'), desc: t('landing.wfStep3Desc'), icon: <Activity size={24} /> },
+    { num: '04', title: t('landing.wfStep4Title'), desc: t('landing.wfStep4Desc'), icon: <Target size={24} /> },
+  ];
 
   // Scroll tracking
   useEffect(() => {
@@ -158,17 +159,22 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
         <div className="nav-inner">
           <div className="nav-brand">
             <div className="nav-logo"><Sparkles size={18} /></div>
-            <strong>HOTERFEA</strong>
+            <strong>{t('landing.brand')}</strong>
           </div>
           <div className="nav-links">
-            <a href="#features">Özellikler</a>
-            <a href="#modules">Modüller</a>
-            <a href="#workflow">Nasıl Çalışır</a>
-            <a href="#" onClick={e => { e.preventDefault(); onOpenPresentation(); }} style={{ color: '#D4AF37' }}><Sparkles size={12} style={{marginRight:4, display:'inline'}} /> Sunumu Gör</a>
+            <a href="#features">{t('landing.navFeatures')}</a>
+            <a href="#modules">{t('landing.navModules')}</a>
+            <a href="#workflow">{t('landing.navWorkflow')}</a>
+            <a href="#" onClick={e => { e.preventDefault(); onOpenPresentation(); }} style={{ color: '#D4AF37' }}>
+              <Sparkles size={12} style={{marginRight:4, display:'inline'}} /> {t('landing.navPresentation')}
+            </a>
           </div>
-          <button className="nav-cta" onClick={onOpenDemo}>
-            <Play size={13} /> Canlı Demo
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <LanguageSwitcher dark={true} />
+            <button className="nav-cta" onClick={onOpenDemo}>
+              <Play size={13} /> {t('landing.demoBtn')}
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -181,23 +187,21 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
         <div className="hero-inner">
           <div className="hero-text">
             <div className="hero-chip">
-              <Cpu size={12} /> <span>AI-Powered Hotel Management</span>
+              <Cpu size={12} /> <span>{t('landing.heroChip')}</span>
             </div>
             <h1>
-              Otel Yönetimini<br />
-              <span className="grad">Yeniden Tanımlıyoruz</span>
+              {t('landing.heroTitle1')}<br />
+              <span className="grad">{t('landing.heroTitle2')}</span>
             </h1>
             <p className="hero-desc">
-              <strong>Hoterfea</strong>, yapay zeka destekli akıllı arama motoru, 45+ entegre modül
-              ve gerçek zamanlı operasyon paneli ile otellerin tüm departmanlarını
-              tek bir platformdan yönetmelerini sağlayan yeni nesil ERP sistemidir.
+              {t('landing.heroDesc')}
             </p>
             <div className="hero-btns">
               <button className="btn-primary-xl" onClick={onOpenDemo}>
-                <Rocket size={18} /> Demo'yu Başlat <ArrowRight size={16} />
+                <Rocket size={18} /> {t('landing.heroBtnRun')} <ArrowRight size={16} />
               </button>
               <button className="btn-secondary-xl" onClick={onOpenPresentation} style={{ marginLeft: '16px' }}>
-                <Eye size={18} /> Sunumu İncele
+                <Eye size={18} /> {t('landing.heroBtnPres')}
               </button>
             </div>
 
@@ -205,17 +209,17 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
             <div className="hero-counters" ref={modCounter.ref}>
               <div className="hc-item">
                 <strong>{modCounter.count}+</strong>
-                <span>Entegre Modül</span>
+                <span>{t('landing.statModules')}</span>
               </div>
               <div className="hc-divider" />
               <div className="hc-item" ref={channelCounter.ref}>
                 <strong>{channelCounter.count}+</strong>
-                <span>Kanal Entegrasyonu</span>
+                <span>{t('landing.statChannels')}</span>
               </div>
               <div className="hc-divider" />
               <div className="hc-item" ref={uptimeCounter.ref}>
                 <strong>{uptimeCounter.count}.9%</strong>
-                <span>Uptime</span>
+                <span>{t('landing.statUptime')}</span>
               </div>
             </div>
           </div>
@@ -248,14 +252,14 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
                     </div>
                     <div className="mock-kpis">
                       {[
-                        { label: 'Doluluk', val: '%84', c: '#3b82f6' },
-                        { label: 'İçeride', val: '142', c: '#10b981' },
-                        { label: 'Gelir', val: '₺245K', c: '#f59e0b' },
-                        { label: 'RevPAR', val: '₺1.2K', c: '#8b5cf6' },
+                        { labelTr: 'Doluluk', labelEn: 'Occupancy', val: '%84', c: '#3b82f6' },
+                        { labelTr: 'İçeride', labelEn: 'In-House', val: '142', c: '#10b981' },
+                        { labelTr: 'Gelir', labelEn: 'Revenue', val: '₺245K', c: '#f59e0b' },
+                        { labelTr: 'RevPAR', labelEn: 'RevPAR', val: '₺1.2K', c: '#8b5cf6' },
                       ].map((kpi, i) => (
                         <div key={i} className="mock-kpi">
                           <div className="mk-val" style={{ color: kpi.c }}>{kpi.val}</div>
-                          <div className="mk-label">{kpi.label}</div>
+                          <div className="mk-label">{language === 'tr' ? kpi.labelTr : kpi.labelEn}</div>
                           <div className="mk-bar"><div style={{ width: `${55 + i * 12}%`, background: kpi.c }} /></div>
                         </div>
                       ))}
@@ -285,15 +289,15 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
               {/* Floating notification cards */}
               <div className="float-card fc-1">
                 <div className="fc-icon" style={{ background: '#10b981' }}><Check size={12} /></div>
-                <div><strong>Oda 204</strong><span>Check-in tamamlandı</span></div>
+                <div><strong>{language === 'tr' ? 'Oda 204' : 'Room 204'}</strong><span>{language === 'tr' ? 'Check-in tamamlandı' : 'Check-in completed'}</span></div>
               </div>
               <div className="float-card fc-2">
                 <div className="fc-icon" style={{ background: '#f59e0b' }}><Bell size={12} /></div>
-                <div><strong>Restoran</strong><span>3 yeni sipariş</span></div>
+                <div><strong>{language === 'tr' ? 'Restoran' : 'Restaurant'}</strong><span>{language === 'tr' ? '3 yeni sipariş' : '3 new orders'}</span></div>
               </div>
               <div className="float-card fc-3">
                 <div className="fc-icon" style={{ background: '#8b5cf6' }}><TrendingUp size={12} /></div>
-                <div><strong>Gelir</strong><span>+%12 artış</span></div>
+                <div><strong>{language === 'tr' ? 'Gelir' : 'Revenue'}</strong><span>{language === 'tr' ? '+%12 artış' : '+12% increase'}</span></div>
               </div>
             </div>
           </div>
@@ -317,9 +321,9 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
       {/* ═══ Features ═══ */}
       <section id="features" className="sec-features" data-animate>
         <div className="sec-header">
-          <div className="sec-chip"><Zap size={12} /> Özellikler</div>
-          <h2>Neden <span className="grad">Hoterfea</span>?</h2>
-          <p>Her biri otel operasyonlarınız için özel olarak tasarlanmış güçlü yetenekler.</p>
+          <div className="sec-chip"><Zap size={12} /> {t('landing.navFeatures')}</div>
+          <h2>{t('landing.whyTitle1')} <span className="grad">{t('landing.whyTitle2')}</span></h2>
+          <p>{t('landing.whyDesc')}</p>
         </div>
         <div className={`feat-grid ${isVisible('features') ? 'in' : ''}`}>
           {CORE_FEATURES.map((f, i) => (
@@ -337,18 +341,16 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
       <section id="search-demo" className="sec-search" data-animate>
         <div className={`search-demo-inner ${isVisible('search-demo') ? 'in' : ''}`}>
           <div className="sd-left">
-            <div className="sec-chip"><Command size={12} /> Akıllı Arama</div>
-            <h2>Ne Aklınıza Gelirse <span className="grad">Yazın ve Bulun</span></h2>
+            <div className="sec-chip"><Command size={12} /> {t('common.search')}</div>
+            <h2>{t('landing.searchTitle1')} <span className="grad">{t('landing.searchTitle2')}</span></h2>
             <p>
-              Hoterfea'nın NLP tabanlı arama motoru, yazdığınız her şeyi anlar.
-              Modül adı, özellik, misafir ismi, hatta yanlış yazılmış kelimeler bile —
-              yapay zeka destekli fuzzy matching algoritması sayesinde doğru sonuca ulaşırsınız.
+              {t('landing.searchDesc')}
             </p>
             <div className="sd-examples">
-              <div className="sd-ex"><Command size={14} /> <code>"yemek"</code> → Restoran POS modülü açılır</div>
-              <div className="sd-ex"><Command size={14} /> <code>"hens"</code> → Hans Müller misafiri bulunur</div>
-              <div className="sd-ex"><Command size={14} /> <code>"spa randevu"</code> → SPA yönetimi açılır</div>
-              <div className="sd-ex"><Command size={14} /> <code>"kasa"</code> → Kasa işlemleri modülü açılır</div>
+              <div className="sd-ex"><Command size={14} /> <code>{language === 'tr' ? '"yemek"' : '"food"'}</code> → {language === 'tr' ? 'Restoran POS' : 'Restaurant POS'}</div>
+              <div className="sd-ex"><Command size={14} /> <code>"hens"</code> → Hans Müller</div>
+              <div className="sd-ex"><Command size={14} /> <code>{language === 'tr' ? '"spa randevu"' : '"spa booking"'}</code> → SPA</div>
+              <div className="sd-ex"><Command size={14} /> <code>{language === 'tr' ? '"kasa"' : '"cash desk"'}</code> → {language === 'tr' ? 'Kasa / Cash Desk' : 'Cash Desk'}</div>
             </div>
           </div>
           <div className="sd-right">
@@ -359,19 +361,14 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
                 <span className="sdms-cursor" />
               </div>
               <div className="sdms-results">
-                <div className="sdms-section">MODÜLLER / ÖZELLİKLER <span className="ai-chip">AI</span></div>
+                <div className="sdms-section">{language === 'tr' ? 'MODÜLLER / MİSAFİRLER' : 'MODULES / GUESTS'} <span className="ai-chip">AI</span></div>
                 <div className="sdms-item active">
                   <div className="sdms-dot" style={{ background: '#ef4444' }} />
-                  <div><strong>Restoran POS</strong><span>Yiyecek & İçecek</span></div>
+                  <div><strong>{language === 'tr' ? 'Restoran POS' : 'Restaurant POS'}</strong></div>
                 </div>
-                <div className="sdms-item">
-                  <div className="sdms-dot" style={{ background: '#06b6d4' }} />
-                  <div><strong>SPA & Wellness</strong><span>Operasyon</span></div>
-                </div>
-                <div className="sdms-section" style={{ marginTop: 12 }}>MİSAFİRLER <span className="ai-chip">FUZZY</span></div>
                 <div className="sdms-item">
                   <div className="sdms-dot" style={{ background: '#8b5cf6' }} />
-                  <div><strong>Hans Müller</strong><span>Oda 204 · Almanya</span></div>
+                  <div><strong>Hans Müller</strong></div>
                 </div>
               </div>
             </div>
@@ -382,9 +379,9 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
       {/* ═══ All Modules Grid ═══ */}
       <section id="modules" className="sec-modules" data-animate>
         <div className="sec-header">
-          <div className="sec-chip"><Layers size={12} /> 45+ Modül</div>
-          <h2><span className="grad">Her Departman</span> İçin Bir Modül</h2>
-          <p>Ön bürodan mutfağa, SPA'dan muhasebeye — tüm otel operasyonları tek çatı altında.</p>
+          <div className="sec-chip"><Layers size={12} /> {t('landing.navModules')}</div>
+          <h2><span className="grad">{t('landing.modTitle1')}</span> {t('landing.modTitle2')}</h2>
+          <p>{t('landing.modDesc')}</p>
         </div>
         <div className={`mod-grid ${isVisible('modules') ? 'in' : ''}`}>
           {ALL_MODULES.map((m, i) => (
@@ -396,7 +393,7 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
         </div>
         <div className="mod-cta">
           <button className="btn-primary-xl" onClick={onOpenDemo}>
-            <Monitor size={18} /> Tüm Modülleri Keşfet <ArrowRight size={16} />
+            <Monitor size={18} /> {t('landing.modBtn')} <ArrowRight size={16} />
           </button>
         </div>
       </section>
@@ -404,9 +401,9 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
       {/* ═══ How It Works ═══ */}
       <section id="workflow" className="sec-workflow" data-animate>
         <div className="sec-header">
-          <div className="sec-chip"><Target size={12} /> Nasıl Çalışır</div>
-          <h2>Misafir Yolculuğu <span className="grad">Uçtan Uca</span> Otomatik</h2>
-          <p>Bir misafirin gelişinden ayrılışına kadar her adım Hoterfea tarafından yönetilir.</p>
+          <div className="sec-chip"><Target size={12} /> {t('landing.navWorkflow')}</div>
+          <h2>{t('landing.wfTitle1')} <span className="grad">{t('landing.wfTitle2')}</span></h2>
+          <p>{t('landing.wfDesc')}</p>
         </div>
         <div className={`wf-timeline ${isVisible('workflow') ? 'in' : ''}`}>
           {WORKFLOW_STEPS.map((s, i) => (
@@ -426,10 +423,10 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
         <div className={`final-box ${isVisible('final') ? 'in' : ''}`}>
           <div className="final-orb" />
           <Sparkles size={36} className="final-sparkle" />
-          <h2>Hoterfea'yı <span className="grad">Şimdi Deneyin</span></h2>
-          <p>Kurulum gerektirmez. Tek tıkla tam özellikli demo ortamına erişin,<br/>45+ modülü keşfedin ve farkı yaşayın.</p>
+          <h2>{t('landing.finalTitle1')} <span className="grad">{t('landing.finalTitle2')}</span></h2>
+          <p>{t('landing.finalDesc1')}<br/>{t('landing.finalDesc2')}</p>
           <button className="btn-primary-xl" onClick={onOpenDemo}>
-            <Play size={18} /> Canlı Demo'yu Başlat <ArrowRight size={16} />
+            <Play size={18} /> {t('landing.heroBtnRun')} <ArrowRight size={16} />
           </button>
         </div>
       </section>
@@ -442,9 +439,9 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
             <strong>HOTERFEA</strong>
           </div>
           <div className="foot-links">
-            <a href="#features">Özellikler</a>
-            <a href="#modules">Modüller</a>
-            <a href="#" onClick={e => { e.preventDefault(); onOpenDemo(); }}>Demo</a>
+            <a href="#features">{t('landing.navFeatures')}</a>
+            <a href="#modules">{t('landing.navModules')}</a>
+            <a href="#" onClick={e => { e.preventDefault(); onOpenDemo(); }}>{t('landing.demoBtn')}</a>
           </div>
           <span className="foot-copy">© 2026 Hoterfea</span>
         </div>

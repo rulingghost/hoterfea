@@ -1,26 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { User, Lock, Calendar, Building2, TrendingUp, TrendingDown } from 'lucide-react';
+import { User, Lock, Calendar, Building2, TrendingUp, TrendingDown, Globe } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../../context/LanguageContext';
+import LanguageSwitcher from '../ui/LanguageSwitcher';
 
 const Login = ({ onLogin }) => {
-  const [rates, setRates] = useState({ usd: 32.167, eur: 34.525, usdChange: '+0,0140', eurChange: '+0,0164' });
+  const { t } = useLanguage();
+  const [rates, setRates] = useState({ usd: '32,167', eur: '34,525', usdChange: '+0,0140', eurChange: '+0,0164' });
   const [formData, setFormData] = useState({
     username: '',
     password: '',
     year: '2026',
     branch: ''
   });
+  const [time, setTime] = useState('');
+
+  // Live clock
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setTime(now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }));
+    };
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     const fetchRates = async () => {
       try {
-        // Using a public API for live rates (TRY based)
         const res = await fetch('https://open.er-api.com/v6/latest/USD');
         const data = await res.json();
         if (data && data.rates && data.rates.TRY) {
           const usdTry = data.rates.TRY;
-          const eurTry = usdTry / data.rates.EUR; // Calculate EUR/TRY via cross rate
-          
+          const eurTry = usdTry / data.rates.EUR;
           setRates(prev => ({
             ...prev,
             usd: usdTry.toFixed(3).replace('.', ','),
@@ -31,9 +44,8 @@ const Login = ({ onLogin }) => {
         console.error('Cant fetch rates:', err);
       }
     };
-
     fetchRates();
-    const interval = setInterval(fetchRates, 60000); // Update every minute
+    const interval = setInterval(fetchRates, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -42,9 +54,25 @@ const Login = ({ onLogin }) => {
     onLogin(formData);
   };
 
+  const labels = {
+    title:        t('login.title')        || 'Sisteme Giriş',
+    username:     t('login.username')     || 'Kullanıcı Adı',
+    userPlaceholder: t('login.userPlaceholder') || 'Kullanıcı adınızı girin...',
+    password:     t('login.password')    || 'Şifre',
+    passPlaceholder: t('login.passPlaceholder') || 'Şifrenizi girin...',
+    year:         t('login.year')        || 'Çalışma Yılı',
+    branch:       t('login.branch')      || 'Şube / Otel Seçiniz',
+    branchSelect: t('login.branchSelect')|| 'Seçiniz...',
+    loginBtn:     t('login.loginBtn')    || 'Sisteme Giriş',
+    exchangeTtl:  t('login.exchangeTtl') || 'Döviz Kurları',
+    serverActive: t('login.serverActive')|| 'Sunucu: Aktif',
+    userIp:       t('login.userIp')      || 'Kullanıcı IP:',
+    systemOnline: t('login.systemOnline')|| 'System Online 100%',
+  };
+
   return (
     <div className="login-container">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="login-main card"
@@ -58,10 +86,10 @@ const Login = ({ onLogin }) => {
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="input-group">
-            <label><User size={18} /> Kullanıcı Adı</label>
-            <input 
-              type="text" 
-              placeholder="Kullanıcı adınızı girin..." 
+            <label><User size={18} /> {labels.username}</label>
+            <input
+              type="text"
+              placeholder={labels.userPlaceholder}
               value={formData.username}
               onChange={(e) => setFormData({...formData, username: e.target.value})}
               required
@@ -69,10 +97,10 @@ const Login = ({ onLogin }) => {
           </div>
 
           <div className="input-group">
-            <label><Lock size={18} /> Şifre</label>
-            <input 
-              type="password" 
-              placeholder="Şifre" 
+            <label><Lock size={18} /> {labels.password}</label>
+            <input
+              type="password"
+              placeholder={labels.passPlaceholder}
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
               required
@@ -80,8 +108,8 @@ const Login = ({ onLogin }) => {
           </div>
 
           <div className="input-group">
-            <label><Calendar size={18} /> Çalışma Yılı</label>
-            <select 
+            <label><Calendar size={18} /> {labels.year}</label>
+            <select
               value={formData.year}
               onChange={(e) => setFormData({...formData, year: e.target.value})}
             >
@@ -92,13 +120,13 @@ const Login = ({ onLogin }) => {
           </div>
 
           <div className="input-group">
-            <label><Building2 size={18} /> Şube/Otel Seçiniz</label>
-            <select 
+            <label><Building2 size={18} /> {labels.branch}</label>
+            <select
               value={formData.branch}
               onChange={(e) => setFormData({...formData, branch: e.target.value})}
               required
             >
-              <option value="">Seçiniz...</option>
+              <option value="">{labels.branchSelect}</option>
               <option value="grand-resort">Demo Otel 1</option>
               <option value="spa-city">Demo Otel 2</option>
               <option value="beach-club">Demo Otel 3</option>
@@ -106,18 +134,18 @@ const Login = ({ onLogin }) => {
           </div>
 
           <button type="submit" className="premium-button login-btn">
-            Sisteme Giriş
+            {labels.loginBtn}
           </button>
         </form>
       </motion.div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2 }}
         className="exchange-rates card"
       >
-        <h3>Döviz Kurları</h3>
+        <h3>{labels.exchangeTtl}</h3>
         <div className="rate-item">
           <div className="rate-info">
             <span className="currency">USD / TRY</span>
@@ -138,13 +166,13 @@ const Login = ({ onLogin }) => {
       <footer className="login-footer">
         <div className="footer-left">
           <span>Hoterfea v2.0.26</span>
-          <span className="status"><span className="status-dot"></span> Sunucu: Aktif</span>
-          <span>Kullanıcı IP: 192.168.1.1</span>
+          <span className="status"><span className="status-dot"></span> {labels.serverActive}</span>
+          <span>{labels.userIp} 192.168.1.1</span>
         </div>
         <div className="footer-right">
           <span>v.8.4.2 Enterprise</span>
-          <span className="uptime">System Online 100%</span>
-          <span>09:42</span>
+          <span className="uptime">{labels.systemOnline}</span>
+          <span>{time}</span>
         </div>
       </footer>
 
@@ -169,9 +197,7 @@ const Login = ({ onLogin }) => {
           z-index: 10;
         }
 
-        .login-header {
-          text-align: center;
-        }
+        .login-header { text-align: center; }
 
         .logo-section {
           display: flex;
@@ -180,9 +206,7 @@ const Login = ({ onLogin }) => {
           gap: 10px;
         }
 
-        .logo-icon {
-          color: #7f8c8d;
-        }
+        .logo-icon { color: #7f8c8d; }
 
         .logo-section h1 {
           font-size: 24px;
@@ -244,10 +268,7 @@ const Login = ({ onLogin }) => {
           align-items: baseline;
         }
 
-        .currency {
-          font-size: 14px;
-          color: #34495e;
-        }
+        .currency { font-size: 14px; color: #34495e; }
 
         .value {
           font-size: 20px;
@@ -306,10 +327,7 @@ const Login = ({ onLogin }) => {
           border-radius: 50%;
         }
 
-        .uptime {
-          color: #27ae60;
-          font-weight: 500;
-        }
+        .uptime { color: #27ae60; font-weight: 500; }
 
         @media (max-width: 800px) {
           .login-container {

@@ -5,20 +5,21 @@ import {
   ChevronRight, AlertTriangle, ChevronDown, 
   Maximize, Minimize, HelpCircle
 } from 'lucide-react';
-import { guideData } from '../../data/guideData';
+import { getGuideData, guideCategoryLabel } from '../../data/guideData';
+import { useLanguage } from '../../context/LanguageContext';
 
-const CATEGORIES = ['Tümü', ...new Set(guideData.map(g => g.category))];
+
 
 // ==========================================
 // GELİŞMİŞ NLP ARAMA FONKSİYONU
 // Hem tam hem kısmi hem Türkçe eşleşme
 // ==========================================
-function smartSearch(query) {
+function smartSearch(query, guideData) {
   if (!query || query.trim().length < 1) return [];
   
   const q = query.toLowerCase()
     .replace(/[?!.,;]/g, '')
-    .replace(/nasıl|nerede|nereden|yapılır|açıkla|göster|yardım|neyin|nedir|neden/gi, '')
+    .replace(/nasıl|nerede|nereden|yapılır|açıkla|göster|yardım|neyin|nedir|neden|how|where|what|why|help/gi, '')
     .trim();
 
   if (!q) return guideData.slice(0, 5);
@@ -59,49 +60,74 @@ function smartSearch(query) {
 // ==========================================
 // CHATBOT NLP — Çok daha akıllı cevap
 // ==========================================
-function buildChatResponse(query) {
+function buildChatResponse(query, guideData, lang) {
+  const isEn = lang === 'en';
   const q = query.toLowerCase()
     .replace(/[?!.,;]/g, '')
-    .replace(/nasıl|nerede|nereden|yapılır|açıkla|göster|yardım|neyin|nedir|neden|ben|bana|bunu/gi, '')
+    .replace(/nasıl|nerede|nereden|yapılır|açıkla|göster|yardım|neyin|nedir|neden|ben|bana|bunu|how|where|what|show|help|explain/gi, '')
     .trim();
 
-  // Önce en iyi eşleşmeyi bul
-  const results = smartSearch(q);
+  const results = smartSearch(q, guideData);
   
   if (results.length === 0) {
-    return `Sorduğunuz konu için eşleşme bulamadım. Lütfen daha kısa yazmayı deneyin.\n\n**Örnek sorular:**\n- "Booking bağlantısını nasıl kontrol ederim"\n- "Misafiri odaya nasıl alırım"\n- "Gece raporunu nasıl kapatırım"\n- "Fatura nasıl kesilir"`;
+    return isEn
+      ? `No match found for your query. Try shorter keywords.\n\n**Example questions:**\n- "How do I check Booking connection"\n- "How do I check a guest in"\n- "How do I close the night audit"\n- "How do I create an invoice"`
+      : `Sorduğunuz konu için eşleşme bulamadım. Lütfen daha kısa yazmayı deneyin.\n\n**Örnek sorular:**\n- "Booking bağlantısını nasıl kontrol ederim"\n- "Misafiri odaya nasıl alırım"\n- "Gece raporunu nasıl kapatırım"\n- "Fatura nasıl kesilir"`;
   }
 
   const best = results[0];
-  let reply = `**${best.category} → ${best.title}** için adım adım yol tarifi:\n\n`;
+  const bestCat = guideCategoryLabel(best.category, lang);
+  let reply = isEn
+    ? `Step-by-step guide for **${best.title}** (${bestCat}):\n\n`
+    : `**${best.category} → ${best.title}** için adım adım yol tarifi:\n\n`;
   reply += `> ${best.purpose}\n\n`;
   
   best.steps.forEach((step, i) => {
     if (step.title && !step.warn) {
       reply += `**${i + 1}. ${step.title}**\n${step.desc}\n\n`;
     } else if (step.warn) {
-      reply += `🚨 **Önemli Uyarı:** ${step.warn}\n\n`;
+      reply += isEn
+        ? `🚨 **Important Warning:** ${step.warn}\n\n`
+        : `🚨 **Önemli Uyarı:** ${step.warn}\n\n`;
     }
   });
 
   if (results.length > 1) {
-    reply += `---\n*İlgili başka konular: ${results.slice(1, 3).map(r => `**${r.title}**`).join(', ')}*`;
+    reply += isEn
+      ? `---\n*Related topics: ${results.slice(1, 3).map(r => `**${r.title}**`).join(', ')}*`
+      : `---\n*İlgili başka konular: ${results.slice(1, 3).map(r => `**${r.title}**`).join(', ')}*`;
   }
 
   return reply;
 }
 
-const GlobalGuideWidget = () => {
+
+
+const GlobalGuideWidget = ({ activeModuleId }) => {
+  const { t, language } = useLanguage();
+  const isEn = language === 'en';
+  const catLabel = (cat) => guideCategoryLabel(cat, language);
+  const guideData = useMemo(() => getGuideData(t, language), [t, language]);
   const [isOpen, setIsOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [activeTab, setActiveTab] = useState('search'); 
   
   const [searchQ, setSearchQ] = useState('');
   const [expandedGuide, setExpandedGuide] = useState(null);
-  const [selectedCat, setSelectedCat] = useState('Tümü');
+  
+  const ALL_LABEL = isEn ? 'All' : 'Tümü';
+  const CATEGORIES = useMemo(() => [
+    ALL_LABEL,
+    ...new Set(guideData.map(g => g.category))
+  ], [language, guideData]);
+
+  const [selectedCat, setSelectedCat] = useState(ALL_LABEL);
+
+  // sync ALL_LABEL when language changes
+  React.useEffect(() => { setSelectedCat(ALL_LABEL); }, [language]);
 
   const [chatMsgs, setChatMsgs] = useState([
-    { role: 'ai', text: 'Merhaba. Sistemdeki herhangi bir işlemin nerede olduğunu veya nasıl yapıldığını buraya sorun.\n\n**Örnek:** "Booking rezervasyonları nerede görünür?" veya "Gece kapatma nasıl yapılır?"' }
+    { role: 'ai', text: t('guide.chatIntro') }
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -111,11 +137,11 @@ const GlobalGuideWidget = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMsgs, isTyping]);
 
-  const searchResults = useMemo(() => smartSearch(searchQ), [searchQ]);
+  const searchResults = useMemo(() => smartSearch(searchQ, guideData), [searchQ, guideData]);
 
   const filteredGuides = useMemo(() => 
-    selectedCat === 'Tümü' ? guideData : guideData.filter(g => g.category === selectedCat)
-  , [selectedCat]);
+    selectedCat === ALL_LABEL ? guideData : guideData.filter(g => g.category === selectedCat)
+  , [selectedCat, language, guideData]);
 
   const handleChatSubmit = () => {
     if (!chatInput.trim()) return;
@@ -125,11 +151,15 @@ const GlobalGuideWidget = () => {
     setIsTyping(true);
 
     setTimeout(() => {
-      const reply = buildChatResponse(msg);
+      const reply = buildChatResponse(msg, guideData, language);
       setChatMsgs(p => [...p, { role: 'ai', text: reply }]);
       setIsTyping(false);
     }, 600);
   };
+
+  const SEARCH_CHIPS = isEn
+    ? ['Check-in', 'Invoice', 'Night Audit', 'Booking', 'Stock', 'Staff']
+    : ['Check-in', 'Fatura', 'Gece Raporu', 'Booking', 'Stok', 'Personel'];
 
   const renderChatLine = (text) => {
     return text.split('\n').map((line, i) => {
@@ -162,7 +192,7 @@ const GlobalGuideWidget = () => {
         style={{ display: isOpen ? 'none' : 'flex' }}
       >
         <HelpCircle size={20} />
-        <span>Nasıl Kullanılır?</span>
+        <span>{t('guide.fab')}</span>
       </motion.button>
 
       <AnimatePresence>
@@ -179,8 +209,8 @@ const GlobalGuideWidget = () => {
                 <div className="ggw-brand">
                   <div className="ggw-logo"><Bot size={20}/></div>
                   <div>
-                    <h3>Nasıl Kullanılır?</h3>
-                    <p>Hangi menüden nereye gidileceğini, adım adım anlatıyoruz.</p>
+                    <h3>{t('guide.title')}</h3>
+                    <p>{t('guide.subtitle')}</p>
                   </div>
                 </div>
                 <div className="ggw-btns">
@@ -196,13 +226,13 @@ const GlobalGuideWidget = () => {
               {/* TABS */}
               <div className="ggw-tabs">
                 <button className={activeTab === 'search' ? 'on' : ''} onClick={() => setActiveTab('search')}>
-                  <Search size={14}/> Arama Yapın
+                  <Search size={14}/> {t('guide.tabSearch')}
                 </button>
                 <button className={activeTab === 'guides' ? 'on' : ''} onClick={() => setActiveTab('guides')}>
-                  <BookOpen size={14}/> Tüm Yönergeler
+                  <BookOpen size={14}/> {t('guide.tabGuides')}
                 </button>
                 <button className={activeTab === 'chat' ? 'on' : ''} onClick={() => setActiveTab('chat')}>
-                  <MessageSquare size={14}/> Asistan
+                  <MessageSquare size={14}/> {t('guide.tabAssistant')}
                 </button>
               </div>
 
@@ -212,12 +242,12 @@ const GlobalGuideWidget = () => {
                 {/* === ARAMA SEKMESİ === */}
                 {activeTab === 'search' && (
                   <div className="tab-search">
-                    <p className="tab-hint">Ne yapmak istediğinizi kısaca yazın. Hem modülü bulalım hem de yolunu tarif edelim.</p>
+                    <p className="tab-hint">{t('guide.searchHint')}</p>
                     <div className="search-wrap">
                       <Search size={18} color="#94a3b8"/>
                       <input 
                         autoFocus
-                        placeholder="Örn: Booking fiyatını değiştirmek istiyorum, gece kapanışı..."
+                        placeholder={t('guide.searchPlaceholder')}
                         value={searchQ}
                         onChange={e => setSearchQ(e.target.value)}
                       />
@@ -228,9 +258,9 @@ const GlobalGuideWidget = () => {
                       {searchQ === '' ? (
                         <div className="empty-state">
                           <HelpCircle size={40} color="#e2e8f0"/>
-                          <p>Aramaya başladığınızda sistem size en doğru kılavuzu anında bulur.</p>
+                          <p>{t('guide.emptySearch')}</p>
                           <div className="quick-chips">
-                            {['Check-in', 'Fatura', 'Gece Raporu', 'Booking', 'Stok', 'Personel'].map(chip => (
+                            {SEARCH_CHIPS.map(chip => (
                               <button key={chip} onClick={() => setSearchQ(chip)}>{chip}</button>
                             ))}
                           </div>
@@ -238,7 +268,7 @@ const GlobalGuideWidget = () => {
                       ) : searchResults.length === 0 ? (
                         <div className="empty-state">
                           <AlertTriangle size={40} color="#fca5a5"/>
-                          <p>"{searchQ}" ile eşleşen bir modül bulunamadı. Farklı bir kelime deneyin.</p>
+                          <p>{t('guide.noResult')}</p>
                         </div>
                       ) : (
                         searchResults.map((res, i) => (
@@ -250,7 +280,7 @@ const GlobalGuideWidget = () => {
                             <div className="rc-icon">{res.icon}</div>
                             <div className="rc-info">
                               <strong>{res.title}</strong>
-                              <span>{res.category}</span>
+                              <span>{catLabel(res.category)}</span>
                             </div>
                             <ChevronRight size={16} color="#0ea5e9"/>
                           </div>
@@ -266,7 +296,7 @@ const GlobalGuideWidget = () => {
                     <div className="cat-bar">
                       {CATEGORIES.map(cat => (
                         <button key={cat} className={selectedCat === cat ? 'on' : ''} onClick={() => { setSelectedCat(cat); setExpandedGuide(null); }}>
-                          {cat}
+                          {catLabel(cat)}
                         </button>
                       ))}
                     </div>
@@ -279,14 +309,14 @@ const GlobalGuideWidget = () => {
                               <div className="gcard-ico">{g.icon}</div>
                               <div className="gcard-label">
                                 <strong>{g.title}</strong>
-                                <span>{g.category}</span>
+                                <span>{catLabel(g.category)}</span>
                               </div>
                               <ChevronDown size={18} color={open ? '#0ea5e9' : '#94a3b8'} style={{transform: open ? 'rotate(180deg)' : 'none', flexShrink:0, transition:'0.2s'}}/>
                             </div>
                             {open && (
                               <div className="gcard-body">
                                 <div className="gcard-purpose">
-                                  <strong>Bu ekran ne işe yarar?</strong>
+                                  <strong>{t('guide.purpose')}</strong>
                                   <p>{g.purpose}</p>
                                 </div>
                                 <div className="gcard-steps">
@@ -294,7 +324,7 @@ const GlobalGuideWidget = () => {
                                     step.warn ? (
                                       <div key={i} className="step-warn">
                                         <AlertTriangle size={16} color="#ef4444"/>
-                                        <div><strong>Önemli Uyarı:</strong> {step.warn}</div>
+                                        <div><strong>{t('guide.importantWarn')}</strong> {step.warn}</div>
                                       </div>
                                     ) : (
                                       <div key={i} className="step-row">
@@ -330,12 +360,12 @@ const GlobalGuideWidget = () => {
                     </div>
                     <div className="chat-box">
                       <input
-                        placeholder="Örn: Booking fiyatlarını nerede değiştiririm?"
+                        placeholder={t('guide.chatPlaceholder')}
                         value={chatInput}
                         onChange={e => setChatInput(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleChatSubmit()}
                       />
-                      <button onClick={handleChatSubmit}>Sor</button>
+                      <button onClick={handleChatSubmit}>{t('guide.ask')}</button>
                     </div>
                   </div>
                 )}

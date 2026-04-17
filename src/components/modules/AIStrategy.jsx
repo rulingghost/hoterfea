@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BrainCircuit, LayoutDashboard, MessageSquareText, DollarSign, TrendingUp, SmilePlus, ShieldAlert } from 'lucide-react';
 import AIDashboard from './ai/AIDashboard';
@@ -9,12 +10,12 @@ import AISentiment from './ai/AISentiment';
 import AIAnomaly from './ai/AIAnomaly';
 
 const TABS = [
-  { id: 'dashboard', label: 'AI Dashboard', icon: <LayoutDashboard size={16}/>, color: '#3b82f6' },
-  { id: 'chatbot',   label: 'AI Asistan',   icon: <MessageSquareText size={16}/>, color: '#8b5cf6' },
-  { id: 'pricing',   label: 'Fiyatlandırma', icon: <DollarSign size={16}/>, color: '#10b981' },
-  { id: 'forecast',  label: 'Talep Tahmini', icon: <TrendingUp size={16}/>, color: '#f59e0b' },
-  { id: 'sentiment', label: 'Sentiment',     icon: <SmilePlus size={16}/>, color: '#ec4899' },
-  { id: 'anomaly',   label: 'Anomali',       icon: <ShieldAlert size={16}/>, color: '#ef4444' },
+  { id: 'dashboard', icon: <LayoutDashboard size={16}/>, color: '#3b82f6' },
+  { id: 'chatbot',   icon: <MessageSquareText size={16}/>, color: '#8b5cf6' },
+  { id: 'pricing',   icon: <DollarSign size={16}/>, color: '#10b981' },
+  { id: 'forecast',  icon: <TrendingUp size={16}/>, color: '#f59e0b' },
+  { id: 'sentiment', icon: <SmilePlus size={16}/>, color: '#ec4899' },
+  { id: 'anomaly',   icon: <ShieldAlert size={16}/>, color: '#ef4444' },
 ];
 
 const TAB_COMPONENTS = {
@@ -27,8 +28,24 @@ const TAB_COMPONENTS = {
 };
 
 const AIStrategy = () => {
+  const { mt, isEn } = useModuleTranslation();
+  const _t = (k) => mt('aiStrategy.' + k);
+  const _c = (k) => mt('common.' + k);
   const [activeTab, setActiveTab] = useState('dashboard');
   const ActiveComponent = TAB_COMPONENTS[activeTab];
+
+  const getSubTitle = () => isEn ? 'Machine learning based hotel operations center' : 'Makine öğrenmesi tabanlı otel operasyon merkezi';
+  const getTabLabel = (id) => {
+    const labels = {
+      dashboard: 'AI Dashboard',
+      chatbot: _t('aiChatbot'),
+      pricing: isEn ? 'Pricing' : 'Fiyatlandırma',
+      forecast: _t('demandForecast'),
+      sentiment: isEn ? 'Sentiment' : 'Sentiment',
+      anomaly: isEn ? 'Anomaly Detection' : 'Anomali Tespiti'
+    };
+    return labels[id];
+  };
 
   return (
     <div className="ai-hub">
@@ -38,12 +55,12 @@ const AIStrategy = () => {
           <div className="ai-logo-ring"><BrainCircuit size={22}/></div>
           <div>
             <h2>AI Strategy Hub</h2>
-            <span>Makine öğrenmesi tabanlı otel operasyon merkezi</span>
+            <span>{getSubTitle()}</span>
           </div>
         </div>
         <div className="ai-hub-status">
           <span className="status-dot"/>
-          <span>AI Motoru Aktif</span>
+          <span>{isEn ? 'AI Engine Active' : 'AI Motoru Aktif'}</span>
         </div>
       </div>
 
@@ -57,7 +74,7 @@ const AIStrategy = () => {
             style={activeTab === tab.id ? { color: tab.color, borderColor: tab.color } : {}}
           >
             {React.cloneElement(tab.icon, { color: activeTab === tab.id ? tab.color : '#94a3b8' })}
-            {tab.label}
+            {getTabLabel(tab.id)}
           </button>
         ))}
       </div>
@@ -78,7 +95,7 @@ const AIStrategy = () => {
       </div>
 
       <style>{`
-        /* ═══════ AI HUB LAYOUT ═══════ */
+        /* â•â•â•â•â•â•â• AI HUB LAYOUT â•â•â•â•â•â•â• */
         .ai-hub { display:flex; flex-direction:column; min-height:100%; }
 
         .ai-hub-header { display:flex; justify-content:space-between; align-items:center; padding:24px 28px 0; }
@@ -89,16 +106,16 @@ const AIStrategy = () => {
         .ai-hub-status { display:flex; align-items:center; gap:8px; padding:8px 16px; border-radius:20px; background:#f0fdf4; border:1px solid #dcfce7; font-size:11px; font-weight:800; color:#10b981; }
         .status-dot { width:8px; height:8px; border-radius:50%; background:#10b981; animation:pulse-dot 2s infinite; }
 
-        /* ═══════ TAB BAR ═══════ */
+        /* â•â•â•â•â•â•â• TAB BAR â•â•â•â•â•â•â• */
         .ai-tab-bar { display:flex; gap:4px; padding:16px 28px 0; border-bottom:1.5px solid #e2e8f0; overflow-x:auto; }
         .ai-tab { display:flex; align-items:center; gap:8px; padding:10px 18px; border:none; background:none; font-size:13px; font-weight:700; color:#94a3b8; cursor:pointer; border-bottom:2.5px solid transparent; transition:0.2s; white-space:nowrap; border-radius:10px 10px 0 0; }
         .ai-tab:hover { color:#475569; background:#f8fafc; }
         .ai-tab.active { color:#3b82f6; border-bottom-color:#3b82f6; background:white; }
 
-        /* ═══════ CONTENT ═══════ */
+        /* â•â•â•â•â•â•â• CONTENT â•â•â•â•â•â•â• */
         .ai-hub-content { flex:1; padding:20px 28px 28px; overflow-y:auto; }
 
-        /* ═══════ DASHBOARD TAB ═══════ */
+        /* â•â•â•â•â•â•â• DASHBOARD TAB â•â•â•â•â•â•â• */
         .ai-dash { display:flex; flex-direction:column; gap:20px; }
         .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
         .kpi-card { background:white; border:1.5px solid #e2e8f0; border-radius:18px; padding:20px; position:relative; overflow:hidden; }
@@ -132,7 +149,7 @@ const AIStrategy = () => {
         .ins-body p { font-size:11px; color:#475569; line-height:1.5; margin:0; }
         .ins-impact { font-size:10px; font-weight:800; color:#10b981; white-space:nowrap; flex-shrink:0; margin-top:2px; }
 
-        /* ═══════ CHATBOT TAB ═══════ */
+        /* â•â•â•â•â•â•â• CHATBOT TAB â•â•â•â•â•â•â• */
         .ai-chat { display:flex; flex-direction:column; height:calc(100vh - 220px); min-height:500px; }
         .chat-quick { display:flex; align-items:center; gap:10px; padding:12px 0; flex-wrap:nowrap; overflow-x:auto; }
         .chat-quick > span { font-size:12px; font-weight:700; color:#64748b; white-space:nowrap; }
@@ -163,7 +180,7 @@ const AIStrategy = () => {
         .chat-send:disabled { opacity:0.4; }
         .chat-reset { width:42px; height:42px; border-radius:12px; background:#f1f5f9; color:#64748b; display:flex; align-items:center; justify-content:center; border:none; cursor:pointer; }
 
-        /* ═══════ PRICING TAB ═══════ */
+        /* â•â•â•â•â•â•â• PRICING TAB â•â•â•â•â•â•â• */
         .ai-pricing { display:flex; flex-direction:column; gap:20px; }
         .pricing-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
         .ps-card { background:white; border:1.5px solid #e2e8f0; border-radius:16px; padding:18px 20px; display:flex; align-items:center; gap:14px; }
@@ -205,7 +222,7 @@ const AIStrategy = () => {
         .pricing-chart-card { background:white; border:1.5px solid #e2e8f0; border-radius:20px; padding:20px; }
         .pricing-chart-card h3 { font-size:14px; font-weight:800; color:#1e293b; margin-bottom:16px; }
 
-        /* ═══════ FORECAST TAB ═══════ */
+        /* â•â•â•â•â•â•â• FORECAST TAB â•â•â•â•â•â•â• */
         .ai-forecast { display:flex; flex-direction:column; gap:20px; }
         .fc-kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
         .fc-kpi { background:white; border:1.5px solid #e2e8f0; border-radius:16px; padding:16px 18px; }
@@ -215,7 +232,7 @@ const AIStrategy = () => {
         .fc-chart-card h3 { font-size:14px; font-weight:800; color:#1e293b; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
         .fc-bottom-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 
-        /* ═══════ SENTIMENT TAB ═══════ */
+        /* â•â•â•â•â•â•â• SENTIMENT TAB â•â•â•â•â•â•â• */
         .ai-sentiment { display:flex; flex-direction:column; gap:20px; }
         .sent-top { display:grid; grid-template-columns:220px 1fr 280px; gap:16px; align-items:start; }
         .overall-score { background:white; border:1.5px solid #e2e8f0; border-radius:20px; padding:24px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; }
@@ -262,7 +279,7 @@ const AIStrategy = () => {
         .rev-body p { font-size:12px; color:#475569; line-height:1.5; margin:0 0 6px; }
         .rev-stars { display:flex; gap:2px; }
 
-        /* ═══════ ANOMALY TAB ═══════ */
+        /* â•â•â•â•â•â•â• ANOMALY TAB â•â•â•â•â•â•â• */
         .ai-anomaly { display:flex; flex-direction:column; gap:20px; }
         .anomaly-top { display:grid; grid-template-columns:200px 1fr 280px; gap:16px; align-items:start; }
         .risk-score-card { background:white; border:1.5px solid #e2e8f0; border-radius:20px; padding:24px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; }
@@ -306,7 +323,7 @@ const AIStrategy = () => {
         .ac-action { padding:8px 14px; border-radius:10px; border:1.5px solid #e2e8f0; background:white; font-size:11px; font-weight:700; color:#475569; cursor:pointer; white-space:nowrap; flex-shrink:0; transition:0.2s; }
         .ac-action:hover { background:#3b82f6; color:white; border-color:#3b82f6; }
 
-        /* ═══════ RESPONSIVE ═══════ */
+        /* â•â•â•â•â•â•â• RESPONSIVE â•â•â•â•â•â•â• */
         @media(max-width:1200px) {
           .kpi-row, .fc-kpi-row { grid-template-columns:repeat(2,1fr); }
           .pricing-grid { grid-template-columns:repeat(2,1fr); }
@@ -319,3 +336,5 @@ const AIStrategy = () => {
 };
 
 export default AIStrategy;
+
+

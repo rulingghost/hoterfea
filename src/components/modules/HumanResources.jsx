@@ -1,51 +1,60 @@
 import React, { useState } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Users, Plus, Search, Mail, Phone, Calendar,
-  Star, TrendingUp, Clock, Edit, X, CheckCircle,
-  Briefcase, Award
-} from 'lucide-react';
-
-const DEPARTMENTS = ['Resepsiyon','Kat Hizmetleri','Restoran','Teknik','Mutfak','Yönetim','Güvenlik','SPA'];
-const POSITIONS   = ['Müdür','Şef','Uzman','Teknisyen','Garson','Resepsiyonist','Güvenlik Görevlisi'];
+import { Users, Plus, Search, Edit, X, CheckCircle } from 'lucide-react';
 
 const INITIAL_STAFF = [
-  { id:'HR-001', name:'Fatma Kara',    dept:'Resepsiyon',     pos:'Şef',         phone:'0532 100 1001', email:'fatma@hotel.com', salary:18000, start:'2022-03-01', status:'aktif', shift:'Sabah' },
-  { id:'HR-002', name:'Mehmet Demir',  dept:'Teknik',         pos:'Teknisyen',   phone:'0533 200 2002', email:'mehmet@hotel.com', salary:16000, start:'2021-06-15', status:'aktif', shift:'Vardiya' },
-  { id:'HR-003', name:'Ayşe Şahin',   dept:'Kat Hizmetleri', pos:'Uzman',       phone:'0534 300 3003', email:'ayse@hotel.com',   salary:14000, start:'2023-01-10', status:'aktif', shift:'Sabah' },
-  { id:'HR-004', name:'Ali Çelik',     dept:'Restoran',       pos:'Garson',      phone:'0535 400 4004', email:'ali@hotel.com',    salary:13500, start:'2023-08-20', status:'aktif', shift:'Akşam' },
-  { id:'HR-005', name:'Zeynep Kurt',  dept:'Yönetim',        pos:'Müdür',       phone:'0536 500 5005', email:'zeynep@hotel.com', salary:35000, start:'2019-04-01', status:'aktif', shift:'Tam Gün' },
-  { id:'HR-006', name:'Emre Öztürk',  dept:'Güvenlik',       pos:'Güvenlik Görevlisi', phone:'0537 600 6006', email:'emre@hotel.com', salary:15000, start:'2022-11-01', status:'izin', shift:'Gece' },
+  { id:'HR-001', name:'Fatma Kara',   dept:'Resepsiyon',    pos:'Şef',          phone:'0532 100 1001', email:'fatma@hotel.com',  salary:18000, start:'2022-03-01', status:'aktif', shift:'Sabah' },
+  { id:'HR-002', name:'Mehmet Demir', dept:'Teknik',        pos:'Teknisyen',    phone:'0533 200 2002', email:'mehmet@hotel.com', salary:16000, start:'2021-06-15', status:'aktif', shift:'Vardiya' },
+  { id:'HR-003', name:'Ayşe Şahin',  dept:'Kat Hizmetleri',pos:'Uzman',        phone:'0534 300 3003', email:'ayse@hotel.com',   salary:14000, start:'2023-01-10', status:'aktif', shift:'Sabah' },
+  { id:'HR-004', name:'Ali Çelik',   dept:'Restoran',      pos:'Garson',       phone:'0535 400 4004', email:'ali@hotel.com',    salary:13500, start:'2023-08-20', status:'aktif', shift:'Akşam' },
+  { id:'HR-005', name:'Zeynep Kurt', dept:'Yönetim',       pos:'Müdür',        phone:'0536 500 5005', email:'zeynep@hotel.com', salary:35000, start:'2019-04-01', status:'aktif', shift:'Tam Gün' },
+  { id:'HR-006', name:'Emre Öztürk', dept:'Güvenlik',      pos:'Güvenlik Gör.',phone:'0537 600 6006', email:'emre@hotel.com',   salary:15000, start:'2022-11-01', status:'izin',  shift:'Gece' },
 ];
 
-const SHIFTS = ['Sabah (07:00-15:00)', 'Akşam (15:00-23:00)', 'Gece (23:00-07:00)', 'Tam Gün (09:00-18:00)', 'Vardiya'];
-
 const HumanResources = () => {
+  const { mt, language } = useModuleTranslation();
+  const isEn = language === 'en';
+  const _t = (k) => mt('hr.' + k);
+  const _c = (k) => mt('common.' + k);
   const { addNotification } = useHotel();
+
+  const DEPARTMENTS = ['Resepsiyon','Kat Hizmetleri','Restoran','Teknik','Mutfak','Yönetim','Güvenlik','SPA'];
+  const DEPT_EN = ['Reception','Housekeeping','Restaurant','Technical','Kitchen','Management','Security','SPA'];
+  const deptDisplay = (d) => { if (!isEn) return d; const i = DEPARTMENTS.indexOf(d); return i >= 0 ? DEPT_EN[i] : d; };
+
+  const POSITIONS = ['Müdür','Şef','Uzman','Teknisyen','Garson','Resepsiyonist','Güvenlik Görevlisi'];
+  const POS_EN = ['Manager','Supervisor','Specialist','Technician','Waiter','Receptionist','Security Officer'];
+  const posDisplay = (p) => { if (!isEn) return p; const i = POSITIONS.indexOf(p); return i >= 0 ? POS_EN[i] : p; };
+
+  const SHIFTS = ['Sabah (07:00-15:00)','Akşam (15:00-23:00)','Gece (23:00-07:00)','Tam Gün (09:00-18:00)','Vardiya'];
+  const SHIFT_EN = ['Morning (07:00-15:00)','Evening (15:00-23:00)','Night (23:00-07:00)','Full Day (09:00-18:00)','Rotating'];
+  const shiftDisplay = (s) => { if (!isEn) return s; const i = SHIFTS.indexOf(s); return i >= 0 ? SHIFT_EN[i] : s; };
+
   const [staff, setStaff]     = useState(INITIAL_STAFF);
   const [search, setSearch]   = useState('');
-  const [deptFilter, setDept] = useState('Tümü');
+  const [deptFilter, setDept] = useState('all');
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [form, setForm] = useState({ name:'', dept:DEPARTMENTS[0], pos:POSITIONS[0], phone:'', email:'', salary:'', start:'2026-03-14', status:'aktif', shift:'Sabah (07:00-15:00)' });
-  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const [form, setForm] = useState({ name:'', dept:'Resepsiyon', pos:'Müdür', phone:'', email:'', salary:'', start:'2026-03-14', status:'aktif', shift:'Sabah (07:00-15:00)' });
+  const set = (k, v) => setForm(p => ({...p, [k]: v}));
 
   const filtered = staff.filter(s => {
     const q = search.toLowerCase();
-    return (deptFilter==='Tümü'||s.dept===deptFilter) && (!q||s.name.toLowerCase().includes(q)||s.dept.toLowerCase().includes(q));
+    return (deptFilter === 'all' || s.dept === deptFilter) && (!q || s.name.toLowerCase().includes(q) || s.dept.toLowerCase().includes(q));
   });
 
   const submit = (e) => {
     e.preventDefault();
     if (editMode && selected) {
-      setStaff(p=>p.map(s=>s.id===selected.id?{...s,...form}:s));
-      addNotification({ type:'success', msg:`Personel güncellendi: ${form.name}` });
+      setStaff(p => p.map(s => s.id === selected.id ? {...s, ...form} : s));
+      addNotification({ type:'success', msg: `${language === 'tr' ? 'Personel güncellendi' : 'Staff updated'}: ${form.name}` });
     } else {
-      const id = `HR-${String(staff.length+1).padStart(3,'0')}`;
-      setStaff(p=>[...p,{ ...form, id, salary:Number(form.salary) }]);
-      addNotification({ type:'success', msg:`Yeni personel eklendi: ${form.name}` });
+      const id = `HR-${String(staff.length + 1).padStart(3,'0')}`;
+      setStaff(p => [...p, { ...form, id, salary: Number(form.salary) }]);
+      addNotification({ type:'success', msg: `${language === 'tr' ? 'Yeni personel eklendi' : 'Staff added'}: ${form.name}` });
     }
     setShowForm(false); setEditMode(false); setSelected(null);
   };
@@ -56,50 +65,55 @@ const HumanResources = () => {
   };
 
   const toggleStatus = (id) => {
-    setStaff(p=>p.map(s=>s.id===id?{...s,status:s.status==='aktif'?'izin':'aktif'}:s));
+    setStaff(p => p.map(s => s.id === id ? {...s, status: s.status === 'aktif' ? 'izin' : 'aktif'} : s));
   };
 
-  const totalSalary = staff.filter(s=>s.status==='aktif').reduce((sum,s)=>sum+s.salary,0);
-  const byDept = DEPARTMENTS.reduce((acc,d)=>({...acc,[d]:staff.filter(s=>s.dept===d).length}),{});
+  const totalSalary = staff.filter(s => s.status === 'aktif').reduce((sum, s) => sum + s.salary, 0);
+  const byDept      = [...new Set(staff.map(s => s.dept))].reduce((acc, d) => ({...acc, [d]: staff.filter(s => s.dept === d).length}), {});
+
+  const statusLabel = (s) => s === 'aktif'
+    ? (language === 'tr' ? 'Aktif'  : 'Active')
+    : (language === 'tr' ? 'İzinde' : 'On Leave');
+
+  const allDepts = ['all', ...DEPARTMENTS];
 
   return (
     <div className="hr-layout">
       {/* Left: Staff List */}
       <div className="hr-left">
         <div className="hrl-head">
-          <h2>Personel Yönetimi</h2>
-          <button className="btn-primary sm" onClick={()=>{ setEditMode(false); setForm({ name:'',dept:DEPARTMENTS[0],pos:POSITIONS[0],phone:'',email:'',salary:'',start:'2026-03-14',status:'aktif',shift:'Sabah (07:00-15:00)' }); setShowForm(true); }}>
-            <Plus size={14}/> Personel Ekle
+          <h2>{_t('title')}</h2>
+          <button className="btn-primary sm" onClick={() => { setEditMode(false); setForm({ name:'',dept:'Resepsiyon',pos:'Müdür',phone:'',email:'',salary:'',start:'2026-03-14',status:'aktif',shift:'Sabah (07:00-15:00)' }); setShowForm(true); }}>
+            <Plus size={14}/> {language === 'tr' ? 'Personel Ekle' : 'Add Staff'}
           </button>
         </div>
 
-        {/* KPI */}
         <div className="hr-kpi">
-          <div className="hk"><strong>{staff.filter(s=>s.status==='aktif').length}</strong><span>Aktif</span></div>
-          <div className="hk"><strong style={{color:'#f59e0b'}}>{staff.filter(s=>s.status==='izin').length}</strong><span>İzinde</span></div>
-          <div className="hk"><strong style={{color:'#10b981'}}>₺{(totalSalary/1000).toFixed(0)}K</strong><span>Maaş/Ay</span></div>
+          <div className="hk"><strong>{staff.filter(s => s.status === 'aktif').length}</strong><span>{language === 'tr' ? 'Aktif' : 'Active'}</span></div>
+          <div className="hk"><strong style={{color:'#f59e0b'}}>{staff.filter(s => s.status === 'izin').length}</strong><span>{language === 'tr' ? 'İzinde' : 'On Leave'}</span></div>
+          <div className="hk"><strong style={{color:'#10b981'}}>₺{(totalSalary/1000).toFixed(0)}K</strong><span>{language === 'tr' ? 'Maaş/Ay' : 'Salary/Mo'}</span></div>
         </div>
 
-        {/* Search + Filter */}
         <div className="hr-filters">
-          <div className="search-box"><Search size={14}/><input placeholder="İsim, departman..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+          <div className="search-box"><Search size={14}/><input placeholder={language === 'tr' ? 'İsim, departman...' : 'Name, department...'} value={search} onChange={e => setSearch(e.target.value)}/></div>
           <div className="dept-tabs">
-            {['Tümü',...DEPARTMENTS].map(d=>(
-              <button key={d} className={`dt ${deptFilter===d?'active':''}`} onClick={()=>setDept(d)}>{d}</button>
+            {allDepts.map(d => (
+              <button key={d} className={`dt ${deptFilter === d ? 'active' : ''}`} onClick={() => setDept(d)}>
+                {d === 'all' ? _c('all') : deptDisplay(d)}
+              </button>
             ))}
           </div>
         </div>
 
-        {/* List */}
         <div className="staff-list">
-          {filtered.map((s,i)=>(
-            <motion.button key={s.id} className={`staff-item ${selected?.id===s.id?'active':''}`} onClick={()=>setSelected(s)} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.04}}>
-              <div className="si-av" style={{background:s.status==='izin'?'#f1f5f9':'#eff6ff',color:s.status==='izin'?'#94a3b8':'#3b82f6'}}>{s.name[0]}</div>
+          {filtered.map((s, i) => (
+            <motion.button key={s.id} className={`staff-item ${selected?.id === s.id ? 'active' : ''}`} onClick={() => setSelected(s)} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.04}}>
+              <div className="si-av" style={{background:s.status === 'izin' ? '#f1f5f9' : '#eff6ff', color:s.status === 'izin' ? '#94a3b8' : '#3b82f6'}}>{s.name[0]}</div>
               <div className="si-info">
                 <strong>{s.name}</strong>
-                <span>{s.dept} · {s.pos}</span>
+                <span>{deptDisplay(s.dept)} · {posDisplay(s.pos)}</span>
               </div>
-              <span className={`si-status ${s.status}`}>{s.status==='aktif'?'●':'○'}</span>
+              <span className={`si-status ${s.status}`}>●</span>
             </motion.button>
           ))}
         </div>
@@ -111,22 +125,22 @@ const HumanResources = () => {
           {showForm ? (
             <motion.form key="form" className="hr-form" onSubmit={submit} initial={{opacity:0,x:20}} animate={{opacity:1,x:0}}>
               <div className="form-head">
-                <h3>{editMode?'Personel Düzenle':'Yeni Personel'}</h3>
-                <button type="button" onClick={()=>{setShowForm(false);setEditMode(false);}}><X size={18}/></button>
+                <h3>{editMode ? (language === 'tr' ? 'Personel Düzenle' : 'Edit Staff') : (language === 'tr' ? 'Yeni Personel' : 'New Staff')}</h3>
+                <button type="button" onClick={() => { setShowForm(false); setEditMode(false); }}><X size={18}/></button>
               </div>
               <div className="fg-grid">
-                <div className="fg full"><label>Ad Soyad *</label><input value={form.name} onChange={e=>set('name',e.target.value)} required placeholder="Ad Soyad"/></div>
-                <div className="fg"><label>Departman</label><select value={form.dept} onChange={e=>set('dept',e.target.value)}>{DEPARTMENTS.map(d=><option key={d}>{d}</option>)}</select></div>
-                <div className="fg"><label>Pozisyon</label><select value={form.pos} onChange={e=>set('pos',e.target.value)}>{POSITIONS.map(p=><option key={p}>{p}</option>)}</select></div>
-                <div className="fg"><label>Telefon</label><input value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="0532 xxx xxxx"/></div>
-                <div className="fg"><label>E-posta</label><input value={form.email} onChange={e=>set('email',e.target.value)} placeholder="ad@hotel.com"/></div>
-                <div className="fg"><label>Maaş (₺)</label><input type="number" value={form.salary} onChange={e=>set('salary',e.target.value)} placeholder="0"/></div>
-                <div className="fg"><label>İşe Başlama</label><input type="date" value={form.start} onChange={e=>set('start',e.target.value)}/></div>
-                <div className="fg full"><label>Vardiya</label><select value={form.shift} onChange={e=>set('shift',e.target.value)}>{SHIFTS.map(s=><option key={s}>{s}</option>)}</select></div>
+                <div className="fg full"><label>{language === 'tr' ? 'Ad Soyad *' : 'Full Name *'}</label><input value={form.name} onChange={e => set('name',e.target.value)} required placeholder={language === 'tr' ? 'Ad Soyad' : 'Full Name'}/></div>
+                <div className="fg"><label>{isEn ? 'Department' : 'Departman'}</label><select value={form.dept} onChange={e => set('dept',e.target.value)}>{DEPARTMENTS.map(d => <option key={d} value={d}>{deptDisplay(d)}</option>)}</select></div>
+                <div className="fg"><label>{isEn ? 'Position' : 'Pozisyon'}</label><select value={form.pos} onChange={e => set('pos',e.target.value)}>{POSITIONS.map(p => <option key={p} value={p}>{posDisplay(p)}</option>)}</select></div>
+                <div className="fg"><label>{language === 'tr' ? 'Telefon' : 'Phone'}</label><input value={form.phone} onChange={e => set('phone',e.target.value)} placeholder="0532 xxx xxxx"/></div>
+                <div className="fg"><label>E-mail</label><input value={form.email} onChange={e => set('email',e.target.value)} placeholder="ad@hotel.com"/></div>
+                <div className="fg"><label>{language === 'tr' ? 'Maaş (₺)' : 'Salary (₺)'}</label><input type="number" value={form.salary} onChange={e => set('salary',e.target.value)} placeholder="0"/></div>
+                <div className="fg"><label>{language === 'tr' ? 'İşe Başlama' : 'Start Date'}</label><input type="date" value={form.start} onChange={e => set('start',e.target.value)}/></div>
+                <div className="fg full"><label>{isEn ? 'Shift' : 'Vardiya'}</label><select value={form.shift} onChange={e => set('shift',e.target.value)}>{SHIFTS.map(s => <option key={s} value={s}>{shiftDisplay(s)}</option>)}</select></div>
               </div>
               <div className="form-foot">
-                <button type="button" className="btn-cancel" onClick={()=>setShowForm(false)}>İptal</button>
-                <button type="submit" className="btn-primary">{editMode?'Güncelle':'Ekle'}</button>
+                <button type="button" className="btn-cancel" onClick={() => setShowForm(false)}>{_c('cancel')}</button>
+                <button type="submit" className="btn-primary">{editMode ? _c('update') : _c('add')}</button>
               </div>
             </motion.form>
           ) : selected ? (
@@ -135,45 +149,46 @@ const HumanResources = () => {
                 <div className="sd-av">{selected.name[0]}</div>
                 <div>
                   <h3>{selected.name}</h3>
-                  <span>{selected.pos} · {selected.dept}</span>
-                  <span className={`sd-badge ${selected.status}`}>{selected.status==='aktif'?'Aktif':'İzinde'}</span>
+                  <span>{posDisplay(selected.pos)} · {deptDisplay(selected.dept)}</span>
+                  <span className={`sd-badge ${selected.status}`}>{statusLabel(selected.status)}</span>
                 </div>
-                <button className="edit-btn" onClick={()=>openEdit(selected)}><Edit size={16}/></button>
+                <button className="edit-btn" onClick={() => openEdit(selected)}><Edit size={16}/></button>
               </div>
 
               <div className="sd-grid">
                 {[
-                  ['Personel No', selected.id],
-                  ['Telefon', selected.phone],
-                  ['E-posta', selected.email],
-                  ['Vardiya', selected.shift],
-                  ['İşe Başlama', selected.start],
-                  ['Maaş', `₺${Number(selected.salary).toLocaleString()}/ay`],
-                ].map(([k,v])=>(
+                  [language === 'tr' ? 'Personel No' : 'Staff No', selected.id],
+                  [language === 'tr' ? 'Telefon' : 'Phone', selected.phone],
+                  ['E-mail', selected.email],
+                  [isEn ? 'Shift' : 'Vardiya', shiftDisplay(selected.shift)],
+                  [language === 'tr' ? 'İşe Başlama' : 'Start Date', selected.start],
+                  [language === 'tr' ? 'Maaş' : 'Salary', `₺${Number(selected.salary).toLocaleString()}/${language === 'tr' ? 'ay' : 'mo'}`],
+                ].map(([k, v]) => (
                   <div key={k} className="sdi"><label>{k}</label><strong>{v}</strong></div>
                 ))}
               </div>
 
-              {/* Dept distribution */}
               <div className="dept-chart">
-                <h4>Departman Dağılımı</h4>
-                {Object.entries(byDept).filter(([,v])=>v>0).map(([d,c])=>(
+                <h4>{language === 'tr' ? 'Departman Dağılımı' : 'Department Distribution'}</h4>
+                {Object.entries(byDept).filter(([,v]) => v > 0).map(([d, c]) => (
                   <div key={d} className="dc-row">
-                    <span>{d}</span>
+                    <span>{deptDisplay(d)}</span>
                     <div className="dc-bar-wrap"><div className="dc-bar" style={{width:`${(c/staff.length)*100}%`}}/></div>
                     <strong>{c}</strong>
                   </div>
                 ))}
               </div>
 
-              <button className={`toggle-status-btn ${selected.status}`} onClick={()=>{ toggleStatus(selected.id); setSelected(p=>({...p,status:p.status==='aktif'?'izin':'aktif'})); }}>
-                {selected.status==='aktif' ? '📅 İzne Gönder' : '✅ Aktife Al'}
+              <button className={`toggle-status-btn ${selected.status}`} onClick={() => { toggleStatus(selected.id); setSelected(p => ({...p, status: p.status === 'aktif' ? 'izin' : 'aktif'})); }}>
+                {selected.status === 'aktif'
+                  ? (language === 'tr' ? '🏖 İzne Gönder' : '🏖 Send on Leave')
+                  : (language === 'tr' ? '✅ Aktife Al' : '✅ Set Active')}
               </button>
             </motion.div>
           ) : (
             <motion.div key="empty" className="hr-empty" initial={{opacity:0}} animate={{opacity:1}}>
               <Users size={64} color="#e2e8f0"/>
-              <p>Personel detayı için listeden birini seçin</p>
+              <p>{language === 'tr' ? 'Personel detayı için listeden birini seçin' : 'Select a staff member to view details'}</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -181,7 +196,7 @@ const HumanResources = () => {
 
       <style>{`
         .hr-layout{display:flex;height:calc(100vh - 70px);}
-        .hr-left{width:380px;border-right:1px solid #e2e8f0;background:white;display:flex;flex-direction:column;overflow:hidden;}
+        .hr-left{width:380px;border-right:1px solid #e2e8f0;background:white;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
         .hrl-head{padding:20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f1f5f9;}
         .hrl-head h2{font-size:18px;font-weight:800;color:#1e293b;}
         .btn-primary{padding:10px 18px;border-radius:12px;border:none;background:#3b82f6;color:white;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;}
@@ -207,10 +222,8 @@ const HumanResources = () => {
         .si-info span{font-size:11px;color:#94a3b8;}
         .si-status.aktif{color:#10b981;font-size:16px;}
         .si-status.izin{color:#94a3b8;font-size:16px;}
-
         .hr-right{flex:1;overflow-y:auto;background:#f8fafc;}
         .hr-empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#94a3b8;font-size:14px;}
-
         .hr-form{background:white;border-radius:0;min-height:100%;padding:28px;display:flex;flex-direction:column;gap:20px;}
         .form-head{display:flex;justify-content:space-between;align-items:center;}
         .form-head h3{font-size:18px;font-weight:800;color:#1e293b;}
@@ -222,7 +235,6 @@ const HumanResources = () => {
         .fg input,.fg select{padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;}
         .form-foot{display:flex;justify-content:flex-end;gap:10px;padding-top:8px;}
         .btn-cancel{padding:10px 18px;border-radius:10px;border:1px solid #e2e8f0;background:white;font-weight:700;cursor:pointer;}
-
         .staff-detail{padding:28px;display:flex;flex-direction:column;gap:22px;}
         .sd-head{display:flex;align-items:center;gap:16px;background:white;padding:22px;border-radius:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
         .sd-av{width:56px;height:56px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:16px;display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:900;flex-shrink:0;}

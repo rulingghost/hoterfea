@@ -1,15 +1,20 @@
 import React from 'react';
 import { useHotel } from '../../../context/HotelContext';
+import { useLanguage } from '../../../context/LanguageContext';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { CalendarDays, TrendingUp, BarChart3 } from 'lucide-react';
 
 const AIForecast = () => {
   const { rooms, reservations } = useHotel();
+  const { isEn } = useLanguage();
 
   const occupied = rooms.filter(r => r.status === 'dolu').length;
   const total = rooms.length;
   const baseOcc = Math.round((occupied / total) * 100);
+
+  const DAY_NAMES_TR = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+  const DAY_NAMES_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const forecastData = Array.from({ length: 14 }, (_, i) => {
     const date = new Date();
@@ -23,7 +28,7 @@ const AIForecast = () => {
     const revenue = Math.round((occ / 100) * total * avgRate);
     return {
       tarih: `${date.getDate()}/${date.getMonth() + 1}`,
-      gun: ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'][dayOfWeek],
+      gun: isEn ? DAY_NAMES_EN[dayOfWeek] : DAY_NAMES_TR[dayOfWeek],
       doluluk: occ,
       gelir: revenue,
       isWeekend
@@ -33,7 +38,7 @@ const AIForecast = () => {
   const channelForecast = [
     { name: 'Booking.com', value: 35, color: '#3b82f6' },
     { name: 'Expedia', value: 20, color: '#8b5cf6' },
-    { name: 'Direkt', value: 25, color: '#10b981' },
+    { name: isEn ? 'Direct' : 'Direkt', value: 25, color: '#10b981' },
     { name: 'HotelRunner', value: 12, color: '#f59e0b' },
     { name: 'TUI', value: 8, color: '#ef4444' },
   ];
@@ -43,7 +48,12 @@ const AIForecast = () => {
     const occ = typeRooms.filter(r => r.status === 'dolu').length;
     const rate = Math.round((occ / (typeRooms.length || 1)) * 100);
     const future = Math.min(100, rate + Math.round(Math.random() * 10 - 3));
-    return { type, mevcut: rate, tahmini: future, oda: typeRooms.length };
+    return {
+      type,
+      [isEn ? 'Current' : 'Mevcut']: rate,
+      [isEn ? 'Forecast' : 'Tahmini']: future,
+      oda: typeRooms.length
+    };
   });
 
   const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
@@ -56,10 +66,10 @@ const AIForecast = () => {
     <div className="ai-forecast">
       <div className="fc-kpi-row">
         {[
-          { label: 'Ort. Tahmini Doluluk', val: `%${avgForecast}`, color: '#3b82f6' },
-          { label: 'En Yoğun Gün', val: `${peakDay.gun} ${peakDay.tarih} (%${peakDay.doluluk})`, color: '#10b981' },
-          { label: 'En Düşük Gün', val: `${lowDay.gun} ${lowDay.tarih} (%${lowDay.doluluk})`, color: '#ef4444' },
-          { label: '14 Gün Tahmini Gelir', val: `₺${(totalForecastRev / 1000000).toFixed(1)}M`, color: '#8b5cf6' },
+          { label: isEn ? 'Avg. Forecast Occupancy' : 'Ort. Tahmini Doluluk', val: `%${avgForecast}`, color: '#3b82f6' },
+          { label: isEn ? 'Peak Day' : 'En Yoğun Gün', val: `${peakDay.gun} ${peakDay.tarih} (%${peakDay.doluluk})`, color: '#10b981' },
+          { label: isEn ? 'Lowest Day' : 'En Düşük Gün', val: `${lowDay.gun} ${lowDay.tarih} (%${lowDay.doluluk})`, color: '#ef4444' },
+          { label: isEn ? '14-Day Forecast Revenue' : '14 Gün Tahmini Gelir', val: `₺${(totalForecastRev / 1000000).toFixed(1)}M`, color: '#8b5cf6' },
         ].map((k, i) => (
           <motion.div key={k.label} className="fc-kpi" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
             <span>{k.label}</span>
@@ -69,7 +79,7 @@ const AIForecast = () => {
       </div>
 
       <div className="fc-chart-card">
-        <h3><CalendarDays size={16}/> 14 Günlük Doluluk Projeksiyonu</h3>
+        <h3><CalendarDays size={16}/> {isEn ? '14-Day Occupancy Projection' : '14 Günlük Doluluk Projeksiyonu'}</h3>
         <ResponsiveContainer width="100%" height={260}>
           <AreaChart data={forecastData}>
             <defs>
@@ -80,7 +90,7 @@ const AIForecast = () => {
             </defs>
             <XAxis dataKey="tarih" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }}/>
             <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} tickFormatter={v => `%${v}`}/>
-            <Tooltip formatter={v => `%${v}`} labelFormatter={l => `Tarih: ${l}`}/>
+            <Tooltip formatter={v => `%${v}`} labelFormatter={l => `${isEn ? 'Date' : 'Tarih'}: ${l}`}/>
             <Area type="monotone" dataKey="doluluk" stroke="#3b82f6" strokeWidth={2.5} fill="url(#fcGrad)" dot={{ r: 4, fill: '#3b82f6' }}/>
           </AreaChart>
         </ResponsiveContainer>
@@ -88,14 +98,14 @@ const AIForecast = () => {
 
       <div className="fc-bottom-grid">
         <div className="fc-chart-card">
-          <h3><BarChart3 size={16}/> Oda Tipi Talep Karşılaştırması</h3>
+          <h3><BarChart3 size={16}/> {isEn ? 'Room Type Demand Comparison' : 'Oda Tipi Talep Karşılaştırması'}</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={roomTypeForecast} barGap={6}>
               <XAxis dataKey="type" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }}/>
               <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }}/>
               <Tooltip formatter={v => `%${v}`}/>
-              <Bar dataKey="mevcut" fill="#e2e8f0" radius={[6, 6, 0, 0]} name="Mevcut"/>
-              <Bar dataKey="tahmini" radius={[6, 6, 0, 0]} name="Tahmini">
+              <Bar dataKey={isEn ? 'Current' : 'Mevcut'} fill="#e2e8f0" radius={[6, 6, 0, 0]}/>
+              <Bar dataKey={isEn ? 'Forecast' : 'Tahmini'} radius={[6, 6, 0, 0]}>
                 {roomTypeForecast.map((_, i) => <Cell key={i} fill={COLORS[i]}/>)}
               </Bar>
             </BarChart>
@@ -103,7 +113,7 @@ const AIForecast = () => {
         </div>
 
         <div className="fc-chart-card">
-          <h3><TrendingUp size={16}/> Kanal Bazlı Talep Dağılımı</h3>
+          <h3><TrendingUp size={16}/> {isEn ? 'Channel-Based Demand Distribution' : 'Kanal Bazlı Talep Dağılımı'}</h3>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie data={channelForecast} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value">

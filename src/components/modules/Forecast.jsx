@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion } from 'framer-motion';
 import {
@@ -11,15 +12,18 @@ import {
 } from 'lucide-react';
 
 const Forecast = () => {
+  const { mt, isEn } = useModuleTranslation();
+  const _t = (k) => mt('forecast.' + k);
+  const _c = (k) => mt('common.' + k);
   const { rooms, reservations, stats, cashTransactions, TODAY } = useHotel();
-  const [range, setRange] = useState('30gün');
+  const [range, setRange] = useState('30d');
 
   const totalRooms = rooms.length;
   const baseOcc = stats.occupancyRate;
   const avgRate = 2800;
 
   const forecastData = useMemo(() => {
-    const days = range === '14gün' ? 14 : range === '30gün' ? 30 : 90;
+    const days = range === '14d' ? 14 : range === '30d' ? 30 : 90;
     return Array.from({length: days}, (_, i) => {
       const d = new Date(TODAY);
       d.setDate(d.getDate() + i);
@@ -34,7 +38,7 @@ const Forecast = () => {
       const budgetOcc = Math.min(100, baseOcc + 5);
       return {
         date: `${d.getDate()}/${d.getMonth()+1}`,
-        fullDate: d.toLocaleDateString('tr-TR',{day:'2-digit',month:'short',weekday:'short'}),
+        fullDate: d.toLocaleDateString(isEn ? 'en-US' : 'tr-TR',{day:'2-digit',month:'short',weekday:'short'}),
         occ, rev, b_occ: budgetOcc, isWeekend
       };
     });
@@ -60,26 +64,26 @@ const Forecast = () => {
 
   const insights = useMemo(() => {
     const list = [];
-    if(avgForecastOcc > 80) list.push({type:'success', text:`Ort. doluluk %${avgForecastOcc} — fiyat artışı değerlendirilmeli`});
-    if(avgForecastOcc < 60) list.push({type:'warn', text:`Ort. doluluk %${avgForecastOcc} — kampanya planlaması önerilir`});
-    if(peakDay.occ > 95) list.push({type:'success', text:`${peakDay.fullDate} tarihinde %${peakDay.occ} peak bekleniyor — overbooking riski`});
-    if(lowDay.occ < 40) list.push({type:'warn', text:`${lowDay.fullDate} tarihinde %${lowDay.occ} — last-minute indirim düşünülebilir`});
-    list.push({type:'info', text:`${aboveBudgetDays}/${forecastData.length} gün bütçe hedefinin üzerinde`});
+    if(avgForecastOcc > 80) list.push({type:'success', text: isEn ? `Avg. occupancy %${avgForecastOcc} — consider a rate increase` : `Ort. doluluk %${avgForecastOcc} — fiyat artışı değerlendirilmeli`});
+    if(avgForecastOcc < 60) list.push({type:'warn', text: isEn ? `Avg. occupancy %${avgForecastOcc} — promotional campaign recommended` : `Ort. doluluk %${avgForecastOcc} — kampanya planlaması önerilir`});
+    if(peakDay.occ > 95) list.push({type:'success', text: isEn ? `${peakDay.fullDate}: %${peakDay.occ} peak expected — overbooking risk` : `${peakDay.fullDate} tarihinde %${peakDay.occ} peak bekleniyor — overbooking riski`});
+    if(lowDay.occ < 40) list.push({type:'warn', text: isEn ? `${lowDay.fullDate}: %${lowDay.occ} — consider last-minute discounts` : `${lowDay.fullDate} tarihinde %${lowDay.occ} — last-minute indirim düşünülebilir`});
+    list.push({type:'info', text: isEn ? `${aboveBudgetDays}/${forecastData.length} days above budget target` : `${aboveBudgetDays}/${forecastData.length} gün bütçe hedefinin üzerinde`});
     return list;
-  }, [avgForecastOcc, peakDay, lowDay, aboveBudgetDays, forecastData.length]);
+  }, [avgForecastOcc, peakDay, lowDay, aboveBudgetDays, forecastData.length, isEn]);
 
   return (
     <div className="frc-page">
       <div className="frc-head">
         <div>
-          <h2><TrendingUp size={20}/> İleriye Dönük Tahminleme (Forecast)</h2>
-          <span>Gerçek doluluk verisine dayalı {range.replace('gün',' günlük')} projeksiyon</span>
+          <h2><TrendingUp size={20}/> {isEn ? 'Forward Forecasting' : 'İleriye Dönük Tahminleme (Forecast)'}</h2>
+          <span>{isEn ? `${range.replace('d','')}-day forecast based on real occupancy data` : `Gerçek doluluk verisine dayalı ${range.replace('d',' günlük')} projeksiyon`}</span>
         </div>
         <div className="head-filters">
           <div className="range-pills">
-            {['14gün', '30gün', '90gün'].map(r => (
+            {['14d', '30d', '90d'].map(r => (
               <button key={r} className={`r-pill ${range === r ? 'active' : ''}`} onClick={() => setRange(r)}>
-                {r.replace('gün', ' Gün')}
+                {r.replace('d', isEn ? ' Days' : ' Gün')}
               </button>
             ))}
           </div>
@@ -89,10 +93,10 @@ const Forecast = () => {
       {/* KPI */}
       <div className="frc-kpis">
         {[
-          { label:'Ort. Tahmini Doluluk', val:`%${avgForecastOcc}`, color: avgForecastOcc>75?'#10b981':'#f59e0b' },
-          { label:'Toplam Tahmini Gelir', val:`₺${(totalForecastRev/1000000).toFixed(1)}M`, color:'#3b82f6' },
-          { label:'Peak Gün', val:`${peakDay.fullDate} (%${peakDay.occ})`, color:'#8b5cf6' },
-          { label:'En Düşük Gün', val:`${lowDay.fullDate} (%${lowDay.occ})`, color:'#ef4444' },
+          { label: isEn ? 'Avg. Forecast Occ.' : 'Ort. Tahmini Doluluk', val:`%${avgForecastOcc}`, color: avgForecastOcc>75?'#10b981':'#f59e0b' },
+          { label: isEn ? 'Total Forecast Revenue' : 'Toplam Tahmini Gelir', val:`₺${(totalForecastRev/1000000).toFixed(1)}M`, color:'#3b82f6' },
+          { label: isEn ? 'Peak Day' : 'Peak Gün', val:`${peakDay.fullDate} (%${peakDay.occ})`, color:'#8b5cf6' },
+          { label: isEn ? 'Lowest Day' : 'En Düşük Gün', val:`${lowDay.fullDate} (%${lowDay.occ})`, color:'#ef4444' },
         ].map((k,i) => (
           <motion.div key={i} className="frc-kpi" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:i*0.06}}>
             <span>{k.label}</span>
@@ -105,10 +109,10 @@ const Forecast = () => {
         {/* Ana Grafik */}
         <div className="main-chart-box">
           <div className="mcb-head">
-            <h3>Doluluk & Bütçe Karşılaştırması</h3>
+            <h3>{isEn ? 'Occupancy vs. Budget' : 'Doluluk & Bütçe Karşılaştırması'}</h3>
             <div className="legend">
-              <div className="l-i"><span style={{background:'#3b82f6'}}/> Tahmin</div>
-              <div className="l-i"><span style={{background:'#e2e8f0'}}/> Bütçe Hedefi</div>
+              <div className="l-i"><span style={{background:'#3b82f6'}}/> {isEn ? 'Forecast' : 'Tahmin'}</div>
+              <div className="l-i"><span style={{background:'#e2e8f0'}}/> {isEn ? 'Budget Target' : 'Bütçe Hedefi'}</div>
             </div>
           </div>
           <div className="chart-wrapper">
@@ -123,7 +127,7 @@ const Forecast = () => {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize:10, fill:'#94a3b8'}} interval={Math.floor(forecastData.length/10)}/>
                 <YAxis axisLine={false} tickLine={false} tick={{fontSize:11, fill:'#94a3b8'}} unit="%" domain={[0,100]}/>
-                <Tooltip formatter={(v,n) => n==='occ' ? [`%${v}`,'Tahmin'] : [`%${v}`,'Bütçe']}/>
+                <Tooltip formatter={(v,n) => n==='occ' ? [`%${v}`, isEn?'Forecast':'Tahmin'] : [`%${v}`, isEn?'Budget':'Bütçe']}/>
                 <Area type="monotone" dataKey="b_occ" stroke="#e2e8f0" fill="transparent" strokeDasharray="5 5" />
                 <Area type="monotone" dataKey="occ" stroke="#3b82f6" strokeWidth={2.5} fillOpacity={1} fill="url(#colorOcc)" dot={forecastData.length<=14 ? {r:3,fill:'#3b82f6'} : false}/>
               </AreaChart>
@@ -134,32 +138,32 @@ const Forecast = () => {
         {/* Yan Panel */}
         <div className="forecast-stats">
           <div className="fs-card">
-            <span className="fs-label">Tahmini ADR</span>
+            <span className="fs-label">{isEn ? 'Forecast ADR' : 'Tahmini ADR'}</span>
             <div className="fs-main-row">
               <strong>₺{avgRate.toLocaleString()}</strong>
               <span className="fs-trend up"><ArrowUpRight size={12}/> +%{((avgForecastOcc-baseOcc)/baseOcc*100).toFixed(1)}</span>
             </div>
           </div>
           <div className="fs-card">
-            <span className="fs-label">RevPAR Hedefi</span>
+            <span className="fs-label">{isEn ? 'RevPAR Target' : 'RevPAR Hedefi'}</span>
             <div className="fs-main-row">
               <strong>₺{Math.round(avgRate * avgForecastOcc / 100).toLocaleString()}</strong>
-              <span className={`fs-trend ${avgForecastOcc>75?'top':'warn'}`}>{avgForecastOcc>75?'Hedefte':'Altında'}</span>
+              <span className={`fs-trend ${avgForecastOcc>75?'top':'warn'}`}>{avgForecastOcc>75 ? (isEn?'On Target':'Hedefte') : (isEn?'Below':'Altında')}</span>
             </div>
           </div>
           <div className="fs-card">
-            <span className="fs-label">Haftalık Gelir Projeksiyonu</span>
+            <span className="fs-label">{isEn ? 'Weekly Revenue Projection' : 'Haftalık Gelir Projeksiyonu'}</span>
             <ResponsiveContainer width="100%" height={80}>
               <BarChart data={weeklyAgg}>
                 <Bar dataKey="rev" fill="#3b82f6" radius={[4,4,0,0]}/>
-                <Tooltip formatter={v=>[`₺${(v/1000).toFixed(0)}K`,'Gelir']}/>
+                <Tooltip formatter={v=>[`₺${(v/1000).toFixed(0)}K`, isEn?'Revenue':'Gelir']}/>
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           <div className="smart-forecast">
             <div className="sf-icon"><Zap size={18} color="#f59e0b" fill="#f59e0b"/></div>
-            <h4>AI Tahmin Notları</h4>
+            <h4>{isEn ? 'AI Forecast Notes' : 'AI Tahmin Notları'}</h4>
             {insights.map((ins,i) => (
               <div key={i} className={`ins-item ${ins.type}`}>
                 {ins.type==='warn' ? <AlertTriangle size={12}/> : ins.type==='success' ? <ArrowUpRight size={12}/> : <Info size={12}/>}
@@ -212,3 +216,5 @@ const Forecast = () => {
 };
 
 export default Forecast;
+
+

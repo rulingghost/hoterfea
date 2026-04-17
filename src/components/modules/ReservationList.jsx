@@ -1,17 +1,11 @@
 import React, { useState } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion } from 'framer-motion';
 import {
-  Search, Filter, Plus, Download,
-  ChevronRight, Eye, Edit, LogIn, LogOut, MoreVertical
+  Search, Plus, Download,
+  LogIn, LogOut, MoreVertical
 } from 'lucide-react';
-
-const STATUS_MAP = {
-  'check-in':  { label: 'İç Misafir',  color: '#10b981', bg: '#f0fdf4' },
-  'check-out': { label: 'Çıkış Yaptı', color: '#64748b', bg: '#f8fafc' },
-  'gelecek':   { label: 'Gelecek',      color: '#3b82f6', bg: '#eff6ff' },
-  'iptal':     { label: 'İptal',        color: '#ef4444', bg: '#fef2f2' },
-};
 
 const CHANNEL_COLORS = {
   'Booking.com': '#003580',
@@ -22,39 +16,49 @@ const CHANNEL_COLORS = {
 };
 
 const ReservationList = () => {
-  const { reservations, checkIn, checkOut, addNotification } = useHotel();
+  const { mt, language } = useModuleTranslation();
+  const _t = (k) => mt('resList.' + k);
+  const _c = (k) => mt('common.' + k);
+  const { reservations, checkIn, checkOut } = useHotel();
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('tümü');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [sortKey, setSortKey] = useState('checkIn');
+
+  const STATUS_MAP = {
+    'check-in':  { label: _t('statusIn'),        color: '#10b981', bg: '#f0fdf4' },
+    'check-out': { label: _t('statusOut'),        color: '#64748b', bg: '#f8fafc' },
+    'gelecek':   { label: _t('statusFuture'),     color: '#3b82f6', bg: '#eff6ff' },
+    'iptal':     { label: _t('statusCancelled'),  color: '#ef4444', bg: '#fef2f2' },
+  };
+
+  const FILTERS = [
+    { key: 'all',       label: _t('filterAll'),      count: reservations.length },
+    { key: 'check-in',  label: _t('filterInHouse'),  count: reservations.filter(r => r.status === 'check-in').length },
+    { key: 'gelecek',   label: _t('filterArrivals'), count: reservations.filter(r => r.status === 'gelecek').length },
+    { key: 'check-out', label: _t('filterDeparture'),count: reservations.filter(r => r.status === 'check-out').length },
+    { key: 'iptal',     label: _t('statusCancelled'),count: reservations.filter(r => r.status === 'iptal').length },
+  ];
 
   const filtered = reservations
     .filter(r => {
       const q = search.toLowerCase();
       const matchSearch = !q || r.guest.toLowerCase().includes(q) || r.id.toLowerCase().includes(q) || (r.room || '').includes(q);
-      const matchStatus = filterStatus === 'tümü' || r.status === filterStatus;
+      const matchStatus = filterStatus === 'all' || r.status === filterStatus;
       return matchSearch && matchStatus;
     })
     .sort((a, b) => (a[sortKey] || '').localeCompare(b[sortKey] || ''));
-
-  const handleCheckIn = (resId) => {
-    checkIn(resId);
-  };
-
-  const handleCheckOut = (resId) => {
-    checkOut(resId);
-  };
 
   return (
     <div className="rl-container">
       {/* Header */}
       <div className="rl-header">
         <div>
-          <h2>Rezervasyon Listesi</h2>
-          <span>Tüm kanallardan gelen rezervasyonların tam listesi</span>
+          <h2>{_t('title')}</h2>
+          <span>{_t('subtitle')}</span>
         </div>
         <div className="rl-actions">
-          <button className="btn-outline"><Download size={16}/> Excel İndir</button>
-          <button className="btn-primary"><Plus size={16}/> Yeni Rezervasyon</button>
+          <button className="btn-outline"><Download size={16}/> {_c('export')}</button>
+          <button className="btn-primary"><Plus size={16}/> {_t('newRes')}</button>
         </div>
       </div>
 
@@ -64,22 +68,20 @@ const ReservationList = () => {
           <Search size={16} color="#94a3b8"/>
           <input
             type="text"
-            placeholder="Misafir adı, oda no veya rezervasyon no ara..."
+            placeholder={_c('search')}
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
         </div>
         <div className="status-filters">
-          {['tümü', 'check-in', 'gelecek', 'check-out', 'iptal'].map(s => (
+          {FILTERS.map(f => (
             <button
-              key={s}
-              className={`tab-btn ${filterStatus === s ? 'active' : ''}`}
-              onClick={() => setFilterStatus(s)}
+              key={f.key}
+              className={`tab-btn ${filterStatus === f.key ? 'active' : ''}`}
+              onClick={() => setFilterStatus(f.key)}
             >
-              {STATUS_MAP[s]?.label || 'Tümü'}
-              <span className="tab-count">{
-                s === 'tümü' ? reservations.length : reservations.filter(r => r.status === s).length
-              }</span>
+              {f.label}
+              <span className="tab-count">{f.count}</span>
             </button>
           ))}
         </div>
@@ -90,17 +92,17 @@ const ReservationList = () => {
         <table className="rl-table">
           <thead>
             <tr>
-              <th onClick={() => setSortKey('id')}># No</th>
-              <th onClick={() => setSortKey('guest')}>Misafir</th>
-              <th>Oda</th>
-              <th onClick={() => setSortKey('checkIn')}>Giriş</th>
-              <th onClick={() => setSortKey('checkOut')}>Çıkış</th>
-              <th>Gece</th>
-              <th>Kanal</th>
-              <th>Toplam</th>
-              <th>Bakiye</th>
-              <th>Durum</th>
-              <th>İşlem</th>
+              <th onClick={() => setSortKey('id')}>{_t('colId')}</th>
+              <th onClick={() => setSortKey('guest')}>{_t('colGuest')}</th>
+              <th>{_t('colRoom')}</th>
+              <th onClick={() => setSortKey('checkIn')}>{_c('checkIn')}</th>
+              <th onClick={() => setSortKey('checkOut')}>{_c('checkOut')}</th>
+              <th>{_t('colNights')}</th>
+              <th>{_t('colChannel')}</th>
+              <th>{_t('colTotal')}</th>
+              <th>{_t('colBalance')}</th>
+              <th>{_t('colStatus')}</th>
+              <th>{_c('actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -119,11 +121,11 @@ const ReservationList = () => {
                       <div className="guest-avatar">{r.guest[0]}</div>
                       <div>
                         <strong>{r.guest}</strong>
-                        <span>{r.pax} Kişi</span>
+                        <span>{r.pax} {_c('persons')}</span>
                       </div>
                     </div>
                   </td>
-                  <td>{r.room ? <span className="room-tag">{r.room}</span> : <span className="no-room">Atanmadı</span>}</td>
+                  <td>{r.room ? <span className="room-tag">{r.room}</span> : <span className="no-room">{_c('noData')}</span>}</td>
                   <td>{r.checkIn}</td>
                   <td>{r.checkOut}</td>
                   <td><strong>{r.nights}</strong></td>
@@ -135,7 +137,7 @@ const ReservationList = () => {
                   <td>
                     {r.balance > 0
                       ? <span className="bal-due">₺{r.balance.toLocaleString()}</span>
-                      : <span className="bal-ok">Kapandı</span>}
+                      : <span className="bal-ok">{_c('closed')}</span>}
                   </td>
                   <td>
                     <span className="status-pill" style={{ background: st.bg, color: st.color }}>
@@ -145,13 +147,13 @@ const ReservationList = () => {
                   <td>
                     <div className="action-btns">
                       {r.status === 'gelecek' && (
-                        <button className="act-btn green" onClick={() => handleCheckIn(r.id)} title="Check-in yap">
-                          <LogIn size={14}/> Giriş
+                        <button className="act-btn green" onClick={() => checkIn(r.id)}>
+                          <LogIn size={14}/> {_c('checkIn')}
                         </button>
                       )}
                       {r.status === 'check-in' && (
-                        <button className="act-btn red" onClick={() => handleCheckOut(r.id)} title="Check-out yap">
-                          <LogOut size={14}/> Çıkış
+                        <button className="act-btn red" onClick={() => checkOut(r.id)}>
+                          <LogOut size={14}/> {_c('checkOut')}
                         </button>
                       )}
                       <button className="act-icon"><MoreVertical size={15}/></button>
@@ -165,29 +167,26 @@ const ReservationList = () => {
       </div>
 
       <div className="rl-footer">
-        <span>{filtered.length} rezervasyon listeleniyor</span>
-        <span>Sayfa 1 / 1</span>
+        <span>{filtered.length} {language === 'tr' ? 'rezervasyon' : 'reservations'}</span>
+        <span>1 / 1</span>
       </div>
 
       <style>{`
         .rl-container { padding: 30px; display: flex; flex-direction: column; gap: 20px; }
-
         .rl-header { display: flex; justify-content: space-between; align-items: flex-start; }
         .rl-header h2 { font-size: 24px; font-weight: 800; color: #1e293b; }
         .rl-header span { font-size: 14px; color: #94a3b8; }
         .rl-actions { display: flex; gap: 12px; }
         .btn-outline { padding: 10px 18px; border-radius: 12px; border: 1.5px solid #e2e8f0; background: white; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #475569; }
         .btn-primary { padding: 10px 18px; border-radius: 12px; border: none; background: #3b82f6; color: white; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-
         .rl-filters { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-        .search-box { display: flex; align-items: center; gap: 10px; background: white; border: 1.5px solid #e2e8f0; padding: 10px 16px; border-radius: 12px; min-width: 340px; }
+        .search-box { display: flex; align-items: center; gap: 10px; background: white; border: 1.5px solid #e2e8f0; padding: 10px 16px; border-radius: 12px; min-width: 300px; }
         .search-box input { border: none; outline: none; font-size: 13px; color: #475569; background: transparent; width: 100%; }
-        .status-filters { display: flex; gap: 8px; }
+        .status-filters { display: flex; gap: 8px; flex-wrap: wrap; }
         .tab-btn { padding: 9px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white; font-size: 12px; font-weight: 700; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: 0.2s; }
         .tab-btn.active { background: #1e293b; color: white; border-color: #1e293b; }
         .tab-count { background: #f1f5f9; color: #64748b; padding: 1px 6px; border-radius: 10px; font-size: 11px; }
         .tab-btn.active .tab-count { background: rgba(255,255,255,0.2); color: white; }
-
         .rl-table-wrap { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; }
         .rl-table { width: 100%; border-collapse: collapse; }
         .rl-table thead { background: #f8fafc; }
@@ -196,7 +195,6 @@ const ReservationList = () => {
         .rl-table td { padding: 16px; font-size: 13px; color: #475569; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
         .rl-table tr:last-child td { border-bottom: none; }
         .rl-table tr:hover td { background: #fafbfc; }
-
         .res-id { font-family: monospace; font-size: 12px; font-weight: 700; color: #64748b; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; }
         .guest-cell { display: flex; align-items: center; gap: 10px; }
         .guest-avatar { width: 34px; height: 34px; background: #eff6ff; color: #3b82f6; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; flex-shrink: 0; }
@@ -208,13 +206,11 @@ const ReservationList = () => {
         .bal-due { color: #ef4444; font-weight: 700; }
         .bal-ok  { color: #10b981; font-weight: 700; }
         .status-pill { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; white-space: nowrap; }
-
         .action-btns { display: flex; align-items: center; gap: 8px; }
         .act-btn { padding: 6px 12px; border-radius: 8px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 5px; }
         .act-btn.green { background: #ecfdf5; color: #10b981; }
         .act-btn.red   { background: #fef2f2; color: #ef4444; }
         .act-icon { background: transparent; border: none; color: #94a3b8; cursor: pointer; }
-
         .rl-footer { display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; font-weight: 600; padding: 0 4px; }
       `}</style>
     </div>

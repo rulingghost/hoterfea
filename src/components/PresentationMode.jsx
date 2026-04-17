@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 import '../styles/presentation.css';
-
+import { useLanguage } from '../context/LanguageContext';
 const slides = [
   {
     id: 1,
@@ -256,6 +256,7 @@ const itemVariants = {
 };
 
 const PresentationMode = ({ onBack }) => {
+  const { t } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showNotes, setShowNotes] = useState(false);
   const [selectedModule, setSelectedModule] = useState(null);
@@ -294,14 +295,17 @@ const PresentationMode = ({ onBack }) => {
   }, [currentSlide, onBack]);
 
   const slide = slides[currentSlide];
+  const locSlide = t('presentation.slides')[currentSlide];
 
   return (
     <div className="presentation-root" style={{ 
       position: 'fixed', inset: 0, background: '#020617', 
       display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
     }}>
+      <LanguageSwitcher style={{ position: 'absolute', top: '2rem', right: '14rem', zIndex: 100000 }} />
+      
       <button className="btn-close-presentation" onClick={onBack} style={{ position: 'absolute', top: '2rem', right: '3rem', zIndex: 100000, background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', padding: '1rem 1.5rem', borderRadius: '12px', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '1.1rem', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', transition: 'all 0.3s' }}>
-        <ArrowLeft size={18} /> Ana Sayfaya Dön
+        <ArrowLeft size={18} /> {t('presentation.backToHome')}
       </button>
 
       <div style={{
@@ -363,15 +367,15 @@ const PresentationMode = ({ onBack }) => {
                     variants={itemVariants} 
                     style={slide.type !== 'cover' ? { fontSize: '4.2vw', textTransform: 'none', letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '1.5vw' } : { fontSize: '5vw' }}
                   >
-                    {slide.title}
+                    {locSlide.title}
                   </motion.h1>
 
-                  {slide.subtitle && (
+                  {locSlide.subtitle && (
                     <motion.p 
                       variants={itemVariants}
                       style={{ fontSize: '1.6vw', color: 'var(--accent-primary)', marginBottom: '3vw', fontWeight: 500, lineHeight: 1.4 }}
                     >
-                      {slide.subtitle}
+                      {locSlide.subtitle}
                     </motion.p>
                   )}
 
@@ -402,7 +406,7 @@ const PresentationMode = ({ onBack }) => {
                         <div style={{ color: 'var(--accent-primary)', display: 'flex' }}>
                           {React.cloneElement(item.icon, { style: { width: '1.8vw', height: '1.8vw' }})}
                         </div>
-                        <span style={{ fontSize: '1.2vw', fontWeight: 500, color: '#fff' }}>{item.text}</span>
+                        <span style={{ fontSize: '1.2vw', fontWeight: 500, color: '#fff' }}>{locSlide.items[i]}</span>
                       </motion.div>
                     ))}
                   </motion.div>
@@ -508,7 +512,7 @@ const PresentationMode = ({ onBack }) => {
           <button 
             className="nav-btn" 
             onClick={() => setShowNotes(!showNotes)} 
-            title="Konuşma Notları (N)"
+            title={`${t('presentation.speakNotes')} (N)`}
             style={{ width: '64px', height: '64px', background: showNotes ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.05)' }}
           >
             <MessageSquare size={28} color={showNotes ? '#000' : '#fff'} />
@@ -560,9 +564,9 @@ const PresentationMode = ({ onBack }) => {
               style={{ position: 'absolute', left: '8rem', bottom: '3.5rem' }}
             >
               <h4 style={{ color: 'var(--accent-primary)', margin: 0, marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '1.2rem' }}>
-                <MessageSquare size={20} /> Not
+                <MessageSquare size={20} /> {t('presentation.speakNotes')}
               </h4>
-              <p style={{ fontSize: '1rem', lineHeight: '1.6', margin: 0, color: '#e2e8f0' }}>{slide.notes}</p>
+              <p style={{ fontSize: '1rem', lineHeight: '1.6', margin: 0, color: '#e2e8f0' }}>{locSlide.notes}</p>
             </motion.div>
           )}
         </AnimatePresence>

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion } from 'framer-motion';
 import {
@@ -9,8 +10,11 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const GlobalVision = () => {
+  const { mt, isEn } = useModuleTranslation();
+  const _t = (k) => mt('globalVision.' + k);
+  const _c = (k) => mt('common.' + k);
   const { rooms, reservations, cashTransactions, stats } = useHotel();
-  const [selectedRegion, setSelectedRegion] = useState('Hepsi');
+  const [selectedRegion, setSelectedRegion] = useState('all');
 
   const totalRevenue = useMemo(() => cashTransactions.filter(t=>t.type==='gelir').reduce((s,t)=>s+t.amount,0), [cashTransactions]);
 
@@ -33,7 +37,7 @@ const GlobalVision = () => {
       pinTop: '30%', pinLeft: '72%' },
   ], [stats, totalRevenue]);
 
-  const filteredHotels = selectedRegion === 'Hepsi' ? hotels : hotels.filter(h => h.region === selectedRegion);
+  const filteredHotels = selectedRegion === 'all' ? hotels : hotels.filter(h => h.region === selectedRegion);
   const totalRooms = rooms.length * hotels.length;
   const avgOcc = Math.round(filteredHotels.reduce((s,h) => s+h.occ, 0) / filteredHotels.length);
   const totalRev = filteredHotels.reduce((s,h) => s+h.rev, 0);
@@ -45,13 +49,18 @@ const GlobalVision = () => {
       <div className="gv-head">
         <div>
           <h2><Globe size={20}/> Global Vision</h2>
-          <span>Grup otelleri performans ve lokasyon analizi — Canlı Veri</span>
+          <span>{isEn ? 'Chain hotels performance & location analysis — Live Data' : 'Grup otelleri performans ve lokasyon analizi — Canlı Veri'}</span>
         </div>
         <div className="gv-actions">
           <div className="region-pills">
-            {['Hepsi', 'Türkiye', 'Avrupa', 'MEA'].map(r => (
-              <button key={r} className={`r-pill ${selectedRegion === r ? 'active' : ''}`} onClick={() => setSelectedRegion(r)}>
-                {r}
+            {[
+              { val: 'all',    labelTr: 'Hepsi',   labelEn: 'All'    },
+              { val: 'Türkiye', labelTr: 'Türkiye', labelEn: 'Turkey' },
+              { val: 'Avrupa', labelTr: 'Avrupa',  labelEn: 'Europe' },
+              { val: 'MEA',    labelTr: 'MEA',     labelEn: 'MEA'    },
+            ].map(r => (
+              <button key={r.val} className={`r-pill ${selectedRegion === r.val ? 'active' : ''}`} onClick={() => setSelectedRegion(r.val)}>
+                {isEn ? r.labelEn : r.labelTr}
               </button>
             ))}
           </div>
@@ -61,10 +70,10 @@ const GlobalVision = () => {
       {/* Özet KPIs */}
       <div className="gv-kpis">
         {[
-          { label: 'Toplam Otel', val: filteredHotels.length, icon: <Globe size={18}/>, color: '#3b82f6' },
-          { label: 'Toplam Oda', val: totalRooms, icon: <MapPin size={18}/>, color: '#8b5cf6' },
-          { label: 'Ort. Doluluk', val: `%${avgOcc}`, icon: <BarChart3 size={18}/>, color: avgOcc>75?'#10b981':'#f59e0b' },
-          { label: 'Toplam Gelir', val: `₺${(totalRev/1000).toFixed(0)}K`, icon: <DollarSign size={18}/>, color: '#10b981' },
+          { label: isEn ? 'Total Hotels' : 'Toplam Otel', val: filteredHotels.length, icon: <Globe size={18}/>, color: '#3b82f6' },
+          { label: isEn ? 'Total Rooms' : 'Toplam Oda', val: totalRooms, icon: <MapPin size={18}/>, color: '#8b5cf6' },
+          { label: isEn ? 'Avg. Occupancy' : 'Ort. Doluluk', val: `%${avgOcc}`, icon: <BarChart3 size={18}/>, color: avgOcc>75?'#10b981':'#f59e0b' },
+          { label: isEn ? 'Total Revenue' : 'Toplam Gelir', val: `₺${(totalRev/1000).toFixed(0)}K`, icon: <DollarSign size={18}/>, color: '#10b981' },
         ].map((k,i) => (
           <div key={i} className="gv-kpi">
             <div className="gk-icon" style={{color:k.color}}>{k.icon}</div>
@@ -89,15 +98,15 @@ const GlobalVision = () => {
                   <div className="pin-dot" />
                   <div className="pin-label">
                     <strong>{h.city}</strong>
-                    <span>%{h.occ} doluluk</span>
+                    <span>%{h.occ} {isEn ? 'occ.' : 'doluluk'}</span>
                   </div>
                 </motion.div>
               ))}
             </div>
             <div className="map-stats">
-              <div className="ms-i"><strong>{filteredHotels.length}</strong> Otel</div>
-              <div className="ms-i"><strong>{totalRooms}</strong> Oda</div>
-              <div className="ms-i"><strong>%{avgOcc}</strong> Ort. Doluluk</div>
+              <div className="ms-i"><strong>{filteredHotels.length}</strong> {isEn ? 'Hotels' : 'Otel'}</div>
+              <div className="ms-i"><strong>{totalRooms}</strong> {isEn ? 'Rooms' : 'Oda'}</div>
+              <div className="ms-i"><strong>%{avgOcc}</strong> {isEn ? 'Avg. Occ.' : 'Ort. Doluluk'}</div>
             </div>
           </div>
         </div>
@@ -105,7 +114,7 @@ const GlobalVision = () => {
         {/* performance list */}
         <div className="gv-list-box">
           <div className="list-head">
-            <h3>Hotel Performance</h3>
+            <h3>{isEn ? 'Hotel Performance' : 'Otel Performansı'}</h3>
           </div>
 
           <div className="gv-cards">
@@ -127,14 +136,14 @@ const GlobalVision = () => {
 
                 <div className="gvc-metrics">
                   <div className="gvc-m">
-                    <span className="m-label">Doluluk</span>
+                    <span className="m-label">{isEn ? 'Occupancy' : 'Doluluk'}</span>
                     <div className="m-val-row">
                       <strong>%{h.occ}</strong>
                       <div className="m-bar-bg"><div className="m-bar" style={{ width: `${h.occ}%`, background: h.occ > 80 ? '#10b981' : '#f59e0b' }}/></div>
                     </div>
                   </div>
                   <div className="gvc-m">
-                    <span className="m-label">Günlük Ciro</span>
+                    <span className="m-label">{isEn ? 'Daily Revenue' : 'Günlük Ciro'}</span>
                     <div className="m-val-row">
                       <strong>₺{(h.rev/1000).toFixed(0)}K</strong>
                       <span className={`m-trend ${h.trend.startsWith('+') ? 'up' : 'down'}`}>
@@ -150,12 +159,12 @@ const GlobalVision = () => {
 
           {/* Karşılaştırma Grafiği */}
           <div className="compare-chart">
-            <h4>Doluluk Karşılaştırması</h4>
+            <h4>{isEn ? 'Occupancy Comparison' : 'Doluluk Karşılaştırması'}</h4>
             <ResponsiveContainer width="100%" height={120}>
               <BarChart data={compData} barSize={16}>
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill:'#94a3b8', fontSize:10}}/>
                 <YAxis hide/>
-                <Tooltip formatter={(v,n) => n==='doluluk' ? [`%${v}`,'Doluluk'] : [`₺${v}K`,'Gelir']}/>
+                <Tooltip formatter={(v,n) => n==='doluluk' ? [`%${v}`, isEn?'Occupancy':'Doluluk'] : [`₺${v}K`, isEn?'Revenue':'Gelir']}/>
                 <Bar dataKey="doluluk" fill="#3b82f6" radius={[4,4,0,0]}/>
               </BarChart>
             </ResponsiveContainer>
@@ -217,3 +226,5 @@ const GlobalVision = () => {
 };
 
 export default GlobalVision;
+
+

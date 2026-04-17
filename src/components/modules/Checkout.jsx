@@ -1,65 +1,73 @@
 import React, { useState } from 'react';
+import { useModuleTranslation } from '../../context/LanguageContext';
 import { useHotel } from '../../context/HotelContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, CreditCard, CheckCircle, Printer, X, AlertCircle, Receipt } from 'lucide-react';
 
 const Checkout = () => {
+  const { mt, language } = useModuleTranslation();
+  const _t = (k) => mt('checkout.' + k);
+  const _c = (k) => mt('common.' + k);
   const { reservations, checkOut, makePayment, folioLines, addNotification } = useHotel();
   const [selected, setSelected] = useState(null);
   const [payModal, setPayModal] = useState(false);
-  const [method, setMethod] = useState('Kredi Kartı');
-  const [payAmt, setPayAmt] = useState(0);
   const [doneId, setDoneId] = useState(null);
+  const [payAmt, setPayAmt] = useState(0);
+  const [method, setMethod] = useState(language === 'tr' ? 'Kredi Kartı' : 'Credit Card');
 
-  // Show only guests checking out today or in-house with balance
+  const PAY_METHODS = language === 'tr'
+    ? ['Nakit', 'Kredi Kartı', 'EFT/Havale']
+    : ['Cash', 'Credit Card', 'Bank Transfer'];
+
   const departures = reservations.filter(r => r.status === 'check-in');
 
-  const handleSelect = (r) => {
-    setSelected(r);
-    setPayAmt(r.balance);
-    setDoneId(null);
-  };
-
+  const handleSelect = (r) => { setSelected(r); setPayAmt(r.balance); setDoneId(null); };
   const handlePay = () => {
     if (payAmt > 0) makePayment(selected.id, Number(payAmt), method);
     setPayModal(false);
   };
-
   const handleCheckout = (resId) => {
     checkOut(resId);
     setDoneId(resId);
     setSelected(null);
-    addNotification({ type:'success', msg:`Hızlı check-out: ${selected.guest}` });
+    addNotification({ type: 'success', msg: `${_t('title')}: ${selected.guest}` });
   };
 
   const lines = selected ? (folioLines[selected.id] || []) : [];
-  const total = lines.reduce((s,l)=>s+l.amount, 0);
+  const total = lines.reduce((s, l) => s + l.amount, 0);
+
+  const typeLabel = (type) => type === 'accommodation'
+    ? (language === 'tr' ? 'Konaklama' : 'Accommodation')
+    : (language === 'tr' ? 'Ekstra' : 'Extra');
 
   return (
     <div className="co-layout">
       {/* Left: departure list */}
       <aside className="co-sidebar">
         <div className="cs-head">
-          <h3>Check-Out Bekleyenler</h3>
+          <h3>{_t('pendingList')}</h3>
           <span className="badge">{departures.length}</span>
         </div>
         <div className="co-list">
           {departures.map(r => (
             <button
               key={r.id}
-              className={`co-item ${selected?.id===r.id?'active':''} ${doneId===r.id?'done':''}`}
+              className={`co-item ${selected?.id === r.id ? 'active' : ''} ${doneId === r.id ? 'done' : ''}`}
               onClick={() => handleSelect(r)}
             >
               <div className="coi-room">{r.room}</div>
               <div className="coi-info">
                 <strong>{r.guest}</strong>
-                <span>Çıkış: {r.checkOut}</span>
+                <span>{_c('checkOut')}: {r.checkOut}</span>
               </div>
-              {r.balance>0 ? <div className="coi-bal">₺{r.balance.toLocaleString()}</div>
-                           : <CheckCircle size={16} color="#10b981"/>}
+              {r.balance > 0
+                ? <div className="coi-bal">₺{r.balance.toLocaleString()}</div>
+                : <CheckCircle size={16} color="#10b981"/>}
             </button>
           ))}
-          {departures.length===0 && <p className="empty-msg">Check-out bekleyen misafir yok.</p>}
+          {departures.length === 0 && (
+            <p className="empty-msg">{language === 'tr' ? 'Check-out bekleyen misafir yok.' : 'No guests pending check-out.'}</p>
+          )}
         </div>
       </aside>
 
@@ -70,53 +78,62 @@ const Checkout = () => {
             <div className="cod-head">
               <div>
                 <h2>{selected.guest}</h2>
-                <span>Oda {selected.room} · {selected.board} · {selected.checkIn} — {selected.checkOut}</span>
+                <span>{_c('room')} {selected.room} · {selected.board} · {selected.checkIn} — {selected.checkOut}</span>
               </div>
               <div className="cod-actions">
-                <button className="btn-sec" onClick={()=>window.print()}><Printer size={15}/> Fatura</button>
-                {selected.balance>0 && (
-                  <button className="btn-pay" onClick={()=>setPayModal(true)}>
-                    <CreditCard size={15}/> Tahsilat Al (₺{selected.balance.toLocaleString()})
+                <button className="btn-sec" onClick={() => window.print()}><Printer size={15}/> {language === 'tr' ? 'Fatura' : 'Invoice'}</button>
+                {selected.balance > 0 && (
+                  <button className="btn-pay" onClick={() => setPayModal(true)}>
+                    <CreditCard size={15}/> {language === 'tr' ? 'Tahsilat Al' : 'Collect'} (₺{selected.balance.toLocaleString()})
                   </button>
                 )}
                 <button
-                  className={`btn-checkout ${selected.balance>0?'warn':''}`}
-                  onClick={()=>handleCheckout(selected.id)}
+                  className={`btn-checkout ${selected.balance > 0 ? 'warn' : ''}`}
+                  onClick={() => handleCheckout(selected.id)}
                 >
-                  <LogOut size={15}/> Check-Out'u Tamamla
+                  <LogOut size={15}/> {_t('complete')}
                 </button>
               </div>
             </div>
 
-            {selected.balance>0 && (
+            {selected.balance > 0 && (
               <div className="balance-warn">
                 <AlertCircle size={18}/>
-                <span>Bu misafirin <strong>₺{selected.balance.toLocaleString()}</strong> tutarında ödenmemiş borcu bulunuyor.</span>
+                <span>
+                  {language === 'tr' ? 'Bu misafirin' : 'This guest has'} <strong>₺{selected.balance.toLocaleString()}</strong>{' '}
+                  {language === 'tr' ? 'tutarında ödenmemiş borcu bulunuyor.' : 'outstanding balance.'}
+                </span>
               </div>
             )}
 
             {/* Folio summary */}
             <div className="cod-folio">
-              <h3><Receipt size={16}/> Hesap Özeti</h3>
+              <h3><Receipt size={16}/> {language === 'tr' ? 'Hesap Özeti' : 'Account Summary'}</h3>
               <table className="mini-table">
-                <thead><tr><th>Açıklama</th><th>Tür</th><th className="right">Tutar</th></tr></thead>
+                <thead><tr>
+                  <th>{_c('description')}</th>
+                  <th>{language === 'tr' ? 'Tür' : 'Type'}</th>
+                  <th className="right">{language === 'tr' ? 'Tutar' : 'Amount'}</th>
+                </tr></thead>
                 <tbody>
-                  {lines.map(l=>(
+                  {lines.map(l => (
                     <tr key={l.id}>
                       <td>{l.desc}</td>
-                      <td><span className={`type-tag ${l.type}`}>{l.type==='accommodation'?'Konaklama':'Ekstra'}</span></td>
+                      <td><span className={`type-tag ${l.type}`}>{typeLabel(l.type)}</span></td>
                       <td className="right">₺{l.amount.toLocaleString()}</td>
                     </tr>
                   ))}
-                  {lines.length===0 && <tr><td colSpan={3} className="empty-msg">Tahakkuk yok.</td></tr>}
+                  {lines.length === 0 && (
+                    <tr><td colSpan={3} className="empty-msg">{language === 'tr' ? 'Tahakkuk yok.' : 'No charges.'}</td></tr>
+                  )}
                 </tbody>
               </table>
               <div className="folio-totals">
-                <div className="ft-row"><span>Toplam</span><strong>₺{total.toLocaleString()}</strong></div>
-                <div className="ft-row"><span>Ödenen</span><strong className="green">₺{selected.paid.toLocaleString()}</strong></div>
-                <div className={`ft-row big ${selected.balance>0?'due':''}`}>
-                  <span>{selected.balance>0?'Kalan Borç':'Hesap Durumu'}</span>
-                  <strong>{selected.balance>0?`₺${selected.balance.toLocaleString()}`:'✓ Kapandı'}</strong>
+                <div className="ft-row"><span>{_c('total')}</span><strong>₺{total.toLocaleString()}</strong></div>
+                <div className="ft-row"><span>{language === 'tr' ? 'Ödenen' : 'Paid'}</span><strong className="green">₺{selected.paid.toLocaleString()}</strong></div>
+                <div className={`ft-row big ${selected.balance > 0 ? 'due' : ''}`}>
+                  <span>{selected.balance > 0 ? (language === 'tr' ? 'Kalan Borç' : 'Outstanding') : (language === 'tr' ? 'Hesap Durumu' : 'Status')}</span>
+                  <strong>{selected.balance > 0 ? `₺${selected.balance.toLocaleString()}` : `✓ ${_c('closed')}`}</strong>
                 </div>
               </div>
             </div>
@@ -124,7 +141,7 @@ const Checkout = () => {
         ) : (
           <div className="co-empty">
             <LogOut size={64} color="#e2e8f0"/>
-            <p>Check-out işlemi için soldaki listeden bir misafir seçin</p>
+            <p>{language === 'tr' ? 'Check-out için soldaki listeden misafir seçin' : 'Select a guest from the list to check out'}</p>
           </div>
         )}
       </main>
@@ -132,28 +149,31 @@ const Checkout = () => {
       {/* Payment Modal */}
       <AnimatePresence>
         {payModal && selected && (
-          <motion.div className="modal-overlay" onClick={()=>setPayModal(false)} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-            <motion.div className="pay-modal" onClick={e=>e.stopPropagation()} initial={{scale:.9}} animate={{scale:1}}>
-              <div className="modal-head"><h3>Tahsilat Al — {selected.guest}</h3><button onClick={()=>setPayModal(false)}><X size={20}/></button></div>
+          <motion.div className="modal-overlay" onClick={() => setPayModal(false)} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+            <motion.div className="pay-modal" onClick={e => e.stopPropagation()} initial={{scale:.9}} animate={{scale:1}}>
+              <div className="modal-head">
+                <h3>{language === 'tr' ? 'Tahsilat Al' : 'Collect Payment'} — {selected.guest}</h3>
+                <button onClick={() => setPayModal(false)}><X size={20}/></button>
+              </div>
               <div className="pay-body">
-                <label>Tutar (₺)</label>
-                <input type="number" value={payAmt} onChange={e=>setPayAmt(e.target.value)} min={1}/>
+                <label>{language === 'tr' ? 'Tutar (₺)' : 'Amount (₺)'}</label>
+                <input type="number" value={payAmt} onChange={e => setPayAmt(e.target.value)} min={1}/>
                 <div className="quick-btns">
-                  {[selected.balance, Math.ceil(selected.balance/2), 500, 1000].filter((v,i,a)=>v>0&&a.indexOf(v)===i).map(v=>(
-                    <button key={v} onClick={()=>setPayAmt(v)}>₺{v.toLocaleString()}</button>
+                  {[selected.balance, Math.ceil(selected.balance/2), 500, 1000].filter((v,i,a) => v > 0 && a.indexOf(v) === i).map(v => (
+                    <button key={v} onClick={() => setPayAmt(v)}>₺{v.toLocaleString()}</button>
                   ))}
                 </div>
-                <label>Yöntem</label>
+                <label>{language === 'tr' ? 'Yöntem' : 'Method'}</label>
                 <div className="method-pills">
-                  {['Nakit','Kredi Kartı','EFT/Havale'].map(m=>(
-                    <button key={m} className={method===m?'active':''} onClick={()=>setMethod(m)}>{m}</button>
+                  {PAY_METHODS.map(m => (
+                    <button key={m} className={method === m ? 'active' : ''} onClick={() => setMethod(m)}>{m}</button>
                   ))}
                 </div>
               </div>
               <div className="modal-foot">
-                <button className="btn-cancel" onClick={()=>setPayModal(false)}>İptal</button>
-                <button className="btn-save" onClick={handlePay} disabled={!payAmt||payAmt<=0}>
-                  <CreditCard size={15}/> Tahsil Et
+                <button className="btn-cancel" onClick={() => setPayModal(false)}>{_c('cancel')}</button>
+                <button className="btn-save" onClick={handlePay} disabled={!payAmt || payAmt <= 0}>
+                  <CreditCard size={15}/> {language === 'tr' ? 'Tahsil Et' : 'Collect'}
                 </button>
               </div>
             </motion.div>
@@ -163,12 +183,10 @@ const Checkout = () => {
 
       <style>{`
         .co-layout { display:flex; height:calc(100vh - 70px); }
-
-        .co-sidebar { width:280px; background:white; border-right:1px solid #e2e8f0; display:flex; flex-direction:column; }
+        .co-sidebar { width:280px; background:white; border-right:1px solid #e2e8f0; display:flex; flex-direction:column; flex-shrink:0; }
         .cs-head { padding:18px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between; }
         .cs-head h3 { font-size:15px; font-weight:800; color:#1e293b; }
         .badge { background:#ef4444; color:white; font-size:11px; font-weight:800; padding:2px 8px; border-radius:20px; }
-
         .co-list { flex:1; overflow-y:auto; padding:8px; }
         .co-item { width:100%; display:flex; align-items:center; gap:10px; padding:12px; border-radius:12px; border:none; background:transparent; cursor:pointer; text-align:left; margin-bottom:4px; transition:0.2s; }
         .co-item:hover { background:#f8fafc; }
@@ -180,11 +198,9 @@ const Checkout = () => {
         .coi-info span { font-size:11px; color:#94a3b8; }
         .coi-bal { font-size:12px; font-weight:800; color:#ef4444; }
         .empty-msg { text-align:center; padding:30px; color:#94a3b8; font-size:13px; }
-
         .co-detail { flex:1; padding:30px; overflow-y:auto; }
         .co-empty { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; color:#94a3b8; font-size:14px; font-weight:600; }
         .cod-inner { display:flex; flex-direction:column; gap:20px; }
-
         .cod-head { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; }
         .cod-head h2 { font-size:22px; font-weight:800; color:#1e293b; }
         .cod-head span { font-size:13px; color:#94a3b8; }
@@ -193,9 +209,7 @@ const Checkout = () => {
         .btn-pay { padding:10px 16px; border-radius:10px; border:none; background:#3b82f6; color:white; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; }
         .btn-checkout { padding:10px 18px; border-radius:10px; border:none; background:#10b981; color:white; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; }
         .btn-checkout.warn { background:#f59e0b; }
-
         .balance-warn { display:flex; align-items:center; gap:10px; background:#fffbeb; color:#b45309; padding:14px 18px; border-radius:12px; border:1px solid #fde68a; font-size:13px; }
-
         .cod-folio { background:white; border-radius:20px; border:1px solid #e2e8f0; padding:24px; }
         .cod-folio h3 { font-size:15px; font-weight:800; color:#1e293b; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
         .mini-table { width:100%; border-collapse:collapse; margin-bottom:16px; }
@@ -206,7 +220,6 @@ const Checkout = () => {
         .type-tag { padding:3px 10px; border-radius:20px; font-size:10px; font-weight:800; }
         .type-tag.accommodation { background:#eff6ff; color:#3b82f6; }
         .type-tag.extra { background:#fff7ed; color:#f59e0b; }
-
         .folio-totals { background:#f8fafc; border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:0; max-width:320px; margin-left:auto; }
         .ft-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e2e8f0; font-size:14px; }
         .ft-row:last-child { border-bottom:none; }
@@ -214,8 +227,6 @@ const Checkout = () => {
         .ft-row.big { font-size:16px; font-weight:800; padding-top:14px; }
         .ft-row.big.due strong { color:#ef4444; }
         .green { color:#10b981 !important; }
-
-        /* Modal */
         .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.75); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; z-index:1000; }
         .pay-modal { background:white; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px rgba(0,0,0,0.4); width:400px; }
         .modal-head { padding:20px 26px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; }
