@@ -81,6 +81,7 @@ export const en = {
     finalDesc1: "No installation required. Access a fully-featured demo environment instantly,",
     finalDesc2: "explore our 45+ modules and feel the difference.",
     mobileWarning: "Please access via desktop environment.",
+    mobileWarningOk: "OK",
     searchExamples: ['open restaurant section...', 'search guest Hans Muller...', 'todays occupancy rate...', 'add food order...'],
     moduleNames: {
       dashboard: 'Executive Dashboard',

@@ -14,10 +14,27 @@ const parsePath = (path) => {
   return { path: cleanPath, parts };
 };
 
+const MOBILE_MAX_W = 768;
+
+const mobileDemoBlockedStyle = {
+  height: '100vh',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: '#060a13',
+  color: '#818cf8',
+  fontFamily: 'sans-serif',
+  padding: '20px',
+  textAlign: 'center',
+};
+
 function App() {
   const { t } = useLanguage();
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= MOBILE_MAX_W : false
+  );
   const [userContext, setUserContext] = useState(null);
+  const [landingMobileDemoNotice, setLandingMobileDemoNotice] = useState(false);
 
   // Derive state from current path
   const getStateFromPath = () => {
@@ -68,23 +85,16 @@ function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  // Mobile check
+  // Mobile check (sadece demo/sunum için; ana sayfa mobilde açılır)
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= MOBILE_MAX_W);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  if (isMobile) {
-    return (
-      <div style={{
-        height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: '#060a13', color: '#818cf8', fontFamily: 'sans-serif', padding: '20px', textAlign: 'center'
-      }}>
-        <h2>{t('landing.mobileWarning')}</h2>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (routeState.page !== 'landing') setLandingMobileDemoNotice(false);
+  }, [routeState.page]);
 
   // Tüm uygulama geçişleri pushState: geri tuşu her adımda içeride (landing → demo → app → modüller) kalır
   const navigate = (path) => {
@@ -92,8 +102,20 @@ function App() {
     setRouteState(getStateFromPath());
   };
 
-  const handleOpenDemo = () => navigate('/demo');
-  const handleOpenPresentation = () => navigate('/presentation');
+  const handleOpenDemo = () => {
+    if (isMobile) {
+      setLandingMobileDemoNotice(true);
+      return;
+    }
+    navigate('/demo');
+  };
+  const handleOpenPresentation = () => {
+    if (isMobile) {
+      setLandingMobileDemoNotice(true);
+      return;
+    }
+    navigate('/presentation');
+  };
 
   const handleLogin = (data) => {
     setUserContext(data);
@@ -120,11 +142,26 @@ function App() {
   const effectivePage = (page === 'app' && !userContext) ? 'login' : page;
 
   const renderPage = () => {
+    if (isMobile && effectivePage === 'presentation') {
+      return (
+        <div style={mobileDemoBlockedStyle}>
+          <h2>{t('landing.mobileWarning')}</h2>
+        </div>
+      );
+    }
     if (effectivePage === 'presentation') {
       return <PresentationMode onBack={() => navigate('/')} />;
     }
     if (effectivePage === 'landing') {
       return <LandingPage onOpenDemo={handleOpenDemo} onOpenPresentation={handleOpenPresentation} />;
+    }
+    // Sadece /demo (canlı demo) mobilde blok; /app oturumu yokken giriş ekranı mobilde açılabilir
+    if (isMobile && effectivePage === 'login' && routeState.page === 'login') {
+      return (
+        <div style={mobileDemoBlockedStyle}>
+          <h2>{t('landing.mobileWarning')}</h2>
+        </div>
+      );
     }
     if (effectivePage === 'login') {
       return <Login onLogin={handleLogin} />;
@@ -145,6 +182,54 @@ function App() {
   return (
     <>
       {renderPage()}
+      {routeState.page === 'landing' && landingMobileDemoNotice && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('landing.mobileWarning')}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(6, 10, 19, 0.92)',
+            padding: '20px',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 400,
+              textAlign: 'center',
+              background: '#0f1420',
+              border: '1px solid rgba(129, 140, 248, 0.25)',
+              borderRadius: 16,
+              padding: '28px 24px',
+            }}
+          >
+            <h2 style={{ color: '#818cf8', fontSize: '1.1rem', fontWeight: 600, margin: '0 0 20px', lineHeight: 1.5 }}>
+              {t('landing.mobileWarning')}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setLandingMobileDemoNotice(false)}
+              style={{
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 10,
+                padding: '12px 28px',
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {t('landing.mobileWarningOk')}
+            </button>
+          </div>
+        </div>
+      )}
       {effectivePage === 'app' && <GlobalGuideWidget />}
     </>
   );

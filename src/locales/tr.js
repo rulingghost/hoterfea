@@ -81,6 +81,7 @@ export const tr = {
     finalDesc1: "Kurulum gerektirmez. Tek tıkla tam özellikli demo ortamına erişin,",
     finalDesc2: "45+ modülü keşfedin ve farkı yaşayın.",
     mobileWarning: "Lütfen masaüstü üzerinden giriniz.",
+    mobileWarningOk: "Tamam",
     searchExamples: ['restoran bölümünü aç...', 'Hans Müller misafir ara...', 'bugünkü doluluk oranı...', 'yemek siparişi ekle...'],
     moduleNames: {
       dashboard: 'Yönetici Paneli',
