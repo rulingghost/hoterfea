@@ -5,7 +5,8 @@ import {
   Check, ChevronDown, Play, Monitor, Sparkles, Building2,
   Wifi, Lock, Search, Bell, Calendar, FileText,
   TrendingUp, Layers, Database, Shield, Cpu, Eye,
-  MousePointer, Command, Rocket, Target, Activity
+  MousePointer, Command, Rocket, Target, Activity,
+  Home, Gem, Star, Crown, Package
 } from 'lucide-react';
 import LanguageSwitcher from './ui/LanguageSwitcher';
 import { useLanguage } from '../context/LanguageContext';
@@ -133,6 +134,11 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
   const channelCounter = useCounter(50, 2000, true);
   const uptimeCounter = useCounter(99, 1600, true);
 
+  const packageTiers = Array.isArray(t('landing.packageTiers')) ? t('landing.packageTiers') : [];
+  const tierIcons = [Home, Gem, Star, Crown];
+  const countTierModules = (tier) =>
+    (tier?.sections || []).reduce((n, s) => n + (Array.isArray(s?.items) ? s.items.length : 0), 0);
+
   return (
     <div className="lp">
       {/* ═══ Floating Particles ═══ */}
@@ -164,6 +170,7 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
           <div className="nav-links">
             <a href="#features">{t('landing.navFeatures')}</a>
             <a href="#modules">{t('landing.navModules')}</a>
+            <a href="#packages">{t('landing.navPackages')}</a>
             <a href="#workflow">{t('landing.navWorkflow')}</a>
             <a href="#" onClick={e => { e.preventDefault(); onOpenPresentation(); }} style={{ color: '#D4AF37' }}>
               <Sparkles size={12} style={{marginRight:4, display:'inline'}} /> {t('landing.navPresentation')}
@@ -398,6 +405,66 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
         </div>
       </section>
 
+      {/* ═══ License packages (commercial tiers) ═══ */}
+      <section id="packages" className="sec-packages" data-animate>
+        <div className="sec-header">
+          <div className="sec-chip"><Package size={12} /> {t('landing.packagesChip')}</div>
+          <h2>{t('landing.packagesTitle1')} <span className="grad">{t('landing.packagesTitle2')}</span></h2>
+          <p>{t('landing.packagesDesc')}</p>
+        </div>
+        <div className={`pkg-grid ${isVisible('packages') ? 'in' : ''}`}>
+          {packageTiers.map((tier, ti) => {
+            const IconCmp = tierIcons[ti] || Package;
+            const modCount = countTierModules(tier);
+            return (
+              <div
+                key={tier.id || ti}
+                className={`pkg-card ${tier.popular ? 'pkg-popular' : ''}`}
+                style={{ '--d': `${ti * 0.08}s` }}
+              >
+                {tier.popular && (
+                  <div className="pkg-ribbon"><Star size={11} fill="currentColor" /> {t('landing.packagesPopular')}</div>
+                )}
+                <div className="pkg-card-head">
+                  <div className="pkg-icon-wrap">
+                    <IconCmp size={22} strokeWidth={1.75} />
+                  </div>
+                  <div className="pkg-badge">{tier.badge}</div>
+                  <h3>{tier.name}</h3>
+                  <p className="pkg-sub">{tier.subtitle}</p>
+                  <div className="pkg-meta">
+                    <span className="pkg-meta-n">{modCount}</span>
+                    <span className="pkg-meta-l">
+                      {t('landing.packagesApprox')} {modCount} {t('landing.packagesModulesWord')}
+                    </span>
+                  </div>
+                </div>
+                <div className="pkg-body">
+                  {(tier.sections || []).map((sec, si) => (
+                    <div key={si} className="pkg-block">
+                      <div className="pkg-block-title">{sec.title}</div>
+                      <ul className="pkg-list">
+                        {(sec.items || []).map((it, ii) => (
+                          <li key={ii}>
+                            <Check size={12} className="pkg-check" strokeWidth={3} />
+                            <span>{it}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+                <div className="pkg-foot">
+                  <button type="button" className="pkg-cta" onClick={onOpenDemo}>
+                    {t('landing.packagesCta')} <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* ═══ How It Works ═══ */}
       <section id="workflow" className="sec-workflow" data-animate>
         <div className="sec-header">
@@ -441,6 +508,7 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
           <div className="foot-links">
             <a href="#features">{t('landing.navFeatures')}</a>
             <a href="#modules">{t('landing.navModules')}</a>
+            <a href="#packages">{t('landing.navPackages')}</a>
             <a href="#" onClick={e => { e.preventDefault(); onOpenDemo(); }}>{t('landing.demoBtn')}</a>
           </div>
           <span className="foot-copy">© 2026 Hoterfea</span>
@@ -622,6 +690,70 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
         @keyframes pillIn { to { opacity: 1; transform: scale(1); } }
         .mod-cta { text-align: center; margin-top: 48px; }
 
+        /* ── Packages (commercial tiers) ─ */
+        .sec-packages { padding: 100px 32px 120px; max-width: 1280px; margin: 0 auto; position: relative; z-index: 1; }
+        .pkg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; align-items: stretch; }
+        .pkg-grid.in .pkg-card { animation: cardIn 0.55s ease forwards; animation-delay: var(--d); }
+        .pkg-card {
+          display: flex; flex-direction: column; background: linear-gradient(165deg, rgba(15,23,42,0.95), rgba(6,10,19,0.98));
+          border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; overflow: hidden; position: relative;
+          opacity: 0; transform: translateY(20px); min-height: 100%;
+          box-shadow: 0 24px 48px rgba(0,0,0,0.35);
+        }
+        .pkg-grid:not(.in) .pkg-card { opacity: 1; transform: none; }
+        .pkg-card:hover { border-color: rgba(129,140,248,0.22); box-shadow: 0 28px 56px rgba(0,0,0,0.45); }
+        .pkg-popular {
+          border-color: rgba(212, 175, 55, 0.45);
+          box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.12), 0 28px 60px rgba(212, 175, 55, 0.08);
+        }
+        .pkg-ribbon {
+          position: absolute; top: 14px; right: -32px; transform: rotate(38deg);
+          background: linear-gradient(90deg, #D4AF37, #b8860b); color: #0a0e1a; font-size: 9px; font-weight: 900;
+          letter-spacing: 0.5px; padding: 6px 40px; display: flex; align-items: center; gap: 5px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.25); z-index: 2;
+        }
+        .pkg-card-head { padding: 22px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; }
+        .pkg-icon-wrap {
+          width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 14px;
+          background: linear-gradient(135deg, rgba(129,140,248,0.15), rgba(168,85,247,0.08));
+          border: 1px solid rgba(129,140,248,0.2); display: flex; align-items: center; justify-content: center; color: #c4b5fd;
+        }
+        .pkg-badge {
+          display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+          color: #94a3b8; background: rgba(255,255,255,0.04); padding: 4px 10px; border-radius: 20px; margin-bottom: 10px;
+        }
+        .pkg-card-head h3 { font-size: 17px; font-weight: 900; color: #fff; margin: 0 0 4px; letter-spacing: -0.3px; }
+        .pkg-sub { font-size: 12px; color: #64748b; margin: 0 0 12px; line-height: 1.45; font-weight: 600; }
+        .pkg-meta { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        .pkg-meta-n { font-size: 22px; font-weight: 900; color: #e2e8f0; line-height: 1; }
+        .pkg-meta-l { font-size: 10px; color: #475569; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+        .pkg-body { flex: 1; padding: 14px 16px 12px; max-height: 340px; overflow-y: auto; scrollbar-width: thin; }
+        .pkg-body::-webkit-scrollbar { width: 5px; }
+        .pkg-body::-webkit-scrollbar-thumb { background: rgba(129,140,248,0.25); border-radius: 4px; }
+        .pkg-block { margin-bottom: 12px; }
+        .pkg-block:last-child { margin-bottom: 0; }
+        .pkg-block-title {
+          font-size: 9px; font-weight: 900; color: #818cf8; text-transform: uppercase; letter-spacing: 0.9px;
+          margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid rgba(129,140,248,0.12);
+        }
+        .pkg-list { list-style: none; margin: 0; padding: 0; }
+        .pkg-list li {
+          display: flex; align-items: flex-start; gap: 8px; font-size: 11px; font-weight: 600; color: #cbd5e1;
+          line-height: 1.45; padding: 3px 0;
+        }
+        .pkg-check { color: #34d399; flex-shrink: 0; margin-top: 2px; }
+        .pkg-foot { padding: 14px 16px 18px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); }
+        .pkg-cta {
+          width: 100%; padding: 11px 14px; border-radius: 11px; border: none; cursor: pointer; font-size: 12px; font-weight: 800;
+          display: flex; align-items: center; justify-content: center; gap: 8px; color: #0f172a;
+          background: linear-gradient(135deg, #e2e8f0, #cbd5e1); transition: 0.25s;
+        }
+        .pkg-cta:hover { background: linear-gradient(135deg, #818cf8, #a855f7); color: #fff; transform: translateY(-1px); }
+        .pkg-popular .pkg-cta {
+          background: linear-gradient(135deg, #D4AF37, #b45309); color: #0a0e1a;
+        }
+        .pkg-popular .pkg-cta:hover { filter: brightness(1.08); color: #0a0e1a; transform: translateY(-1px); }
+
         /* ── Workflow ─────────────── */
         .sec-workflow { padding: 120px 32px; max-width: 1000px; margin: 0 auto; position: relative; z-index: 1; }
         .wf-timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; position: relative; }
@@ -652,6 +784,10 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
         .foot-copy { font-size: 11px; color: #1e293b; }
 
         /* ── Responsive ───────────── */
+        @media (max-width: 1100px) {
+          .pkg-grid { grid-template-columns: repeat(2, 1fr); }
+          .pkg-body { max-height: 280px; }
+        }
         @media (max-width: 900px) {
           .hero-inner { flex-direction: column; gap: 40px; }
           .hero-text h1 { font-size: 34px; }
@@ -670,6 +806,8 @@ const LandingPage = ({ onOpenDemo, onOpenPresentation }) => {
           .wf-timeline { grid-template-columns: 1fr; }
           .hero-text h1 { font-size: 28px; }
           .hero-counters { flex-wrap: wrap; }
+          .pkg-grid { grid-template-columns: 1fr; }
+          .pkg-body { max-height: 260px; }
         }
       `}</style>
     </div>
